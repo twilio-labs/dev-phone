@@ -1,6 +1,7 @@
 # comlink-dev-phone
 A tool for testing SMS and Voice applications
 
+[Simple Diagram of Dev Phone](https://github.com/twilio-labs/comlink-dev-phone/files/7650457/Untitled_Artwork.4.pdf)
 
 ## Design Values
 
@@ -12,3 +13,4 @@ A tool for testing SMS and Voice applications
 ## Design Principle
 
 * In simple situations that turn out being complex (e.g., selecting a phone number), identify a critical path that will get us to a demo-able state, but #WriteItDown and keep track of edge cases you've considered, and how the fully-fledged feature might look
+
