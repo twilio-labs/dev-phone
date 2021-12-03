@@ -1,0 +1,9 @@
+*-debug.log
+*-error.log
+/.nyc_output
+/dist
+/tmp
+/yarn.lock
+/package-lock.json
+node_modules
+coverage

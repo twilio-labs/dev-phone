@@ -1,0 +1,64 @@
+{
+  "name": "@twilio/plugin-dev-phone",
+  "description": "Dev Phone",
+  "version": "1.1.9",
+  "author": "Twilio @twilio",
+  "bugs": "https://github.com/twilio-labs/comlink-dev-phone/issues",
+  "dependencies": {
+    "@oclif/command": "^1.5.20",
+    "@oclif/config": "^1.15.1",
+    "@twilio/cli-core": "^5.0.0",
+    "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "@oclif/dev-cli": "^1.22.2",
+    "@oclif/test": "^1.2.5",
+    "@twilio/cli-test": "^2.1.0",
+    "chai": "^4.2.0",
+    "eslint": "^8.3.0",
+    "eslint-config-oclif": "^3.1.0",
+    "eslint-plugin-mocha": "^9.0.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-unicorn": "^39.0.0",
+    "globby": "^11.0.0",
+    "mocha": "^7.1.2",
+    "nyc": "^15.0.1"
+  },
+  "engines": {
+    "node": ">=10.0.0"
+  },
+  "files": [
+    "/oclif.manifest.json",
+    "/src"
+  ],
+  "homepage": "https://github.com/twilio-labs/comlink-dev-phone",
+  "keywords": [
+    "oclif-plugin"
+  ],
+  "license": "MIT",
+  "oclif": {
+    "name": "dev-phone",
+    "commands": "./src/commands",
+    "bin": "twilio",
+    "repositoryPrefix": "<%- repo %>/blob/<%- version %>/<%- commandPath %>",
+    "devPlugins": [
+      "@oclif/plugin-help"
+    ],
+    "topics": {
+      "dev-phone": {
+        "description": "Twilio Dev Phone plugin"
+      }
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/twilio-labs/comlink-dev-phone.git"
+  },
+  "scripts": {
+    "postpack": "rm -f oclif.manifest.json",
+    "XX-posttest": "eslint --ignore-path .gitignore . && npm audit",
+    "prepack": "oclif-dev manifest && oclif-dev readme",
+    "test": "nyc --check-coverage --lines 90 --reporter=html --reporter=text mocha --forbid-only \"test/**/*.test.js\"",
+    "version": "oclif-dev readme && git add README.md"
+  }
+}
