@@ -78,9 +78,6 @@ class DevPhoneServer extends TwilioClientCommand {
         // https://github.com/twilio/plugin-debugger/blob/main/src/commands/debugger/logs/list.js#L46-L56
 
         if (flags['phone-number']) {
-
-            // MG: this is an async call, but nothing is waiting for the result of `validatePropsAndFlags`
-            // so we can't actually *prevent* the plugin from starting, best we can do is stop it ASAP by throwing CLIException.
             this.pns = await this.twilioClient.incomingPhoneNumbers
                 .list({ phoneNumber: flags['phone-number'] });
 
