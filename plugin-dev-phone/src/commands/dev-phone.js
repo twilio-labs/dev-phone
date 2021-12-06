@@ -6,7 +6,8 @@ const PORT = process.env.PORT || 3001;
 const reformatTwilioPns = twilioResponse => {
     return {
         "phone-numbers": twilioResponse.map(
-            ({ phoneNumber, friendlyName }) => ({ phoneNumber, friendlyName }))
+            ({ phoneNumber, friendlyName, smsUrl, voiceUrl }) =>
+                ({ phoneNumber, friendlyName, smsUrl, voiceUrl }))
     }
 }
 

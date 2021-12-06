@@ -1,29 +1,22 @@
 import { useState } from 'react';
 
-function SendSmsForm({ twilioPns, sendSms }) {
+function SendSmsForm({ devPhonePn, sendSms }) {
 
-    const [fromPn, setFromPn] = useState(twilioPns[0].phoneNumber);
     const [toPn, setToPn] = useState(null);
     const [body, setBody] = useState(null);
 
     const sendIt = () => {
-        sendSms(fromPn, toPn, body);
+        sendSms(devPhonePn.phoneNumber, toPn, body);
     }
 
     return (
         <div className="smsForm">
             <label htmlFor="sendSmsFromPn">From</label>
-            <select
+            <input
                 id="sendSmsFromPn"
-                onChange={e => setFromPn(e.target.value)}>
-
-                {twilioPns.map(pn =>
-                    <option key={pn.phoneNumber}
-                        value={pn.phoneNumber}>
-                        {pn.phoneNumber} [{pn.friendlyName}]
-                    </option>
-                )}
-            </select>
+                disabled={true}
+                value={devPhonePn.phoneNumber}
+                />
 
             <label htmlFor="sendSmsToPn">To</label>
             <input
