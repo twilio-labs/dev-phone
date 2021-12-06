@@ -19,6 +19,7 @@ class DevPhoneServer extends TwilioClientCommand {
     constructor(argv, config, secureStorage) {
         super(argv, config, secureStorage);
         this.cliSettings = {};
+        this.pns = [];
     }
 
     async run() {
@@ -44,8 +45,15 @@ class DevPhoneServer extends TwilioClientCommand {
         })
 
         app.get("/phone-numbers", (req, res) => {
-            this.twilioClient.incomingPhoneNumbers.list()
-                .then(pns => res.json(reformatTwilioPns(pns)));
+            if(this.pns.length === 0) {
+                return this.twilioClient.incomingPhoneNumbers.list()
+                    .then(pns => {
+                        this.pns = pns;
+                        res.json(reformatTwilioPns(pns));
+                    });
+            } else {
+                return res.json(reformatTwilioPns(this.pns));
+            }
         })
 
         app.post("/send-sms", (req, res) => {
@@ -73,18 +81,18 @@ class DevPhoneServer extends TwilioClientCommand {
 
             // MG: this is an async call, but nothing is waiting for the result of `validatePropsAndFlags`
             // so we can't actually *prevent* the plugin from starting, best we can do is stop it ASAP by throwing CLIException.
-            let pns = await this.twilioClient.incomingPhoneNumbers
+            this.pns = await this.twilioClient.incomingPhoneNumbers
                 .list({ phoneNumber: flags['phone-number'] });
 
-            if (pns.length < 1) {
+            if (this.pns.length < 1) {
                 throw new TwilioCliError(
                     `The phone number ${flags['phone-number']} is not associated with your Twilio account`
                 );
             }
 
             const pnConfigAlreadySet = [
-                (isSmsUrlSet(pns[0].smsUrl) ? "SMS webhook URL" : null),
-                (isVoiceUrlSet(pns[0].voiceUrl) ? "Voice webhook URL" : null),
+                (isSmsUrlSet(this.pns[0].smsUrl) ? "SMS webhook URL" : null),
+                (isVoiceUrlSet(this.pns[0].voiceUrl) ? "Voice webhook URL" : null),
             ].filter(x=>x);
 
             if (pnConfigAlreadySet.length > 0) {
