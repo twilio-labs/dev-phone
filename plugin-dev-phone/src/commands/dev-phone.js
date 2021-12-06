@@ -6,8 +6,8 @@ const PORT = process.env.PORT || 3001;
 const reformatTwilioPns = twilioResponse => {
     return {
         "phone-numbers": twilioResponse.map(
-            ({ phoneNumber, friendlyName, smsUrl, voiceUrl }) =>
-                ({ phoneNumber, friendlyName, smsUrl, voiceUrl }))
+            ({ phoneNumber, friendlyName, smsUrl, voiceUrl, capabilities }) =>
+                ({ phoneNumber, friendlyName, smsUrl, voiceUrl, capabilities }))
     }
 }
 
@@ -39,7 +39,11 @@ class DevPhoneServer extends TwilioClientCommand {
 
         app.get("/phone-numbers", (req, res) => {
             this.twilioClient.incomingPhoneNumbers.list()
-                .then(pns => res.json(reformatTwilioPns(pns)));
+                .then(pns => res.json(reformatTwilioPns(pns)))
+                .catch( err => {
+                    console.error('APIs throwed an error', err);
+                    res.status(err.data ? err.data.status : 400).send({ error: err });
+                });
         })
 
         app.post("/send-sms", (req, res) => {
@@ -49,7 +53,11 @@ class DevPhoneServer extends TwilioClientCommand {
                     from: req.body.from,
                     to: req.body.to
                 })
-                .then(message => res.json({ result: message }));
+                .then(message => res.json({ result: message }))
+                .catch( err => {
+                    console.error('APIs throwed an error', err);
+                    res.status(err.data ? err.data.status : 400).send({ error: err });
+                });
         })
 
         app.listen(PORT, () => {
