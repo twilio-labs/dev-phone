@@ -18,15 +18,14 @@ const reformatTwilioPns = twilioResponse => {
 class DevPhoneServer extends TwilioClientCommand {
     constructor(argv, config, secureStorage) {
         super(argv, config, secureStorage);
+        this.cliSettings = {};
     }
-
-    cliSettings = {};
 
     async run() {
         await super.run();
 
         const props = this.parseProperties() || {};
-        this.validatePropsAndFlags(props, this.flags);
+        await this.validatePropsAndFlags(props, this.flags);
 
         process.on('SIGINT', function () {
             console.log("Caught interrupt signal");
