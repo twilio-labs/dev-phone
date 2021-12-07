@@ -5,6 +5,7 @@ import Konami from 'konami'
 
 import PhoneNumberPicker from './components/PhoneNumberPicker'
 import SendSmsForm from './components/SendSmsForm';
+import Caller from './components/Caller';
 
 
 const sendSms = (from, to, body) => {
@@ -53,9 +54,12 @@ function App() {
       </header>
 
       {devPhonePn ?
-        <SendSmsForm devPhonePn={devPhonePn} sendSms={sendSms} />
+        <div>
+          <SendSmsForm devPhonePn={devPhonePn} sendSms={sendSms} />
+          <Caller devPhonePn={devPhonePn} />
+        </div>
         :
-        <PhoneNumberPicker setDevPhonePn={setDevPhonePn}/>
+        <PhoneNumberPicker setDevPhonePn={setDevPhonePn} />
       }
 
 
