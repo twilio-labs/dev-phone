@@ -33,6 +33,9 @@ class DevPhoneServer extends TwilioClientCommand {
         const props = this.parseProperties() || {};
         await this.validatePropsAndFlags(props, this.flags);
 
+        // create conversation for SMS/web interface
+        this.cliSettings.conversation = await this.createConversation();
+
         process.on('SIGINT', function () {
             console.log("Caught interrupt signal");
             process.exit();
@@ -173,6 +176,27 @@ class DevPhoneServer extends TwilioClientCommand {
 
             this.cliSettings.phoneNumber = reformatTwilioPns(this.pns)["phone-numbers"][0];
         }
+    }
+
+    async createConversation () {
+        return await this.twilioClient.conversations.conversations.list()
+        .then( async conversations => {
+            let devConversations = conversations.filter( c => c.friendlyName === 'dev-phone');
+            for (var conversation of devConversations) {
+                await this.twilioClient.conversations.conversations(conversation.sid)
+                    .remove();
+            }
+            return await this.twilioClient.conversations.conversations
+                .create({friendlyName: 'dev-phone'});
+        }).then ( conversation => {
+            console.log('Using conversation ', conversation.sid);
+            return conversation;
+        });
+    }
+
+    async destroyConversation(conversation_sid) {
+        await this.twilioClient.conversations.conversations(conversation_sid)
+            .remove();
     }
 
 }
