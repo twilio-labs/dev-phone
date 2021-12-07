@@ -1,6 +1,10 @@
 import './App.css';
 
 import { useEffect, useState } from 'react';
+import { Provider, useSelector, useDispatch } from 'react-redux'
+import { compose, createStore, applyMiddleware} from 'redux'
+import thunk from 'redux-thunk'
+import reducer from './reducer'
 import Konami from 'konami'
 
 import SendSmsForm from './components/SendSmsForm';
@@ -41,18 +45,25 @@ function App() {
       .then((data) => setTwilioPns(data["phone-numbers"]))
   }, []);
 
+  const store = createStore(reducer, compose(
+    applyMiddleware(thunk),
+    window.devToolsExtension ? window.devToolsExtension() : f => f
+  ))
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <p>HELLO :owlwave:</p>
-        <p>You have <strong>{twilioPns.length}</strong> phone numbers</p>
-      </header>
-      {twilioPns.length > 0 ?
-        <SendSmsForm twilioPns={twilioPns} sendSms={sendSms} />
-        :
-        <div><small>nothing...</small></div>
-      }
-    </div>
+    <Provider store={store}>
+      <div className="App">
+        <header className="App-header">
+          <p>HELLO :owlwave:</p>
+          <p>You have <strong>{twilioPns.length}</strong> phone numbers</p>
+        </header>
+        {twilioPns.length > 0 ?
+          <SendSmsForm twilioPns={twilioPns} sendSms={sendSms} />
+          :
+          <div><small>nothing...</small></div>
+        }
+      </div>
+    </Provider>
   );
 }
 
