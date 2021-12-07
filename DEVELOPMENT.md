@@ -16,11 +16,11 @@ You will need:
   1.  Link the plugin with your Twilio CLI installation
      * `twilio plugins:link $(pwd)/plugin-dev-phone`
   1. Start the plugin
-     * `twilio dev-phone`
+     * `twilio dev-phone` or use a specific number by using the --phone-number flag. e.g. `twilio dev-phone --phone-number +11234567890`
      * Leave this running and continue in a new terminal.
   1. Start the front end
      * (TODO: this is not yet bundled and started automatically by the plugin)
-     * `cd dev-phone-client`
+     * `cd plugin-dev-phone-client`
      * `npm install`
      * `npm start`
 

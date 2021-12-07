@@ -7,16 +7,17 @@ import thunk from 'redux-thunk'
 import reducer from './reducer'
 import Konami from 'konami'
 
+import PhoneNumberPicker from './components/PhoneNumberPicker'
 import SendSmsForm from './components/SendSmsForm';
 
 const sendSms = (from, to, body) => {
   console.log("Get it sent!");
   console.table({ from, to, body });
 
-  if (from && to && body){
+  if (from && to && body) {
     fetch("/send-sms", {
       method: "POST",
-      headers: {"content-type": "application/json"},
+      headers: { "content-type": "application/json" },
       body: JSON.stringify({ from, to, body })
     })
 
@@ -34,15 +35,18 @@ const setupKonamiCode = () => {
 
 function App() {
 
-  const [twilioPns, setTwilioPns] = useState([]);
+  const [devPhonePn, setDevPhonePn] = useState(null);
 
   useEffect(() => {
-
     setupKonamiCode();
 
-    fetch("/phone-numbers")
+    fetch("/plugin-settings")
       .then((res) => res.json())
-      .then((data) => setTwilioPns(data["phone-numbers"]))
+      .then((settings) => {
+        if (settings.phoneNumber) {
+          setDevPhonePn(settings.phoneNumber);
+        }
+      })
   }, []);
 
   const store = createStore(reducer, compose(
@@ -55,13 +59,15 @@ function App() {
       <div className="App">
         <header className="App-header">
           <p>HELLO :owlwave:</p>
-          <p>You have <strong>{twilioPns.length}</strong> phone numbers</p>
         </header>
-        {twilioPns.length > 0 ?
-          <SendSmsForm twilioPns={twilioPns} sendSms={sendSms} />
+
+        {devPhonePn ?
+          <SendSmsForm devPhonePn={devPhonePn} sendSms={sendSms} />
           :
-          <div><small>nothing...</small></div>
+          <PhoneNumberPicker setDevPhonePn={setDevPhonePn}/>
         }
+
+
       </div>
     </Provider>
   );

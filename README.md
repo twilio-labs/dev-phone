@@ -2,7 +2,8 @@
 
 A Twilio CLI plugin for testing SMS and Voice applications.
 
-![Simple Diagram of Dev Phone](https://github.com/twilio-labs/comlink-dev-phone/files/7650457/Untitled_Artwork.4.pdf)
+![A simple architecture of the Softphone](https://user-images.githubusercontent.com/8594375/144852695-eb45253b-9ef2-4d68-a73f-40364b18c978.jpg)
+
 
 ## Key Personas
 
@@ -27,7 +28,7 @@ A developer is building with Twilio and wants to write some automated testing to
 
 ## Design Principle
 
-* In simple situations that turn out being complex (e.g., selecting a phone number), identify a critical path that will get us to a demo-able state, but #WriteItDown and keep track of edge cases you've considered, and how the fully-fledged feature might look. Keep these documents in the repo.
+* In simple situations that turn out being complex (e.g., selecting a phone number), identify a critical path that will get us to a demo-able state, but #WriteItDown and keep track of edge cases you've considered, and how the fully-fledged feature might look. Keep these documents in the repo, in the `decisions` directory.
 
 
 ## Working on this plugin

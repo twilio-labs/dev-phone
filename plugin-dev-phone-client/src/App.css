@@ -10,6 +10,7 @@
   justify-content: center;
   font-size: calc(10px + 2vmin);
   color: white;
+  margin-bottom: 1em;
 }
 
 .App-link {
@@ -28,4 +29,12 @@
   text-align: right;
   padding-right: 1em;
   margin-bottom: 0.5em;
+}
+
+.pnPicker .pnSelect {
+  margin-bottom: 1em;
+}
+
+.pnPicker .pnConfirm {
+
 }
