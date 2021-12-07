@@ -1,4 +1,8 @@
 const { TwilioClientCommand } = require('@twilio/cli-core').baseCommands;
+const { TwilioCliError } = require('@twilio/cli-core').services.error;
+
+const { isSmsUrlSet, isVoiceUrlSet } = require('../phone-number-utils');
+
 const express = require('express');
 
 const PORT = process.env.PORT || 3001;
@@ -26,12 +30,16 @@ class DevPhoneServer extends TwilioClientCommand {
         this.validatePropsAndFlags(props, this.flags);
 
         process.on('SIGINT', function () {
+            // TODO: clean developer's console changes
             console.log("Caught interrupt signal");
             process.exit();
         });
 
         const app = express();
         app.use(express.json()); // request body parser
+
+        // create conversation for SMS/web interface
+        this.cliSettings.conversation = await createConversation();
 
         app.get("/ping", (req, res) => {
             res.json({pong: true});
@@ -46,8 +54,8 @@ class DevPhoneServer extends TwilioClientCommand {
                 });
         })
 
-        app.post("/send-sms", (req, res) => {
-            this.twilioClient.messages
+        app.post("/send-sms", async (req, res) => {
+            await this.twilioClient.messages
                 .create({
                     body: req.body.body,
                     from: req.body.from,
@@ -69,6 +77,24 @@ class DevPhoneServer extends TwilioClientCommand {
     validatePropsAndFlags(props, flags) {
         // Flags defined below can be validated and used here. Example:
         // https://github.com/twilio/plugin-debugger/blob/main/src/commands/debugger/logs/list.js#L46-L56
+    }
+
+    async createConversation () {
+        return await this.twilioClient.conversations.conversations.list()
+        .then( async conversations => {
+            let devConversations = conversations.filter( c => c.friendlyName === 'dev-phone');
+            for (var conversation of devConversations) {
+                await this.twilioClient.conversations.conversations(conversation.sid)
+                    .remove();
+            }
+            return await this.twilioClient.conversations.conversations
+                .create({friendlyName: 'dev-phone'});
+        });
+    }
+
+    async destroyConversation(conversation_sid) {
+        await this.twilioClient.conversations.conversations(conversation_sid)
+            .remove();
     }
 
 }
