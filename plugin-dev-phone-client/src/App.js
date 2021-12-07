@@ -36,6 +36,14 @@ function App() {
 
   useEffect(() => {
     setupKonamiCode();
+
+    fetch("/plugin-settings")
+      .then((res) => res.json())
+      .then((settings) => {
+        if (settings.phoneNumber) {
+          setDevPhonePn(settings.phoneNumber);
+        }
+      })
   }, []);
 
   return (
@@ -49,6 +57,7 @@ function App() {
         :
         <PhoneNumberPicker setDevPhonePn={setDevPhonePn}/>
       }
+
 
     </div>
   );

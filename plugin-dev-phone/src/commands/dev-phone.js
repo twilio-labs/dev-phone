@@ -99,7 +99,7 @@ class DevPhoneServer extends TwilioClientCommand {
                 );
             }
 
-            this.cliSettings.phoneNumber = flags['phone-number'];
+            this.cliSettings.phoneNumber = reformatTwilioPns(this.pns)["phone-numbers"][0];
         }
     }
 
