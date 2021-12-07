@@ -1,5 +1,7 @@
 import { useState } from 'react';
 
+const formatPnForForm = pn => `${pn.phoneNumber} [${pn.friendlyName}]`
+
 function SendSmsForm({ devPhonePn, sendSms }) {
 
     const [toPn, setToPn] = useState(null);
@@ -15,7 +17,7 @@ function SendSmsForm({ devPhonePn, sendSms }) {
             <input
                 id="sendSmsFromPn"
                 disabled={true}
-                value={devPhonePn.phoneNumber}
+                value={formatPnForForm(devPhonePn)}
                 />
 
             <label htmlFor="sendSmsToPn">To</label>
