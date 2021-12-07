@@ -2,6 +2,10 @@ const { flags } = require('@oclif/command');
 const { TwilioClientCommand } = require('@twilio/cli-core').baseCommands;
 const { TwilioCliError } = require('@twilio/cli-core').services.error;
 
+const AccessToken = require('twilio').jwt.AccessToken;
+const ChatGrant = AccessToken.ChatGrant;
+const VoiceGrant = AccessToken.VoiceGrant;
+
 const { isSmsUrlSet, isVoiceUrlSet } = require('../phone-number-utils');
 
 const express = require('express');
@@ -25,6 +29,8 @@ class DevPhoneServer extends TwilioClientCommand {
         this.cliSettings = {};
         this.pns = [];
         this.jwt = null;
+        this.apikey = {};
+        this.twimlApp = {};
     }
 
     async run() {
@@ -36,6 +42,15 @@ class DevPhoneServer extends TwilioClientCommand {
         // create conversation for SMS/web interface
         this.cliSettings.conversation = await this.createConversation();
 
+        // create API KEY and API SECRET to be generate JWT AccessToken for ChatGrant and VoiceGrant
+        this.apikey = await this.createApiKey();
+
+        // create TwiML App
+        this.twimlApp = await this.createTwimlApp();
+
+        // create JWT Access Token
+        this.cliSettings.accessToken = await this.createUserAccessToken();
+
         process.on('SIGINT', function () {
             console.log("Caught interrupt signal");
             process.exit();
@@ -46,6 +61,8 @@ class DevPhoneServer extends TwilioClientCommand {
 
         app.get("/ping", (req, res) => {
             res.json({ pong: true });
+
+            console.log('TWILIO', this.twilioClient);
         })
 
         app.get("/plugin-settings", (req, res) => {
@@ -178,19 +195,85 @@ class DevPhoneServer extends TwilioClientCommand {
         }
     }
 
+    async createApiKey () {
+        return await this.twilioClient.keys.list()
+        .then( async items => {
+            return items.filter( item => item.friendlyName === 'dev-phone');
+        }).then( async items => {
+            for (var item of items) {
+                await this.twilioClient.keys(item.sid)
+                    .remove();
+            }
+            return await this.twilioClient.newKeys
+                .create({friendlyName: 'dev-phone'});
+        }).then ( item => {
+            console.log('Using API Key ', item.sid);
+            return item;
+        });
+    }
+
+    async createTwimlApp () {
+        // create TwiML App and points to https://dev-phone-6880.twil.io/outbound-call
+        return await this.twilioClient.applications.list()
+        .then( async items => {
+            return items.filter( item => item.friendlyName === 'dev-phone');
+        }).then( async items => {
+            for (var item of items) {
+                await this.twilioClient.applications(item.sid)
+                    .remove();
+            }
+            return await this.twilioClient.applications
+                .create({
+                    voiceUrl: 'https://dev-phone-6880.twil.io/outbound-call',
+                    friendlyName: 'dev-phone'
+                });
+        }).then ( item => {
+            console.log('Using TwiML App ', item.sid);
+            console.log(item);
+            return item;
+        });        
+    }
+
+    async createUserAccessToken () {
+        const chatGrant = new ChatGrant({
+            serviceSid: this.cliSettings.conversation.sid
+        });
+
+        const voiceGrant = new VoiceGrant({
+            incomingAllow: true,
+            outgoingApplicationSid: this.twimlApp.sid
+        });
+  
+        const token = new AccessToken(
+            this.twilioClient.accountSid,
+            this.apikey.sid,
+            this.apikey.secret,
+            {
+                identity: 'dev-phone'
+            }
+        );
+
+        token.addGrant(chatGrant);
+        token.addGrant(voiceGrant);
+
+        console.log('TOKEN CREATED', token.toJwt());
+        return token.toJwt();
+    }
+
     async createConversation () {
         return await this.twilioClient.conversations.conversations.list()
-        .then( async conversations => {
-            let devConversations = conversations.filter( c => c.friendlyName === 'dev-phone');
-            for (var conversation of devConversations) {
-                await this.twilioClient.conversations.conversations(conversation.sid)
+        .then( async items => {
+            return items.filter( item => item.friendlyName === 'dev-phone');
+        }).then( async items => {
+            for (var item of items) {
+                await this.twilioClient.conversations.conversations(item.sid)
                     .remove();
             }
             return await this.twilioClient.conversations.conversations
                 .create({friendlyName: 'dev-phone'});
-        }).then ( conversation => {
-            console.log('Using conversation ', conversation.sid);
-            return conversation;
+        }).then ( item => {
+            console.log('Using conversation ', item.sid);
+            return item;
         });
     }
 
