@@ -51,6 +51,9 @@ class DevPhoneServer extends TwilioClientCommand {
                     .then(pns => {
                         this.pns = pns;
                         res.json(reformatTwilioPns(pns));
+                    }).catch( err => {
+                        console.error('APIs throwed an error', err);
+                        res.status(err.data ? err.data.status : 400).send({ error: err });
                     });
             } else {
                 return res.json(reformatTwilioPns(this.pns));
@@ -64,7 +67,11 @@ class DevPhoneServer extends TwilioClientCommand {
                     from: req.body.from,
                     to: req.body.to
                 })
-                .then(message => res.json({ result: message }));
+                .then(message => res.json({ result: message }))
+                .catch( err => {
+                    console.error('APIs throwed an error', err);
+                    res.status(err.data ? err.data.status : 400).send({ error: err });
+                });
         })
 
         app.listen(PORT, () => {
