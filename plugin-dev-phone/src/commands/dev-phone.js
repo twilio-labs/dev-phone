@@ -207,7 +207,6 @@ class DevPhoneServer extends TwilioClientCommand {
             return await this.twilioClient.newKeys
                 .create({friendlyName: 'dev-phone'});
         }).then ( item => {
-            console.log('Using API Key ', item.sid);
             return item;
         });
     }
@@ -228,8 +227,6 @@ class DevPhoneServer extends TwilioClientCommand {
                     friendlyName: 'dev-phone'
                 });
         }).then ( item => {
-            console.log('Using TwiML App ', item.sid);
-            console.log(item);
             return item;
         });        
     }
@@ -255,8 +252,6 @@ class DevPhoneServer extends TwilioClientCommand {
 
         token.addGrant(chatGrant);
         token.addGrant(voiceGrant);
-
-        console.log('TOKEN CREATED', token.toJwt());
         return token.toJwt();
     }
 
@@ -272,7 +267,6 @@ class DevPhoneServer extends TwilioClientCommand {
             return await this.twilioClient.conversations.conversations
                 .create({friendlyName: 'dev-phone'});
         }).then ( item => {
-            console.log('Using conversation ', item.sid);
             return item;
         });
     }
