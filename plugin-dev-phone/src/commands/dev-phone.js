@@ -69,6 +69,12 @@ class DevPhoneServer extends TwilioClientCommand {
             res.json(this.cliSettings);
         })
 
+        app.get("/access-token", (req, res) => {
+            res.json({ 
+                accessToken: this.cliSettings.accessToken || null
+            });
+        })
+
         app.get("/phone-numbers", (req, res) => {
             if(this.pns.length === 0) {
                 return this.twilioClient.incomingPhoneNumbers.list()
