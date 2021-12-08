@@ -325,7 +325,7 @@ class DevPhoneServer extends TwilioClientCommand {
         });
     }
 
-    async destroyConversations() {
+    async destroyConversations () {
         return await this.twilioClient.conversations.conversations.list()
         .then( async items => {
             return items.filter( item => item.friendlyName.startsWith('dev-phone'));
