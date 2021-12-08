@@ -53,6 +53,17 @@ class DevPhoneServer extends TwilioClientCommand {
 
         process.on('SIGINT', function () {
             console.log("Caught interrupt signal");
+            
+            try{
+                destroyConversations()
+            } catch (e) {}
+            try{
+                destroyTwimlApps()
+            } catch (e) {}
+            try{
+                destroyApiKeys()
+            } catch (e) {}
+            
             process.exit();
         });
 
@@ -202,6 +213,15 @@ class DevPhoneServer extends TwilioClientCommand {
     }
 
     async createApiKey () {
+        return await this.destroyApiKeys().then( async () => {
+            return await this.twilioClient.newKeys
+                .create({friendlyName: 'dev-phone'});
+        }).then ( item => {
+            return item;
+        });
+    }
+
+    async destroyApiKeys () {
         return await this.twilioClient.keys.list()
         .then( async items => {
             return items.filter( item => item.friendlyName === 'dev-phone');
@@ -210,23 +230,12 @@ class DevPhoneServer extends TwilioClientCommand {
                 await this.twilioClient.keys(item.sid)
                     .remove();
             }
-            return await this.twilioClient.newKeys
-                .create({friendlyName: 'dev-phone'});
-        }).then ( item => {
-            return item;
         });
     }
 
     async createTwimlApp () {
         // create TwiML App and points to https://dev-phone-6880.twil.io/outbound-call
-        return await this.twilioClient.applications.list()
-        .then( async items => {
-            return items.filter( item => item.friendlyName === 'dev-phone');
-        }).then( async items => {
-            for (var item of items) {
-                await this.twilioClient.applications(item.sid)
-                    .remove();
-            }
+        return await this.destroyTwimlApps().then( async () => {
             return await this.twilioClient.applications
                 .create({
                     voiceUrl: 'https://dev-phone-6880.twil.io/outbound-call',
@@ -235,6 +244,18 @@ class DevPhoneServer extends TwilioClientCommand {
         }).then ( item => {
             return item;
         });        
+    }
+
+    async destroyTwimlApps () {
+        return await this.twilioClient.applications.list()
+        .then( async items => {
+            return items.filter( item => item.friendlyName === 'dev-phone');
+        }).then( async items => {
+            for (var item of items) {
+                await this.twilioClient.applications(item.sid)
+                    .remove();
+            }
+        });
     }
 
     async createUserAccessToken () {
@@ -262,6 +283,15 @@ class DevPhoneServer extends TwilioClientCommand {
     }
 
     async createConversation () {
+        return await this.destroyConversations().then( async () => {
+            return await this.twilioClient.conversations.conversations
+                .create({friendlyName: 'dev-phone'});
+        }).then ( item => {
+            return item;
+        });
+    }
+
+    async destroyConversations() {
         return await this.twilioClient.conversations.conversations.list()
         .then( async items => {
             return items.filter( item => item.friendlyName === 'dev-phone');
@@ -270,16 +300,7 @@ class DevPhoneServer extends TwilioClientCommand {
                 await this.twilioClient.conversations.conversations(item.sid)
                     .remove();
             }
-            return await this.twilioClient.conversations.conversations
-                .create({friendlyName: 'dev-phone'});
-        }).then ( item => {
-            return item;
         });
-    }
-
-    async destroyConversation(conversation_sid) {
-        await this.twilioClient.conversations.conversations(conversation_sid)
-            .remove();
     }
 
 }
