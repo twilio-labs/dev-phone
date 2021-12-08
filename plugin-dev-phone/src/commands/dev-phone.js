@@ -5,6 +5,7 @@ const { TwilioCliError } = require('@twilio/cli-core').services.error;
 const AccessToken = require('twilio').jwt.AccessToken;
 const ChatGrant = AccessToken.ChatGrant;
 const VoiceGrant = AccessToken.VoiceGrant;
+const SyncGrant = AccessToken.SyncGrant;
 
 const { isSmsUrlSet, isVoiceUrlSet } = require('../phone-number-utils');
 
@@ -51,18 +52,22 @@ class DevPhoneServer extends TwilioClientCommand {
         // create JWT Access Token
         this.cliSettings.accessToken = await this.createUserAccessToken();
 
-        process.on('SIGINT', function () {
+        process.on('SIGINT', async function () {
             console.log("Caught interrupt signal");
             
             try{
-                destroyConversations()
+                await destroyConversations()
             } catch (e) {}
             try{
-                destroyTwimlApps()
+                await destroyTwimlApps()
             } catch (e) {}
             try{
-                destroyApiKeys()
+                await destroyApiKeys()
             } catch (e) {}
+            try{
+                await destroySyncs()
+            } catch (e) {}
+            
             
             process.exit();
         });
@@ -267,6 +272,10 @@ class DevPhoneServer extends TwilioClientCommand {
             incomingAllow: true,
             outgoingApplicationSid: this.twimlApp.sid
         });
+
+        const syncGrant = new SyncGrant({
+            serviceSid: process.env.TWILIO_SYNC_SERVICE_SID,
+        })
   
         const token = new AccessToken(
             this.twilioClient.accountSid,
@@ -281,6 +290,28 @@ class DevPhoneServer extends TwilioClientCommand {
         token.addGrant(voiceGrant);
         return token.toJwt();
     }
+
+    async createSync () {
+        return await this.destroySyncs().then( async () => {
+            return await this.twilioClient.sync.services
+                .create({friendlyName: 'dev-phone'});
+        }).then ( item => {
+            return item;
+        });
+    }
+
+    async destroySyncs () {
+        return await this.twilioClient.sync.services.list()
+        .then( async items => {
+            return items.filter( item => item.friendlyName === 'dev-phone');
+        }).then( async items => {
+            for (var item of items) {
+                await this.twilioClient.sync.services(item.sid)
+                    .remove();
+            }
+        });
+    }
+    
 
     async createConversation () {
         return await this.destroyConversations().then( async () => {
