@@ -1,14 +1,13 @@
 import React, { useEffect } from 'react'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { Device } from '@twilio/voice-sdk'
 
 // Establish context with default values
 export const TwilioVoiceContext = React.createContext(null)
-
-
 export const useTwilioVoice = () => React.useContext(TwilioVoiceContext)
 
 const TwilioVoiceManager = ({ children }) => {
+    const twilioAccessToken = useSelector((state) => state.twilioAccessToken)
     let voiceDevice
     let deviceDetails
 

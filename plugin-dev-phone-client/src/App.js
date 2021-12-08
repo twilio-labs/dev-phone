@@ -5,6 +5,7 @@ import { Provider, useSelector, useDispatch } from 'react-redux'
 import { compose, createStore, applyMiddleware} from 'redux'
 import thunk from 'redux-thunk'
 import reducer from './reducer'
+import { fetchTwilioAccessToken } from './actions'
 import Konami from 'konami'
 
 import PhoneNumberPicker from './components/PhoneNumberPicker'
@@ -53,6 +54,8 @@ function App() {
     applyMiddleware(thunk),
     window.devToolsExtension ? window.devToolsExtension() : f => f
   ))
+
+  store.dispatch(fetchTwilioAccessToken())
 
   return (
     <Provider store={store}>

@@ -1,7 +1,7 @@
-import { REQUEST_VOICE_TOKEN_SUCCESS } from '../actions';
+import { REQUEST_ACCESS_TOKEN_SUCCESS } from '../actions';
 
 const initialState = {
-    voiceAccessToken: ''
+    twilioAccessToken: ''
 }
 
 export default function chatReducer(state, action) {
@@ -10,8 +10,8 @@ export default function chatReducer(state, action) {
     }
 
     switch(action.type){
-        case REQUEST_VOICE_TOKEN_SUCCESS:
-            return {...state, voiceAccessToken: action.payload}
+        case REQUEST_ACCESS_TOKEN_SUCCESS:
+            return {...state, twilioAccessToken: action.payload}
 
             default:
             return state

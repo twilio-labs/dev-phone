@@ -43,38 +43,38 @@ export const INCOMING_CALL_REQUEST_FAILURE = "INCOMING_CALL_REQUEST_FAILURE"
 // }
 
 
-export const REQUEST_VOICE_TOKEN = "REQUEST_VOICE_TOKEN"
-export const REQUEST_VOICE_TOKEN_SUCCESS = "REQUEST_VOICE_TOKEN_SUCCESS"
-export const REQUEST_VOICE_TOKEN_ERROR = "REQUEST_VOICE_TOKEN_ERROR"
+export const REQUEST_ACCESS_TOKEN = "REQUEST_ACCESS_TOKEN"
+export const REQUEST_ACCESS_TOKEN_SUCCESS = "REQUEST_ACCESS_TOKEN_SUCCESS"
+export const REQUEST_ACCESS_TOKEN_ERROR = "REQUEST_ACCESS_TOKEN_ERROR"
 
-export function voiceTokenRequest(){
+export function accessTokenRequest(){
     return {
-        type: REQUEST_VOICE_TOKEN
+        type: REQUEST_ACCESS_TOKEN
     }
 }
 
-export function voiceTokenRequestSuccess(payload){
+export function accessTokenRequestSuccess(payload){
     return {
-        type: REQUEST_VOICE_TOKEN_SUCCESS,
+        type: REQUEST_ACCESS_TOKEN_SUCCESS,
         payload
     }
 }
 
-export function VoiceTokenRequestError(error){
+export function accessTokenRequestError(error){
     return {
-        type: REQUEST_VOICE_TOKEN_ERROR,
+        type: REQUEST_ACCESS_TOKEN_ERROR,
         error
     }
 }
 
-export function fetchVoiceToken(roomId) {
+export function fetchTwilioAccessToken(roomId) {
     return async function (dispatch) {
-        dispatch(voiceTokenRequest());
+        dispatch(accessTokenRequest());
         try{
             const response = await fetch(`/accessToken`) // Routed to localhost:3001 via proxy config
-            dispatch(voiceTokenRequestSuccess(response.data));
+            dispatch(accessTokenRequestSuccess(response.data));
         }catch(error){
-            dispatch(VoiceTokenRequestError(error));
+            dispatch(accessTokenRequestError(error));
         }
     }
 }
