@@ -103,10 +103,8 @@ class DevPhoneServer extends TwilioClientCommand {
             console.log("Creating a new API Key")
             const newKey = await this.twilioClient.newKeys.create({friendlyName: 'dev-phone'});
 
-            console.log("created");
-            console.log({newKey});
-            apiKey = newKey.apiKey;
-            apiSecret = newKey.apiSecret;
+            apiKey = newKey.sid;
+            apiSecret = newKey.secret;
 
         } else {
             // This case is if the user has _not_ used env vars for
