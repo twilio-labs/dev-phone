@@ -11,9 +11,6 @@ const { isSmsUrlSet, isVoiceUrlSet } = require('../phone-number-utils');
 
 const express = require('express');
 
-const AccessToken = require('twilio').jwt.AccessToken;
-const VoiceGrant = AccessToken.VoiceGrant;
-
 const PORT = process.env.PORT || 3001;
 
 const reformatTwilioPns = twilioResponse => {
@@ -24,6 +21,11 @@ const reformatTwilioPns = twilioResponse => {
     }
 }
 
+const generateRandomPhoneName = () => {
+    let rand = Math.random().toString().substr(2, 6)
+    return `dev-phone-${rand}`;
+}
+
 class DevPhoneServer extends TwilioClientCommand {
     constructor(argv, config, secureStorage) {
         super(argv, config, secureStorage);
@@ -32,6 +34,7 @@ class DevPhoneServer extends TwilioClientCommand {
         this.jwt = null;
         this.apikey = {};
         this.twimlApp = {};
+        this.devPhoneName = generateRandomPhoneName();
     }
 
     async run() {
@@ -40,34 +43,32 @@ class DevPhoneServer extends TwilioClientCommand {
         const props = this.parseProperties() || {};
         await this.validatePropsAndFlags(props, this.flags);
 
+        console.log(`Hello 👋 I'm your dev-phone and my name is ${this.devPhoneName}\n`);
+
         // create conversation for SMS/web interface
         this.cliSettings.conversation = await this.createConversation();
 
-        // create API KEY and API SECRET to be generate JWT AccessToken for ChatGrant and VoiceGrant
-        this.apikey = await this.createApiKey();
+        // create Sync for Call History interface
+        this.cliSettings.sync = await this.createSync();
+
+        // create API KEY and API SECRET to be generate JWT AccessToken for ChatGrant, VoiceGrant and SyncGrant
+        this.apikey = await this.reuseOrCreateApiKey();
 
         // create TwiML App
         this.twimlApp = await this.createTwimlApp();
 
-        // create JWT Access Token
-        this.cliSettings.accessToken = await this.createUserAccessToken();
+        // create JWT Access Token with ChatGrant, VoiceGrant and SyncGrant
+        this.jwt = await this.createJwt();
 
         process.on('SIGINT', async function () {
             console.log("Caught interrupt signal");
             
             try{
                 await destroyConversations()
-            } catch (e) {}
-            try{
                 await destroyTwimlApps()
-            } catch (e) {}
-            try{
                 await destroyApiKeys()
-            } catch (e) {}
-            try{
                 await destroySyncs()
             } catch (e) {}
-            
             
             process.exit();
         });
@@ -82,7 +83,10 @@ class DevPhoneServer extends TwilioClientCommand {
         })
 
         app.get("/plugin-settings", (req, res) => {
-            res.json(this.cliSettings);
+            res.json({
+                ...this.cliSettings,
+                devPhoneName: this.devPhoneName
+            });
         })
 
         app.get("/access-token", (req, res) => {
@@ -123,68 +127,16 @@ class DevPhoneServer extends TwilioClientCommand {
         app.get("/client-token", async (req, res) => {
 
             if (! this.jwt){
-                await this.createJwt();
+                this.jwt = await this.createJwt();
             }
 
             res.json({ token: this.jwt});
         })
 
         app.listen(PORT, () => {
-            console.log(`Hello 👋 Your local webserver is listening on port ${PORT}`);
+            console.log(`🚀 Your local webserver is listening on port ${PORT}`);
             console.log(`Use ctrl-c to stop it`);
         });
-    }
-
-    async createJwt() {
-
-        // We need an API KEY and SECRET to create the Access Token
-        // Depending on how the user has provided the CLI with creds
-        // we may have one already in this.currentProfile, or we may
-        // need to create a new one
-
-        let apiKey = "";
-        let apiSecret = "";
-
-        if (this.currentProfile.apiKey.startsWith("AC")){
-            // This case is if the user has started the CLI with
-            // $TWILIO_ACCOUNT_SID and $TWILIO_AUTH_TOKEN set in
-            // their environment, using their account creds.
-            console.log("Creating a new API Key")
-            const newKey = await this.twilioClient.newKeys.create({friendlyName: 'dev-phone'});
-
-            apiKey = newKey.sid;
-            apiSecret = newKey.secret;
-
-        } else {
-            // This case is if the user has _not_ used env vars for
-            // their creds. Here we can reuse the api key and secret
-            // that the CLI created when it was installed
-            console.log("Using profile API key");
-            apiKey = this.currentProfile.apiKey;
-            apiSecret = this.currentProfile.apiSecret;
-
-        }
-
-        // TODO: call applications.delete on this when the plugin exits?
-        const application = await this.twilioClient.applications.create({
-            voiceMethod: 'POST',
-            // TODO: This URL should be to a Function created in the user's account,
-            //       not hard-coded (this URL points to a Function in Luis's account).
-            //       We may also need to delete this function when the plugin exits.
-            voiceUrl: 'https://dev-phone-6880.twil.io/outbound-call',
-            friendlyName: 'dev-phone'
-        });
-
-        const accessToken = await new AccessToken(this.twilioClient.accountSid, apiKey, apiSecret);
-        accessToken.identity = 'dev-phone'
-
-        const grant = new VoiceGrant({
-            outgoingApplicationSid: application.sid,
-            incomingAllow: true,
-        });
-        accessToken.addGrant(grant);
-
-        this.jwt = accessToken.toJwt();
     }
 
 
@@ -217,19 +169,49 @@ class DevPhoneServer extends TwilioClientCommand {
         }
     }
 
-    async createApiKey () {
-        return await this.destroyApiKeys().then( async () => {
-            return await this.twilioClient.newKeys
-                .create({friendlyName: 'dev-phone'});
-        }).then ( item => {
-            return item;
-        });
+    async reuseOrCreateApiKey () {
+
+        if (!this.currentProfile.apiKey.startsWith("SK")){
+            // This case is if the user has started the CLI with
+            // $TWILIO_ACCOUNT_SID and $TWILIO_AUTH_TOKEN set in
+            // their environment, using their account creds but 
+            // their API_KEY and SECRET are not properly set.
+            // the CLI uses the ACCOUNT_SID into currentProfile.apiKey
+            // and we need to generate another key
+
+            console.log("I'm creating a new API key...");
+            let key = await this.destroyApiKeys().then( async () => {
+                return await this.twilioClient.newKeys
+                    .create({friendlyName: this.devPhoneName});
+            }).then ( item => {
+                console.log(`✅ I'm using the API Key ${item.sid}\n`);
+                return item;
+            });
+
+            this.currentProfile.apiKey = key.sid;
+            this.currentProfile.apiSecret = key.secret;
+            return {
+                sid: this.currentProfile.apiKey,
+                secret: this.currentProfile.apiSecret
+            }
+
+        } else {
+            // This case is if the user has _not_ used env vars for
+            // their creds. Here we can reuse the api key and secret
+            // that the CLI created when it was installed
+
+            console.log("✅ I'm using your profile API key.\n");
+            return {
+                sid: this.currentProfile.apiKey,
+                secret: this.currentProfile.apiSecret
+            }
+        }
     }
 
     async destroyApiKeys () {
         return await this.twilioClient.keys.list()
         .then( async items => {
-            return items.filter( item => item.friendlyName === 'dev-phone');
+            return items.filter( item => item.friendlyName.startsWith('dev-phone'));
         }).then( async items => {
             for (var item of items) {
                 await this.twilioClient.keys(item.sid)
@@ -239,23 +221,28 @@ class DevPhoneServer extends TwilioClientCommand {
     }
 
     async createTwimlApp () {
+        console.log(`Creating a new TwiMl App to allow Voip calls from your browser...`);
         // create TwiML App and points to https://dev-phone-6880.twil.io/outbound-call
         return await this.destroyTwimlApps().then( async () => {
             return await this.twilioClient.applications
                 .create({
                     voiceUrl: 'https://dev-phone-6880.twil.io/outbound-call',
-                    friendlyName: 'dev-phone'
+                    friendlyName: this.devPhoneName
                 });
         }).then ( item => {
+            console.log(`✅ I'm using the TwiMl App ${item.sid}\n`);
             return item;
         });        
     }
 
     async destroyTwimlApps () {
+        console.log('removing twimlapps...');
         return await this.twilioClient.applications.list()
         .then( async items => {
-            return items.filter( item => item.friendlyName === 'dev-phone');
+            console.log('items ', items);
+            return items.filter( item => item.friendlyName.startsWith('dev-phone'));
         }).then( async items => {
+            console.log('filtered items ', items);
             for (var item of items) {
                 await this.twilioClient.applications(item.sid)
                     .remove();
@@ -263,7 +250,18 @@ class DevPhoneServer extends TwilioClientCommand {
         });
     }
 
-    async createUserAccessToken () {
+
+    async createJwt () {
+
+        // We need an API KEY and SECRET to create the Access Token
+        // Depending on how the user has provided the CLI with creds
+        // we may have one already in this.currentProfile, or we may
+        // need to create a new one
+
+        if (!this.apikey) {
+            this.apikey = await this.reuseOrCreateApiKey();
+        }
+
         const chatGrant = new ChatGrant({
             serviceSid: this.cliSettings.conversation.sid
         });
@@ -274,7 +272,7 @@ class DevPhoneServer extends TwilioClientCommand {
         });
 
         const syncGrant = new SyncGrant({
-            serviceSid: process.env.TWILIO_SYNC_SERVICE_SID,
+            serviceSid: this.cliSettings.sync.sid,
         })
   
         const token = new AccessToken(
@@ -282,20 +280,23 @@ class DevPhoneServer extends TwilioClientCommand {
             this.apikey.sid,
             this.apikey.secret,
             {
-                identity: 'dev-phone'
+                identity: this.devPhoneName
             }
         );
 
         token.addGrant(chatGrant);
         token.addGrant(voiceGrant);
+        token.addGrant(syncGrant);
         return token.toJwt();
     }
 
     async createSync () {
+        console.log(`Creating a new sync list for call history...`);
         return await this.destroySyncs().then( async () => {
             return await this.twilioClient.sync.services
-                .create({friendlyName: 'dev-phone'});
+                .create({friendlyName: this.devPhoneName});
         }).then ( item => {
+            console.log(`✅ I'm using the sync list ${item.sid}\n`);
             return item;
         });
     }
@@ -303,7 +304,7 @@ class DevPhoneServer extends TwilioClientCommand {
     async destroySyncs () {
         return await this.twilioClient.sync.services.list()
         .then( async items => {
-            return items.filter( item => item.friendlyName === 'dev-phone');
+            return items.filter( item => item.friendlyName.startsWith('dev-phone'));
         }).then( async items => {
             for (var item of items) {
                 await this.twilioClient.sync.services(item.sid)
@@ -315,9 +316,11 @@ class DevPhoneServer extends TwilioClientCommand {
 
     async createConversation () {
         return await this.destroyConversations().then( async () => {
+            console.log(`Creating a new conversation...`);
             return await this.twilioClient.conversations.conversations
-                .create({friendlyName: 'dev-phone'});
+                .create({friendlyName: this.devPhoneName});
         }).then ( item => {
+            console.log(`✅ I'm using the conversation ${item.sid}\n`);
             return item;
         });
     }
@@ -325,7 +328,7 @@ class DevPhoneServer extends TwilioClientCommand {
     async destroyConversations() {
         return await this.twilioClient.conversations.conversations.list()
         .then( async items => {
-            return items.filter( item => item.friendlyName === 'dev-phone');
+            return items.filter( item => item.friendlyName.startsWith('dev-phone'));
         }).then( async items => {
             for (var item of items) {
                 await this.twilioClient.conversations.conversations(item.sid)
