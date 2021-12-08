@@ -12,26 +12,32 @@ function SendSmsForm({ devPhonePn, sendSms }) {
     }
 
     return (
-        <div className="smsForm">
-            <label htmlFor="sendSmsFromPn">From</label>
-            <input
-                id="sendSmsFromPn"
-                disabled={true}
-                value={formatPnForForm(devPhonePn)}
+
+        <div>
+            <h3>SMS sender</h3><span></span>
+
+            <div className="smsForm">
+                <label htmlFor="sendSmsFromPn">From</label>
+                <input
+                    id="sendSmsFromPn"
+                    disabled={true}
+                    value={formatPnForForm(devPhonePn.phoneNumber)}
+
                 />
 
-            <label htmlFor="sendSmsToPn">To</label>
-            <input
-                id="sendSmsToPn"
-                placeholder="E.164 format please"
-                defaultValue={toPn}
-                onChange={e => setToPn(e.target.value)} />
+                <label htmlFor="sendSmsToPn">To</label>
+                <input
+                    id="sendSmsToPn"
+                    placeholder="E.164 format please"
+                    defaultValue={toPn}
+                    onChange={e => setToPn(e.target.value)} />
 
-            <label htmlFor="sendSmsBody">Message</label>
-            <textarea id="sendSmsBody" onChange={e => setBody(e.target.value)} />
+                <label htmlFor="sendSmsBody">Message</label>
+                <textarea id="sendSmsBody" onChange={e => setBody(e.target.value)} />
 
-            <span></span>
-            <input type="button" value="send it!" onClick={sendIt} />
+                <span></span>
+                <input type="button" value="send it!" onClick={sendIt} />
+            </div>
         </div>
     );
 }
