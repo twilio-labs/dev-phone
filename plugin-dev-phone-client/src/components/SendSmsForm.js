@@ -21,7 +21,7 @@ function SendSmsForm({ devPhonePn, sendSms }) {
                 <input
                     id="sendSmsFromPn"
                     disabled={true}
-                    value={formatPnForForm(devPhonePn.phoneNumber)}
+                    value={formatPnForForm(devPhonePn)}
 
                 />
 
