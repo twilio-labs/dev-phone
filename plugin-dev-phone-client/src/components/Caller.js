@@ -9,7 +9,7 @@ const setupDevice = (token, setCallStatus) => {
         codecPreferences: ["opus", "pcmu"],
         fakeLocalDTMF: true,
         debug: true,
-        enableRingingState: true // MG: not 100% sure what this does
+        enableRingingState: true
     });
 
     device.on("ready", () => {
@@ -21,7 +21,6 @@ const setupDevice = (token, setCallStatus) => {
     });
 
     device.on("connect", (conn) => {
-        // todo: check that we're not already in a call.
         setCallStatus({inCall: true, message: `Connect: ` + JSON.stringify(conn.message)});
     });
 
