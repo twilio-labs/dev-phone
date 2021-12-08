@@ -1,0 +1,19 @@
+# Use Conversations instead of Sync
+
+This can be a useful framework for recording decisions made by a group.
+Based roughly on this [blog post](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions). Absolutely feel free to deviate from this format if it makes sense for you.
+
+Write as if you are having a conversation with a future developer who wonders why things are the way they are.
+
+## Context
+What is the issue we are seeing or design decision we are facing?
+How do we best capture messaging interactions in the dev softphone? We need to have a small "history" that tracks the SMS conversation for inbound and outbound messages, and we need to render said messages in the UI
+
+## Decision
+Use Conversations. Don't have to ask questions about data structure
+
+## Also considered
+Sync was considered - Conversations is just a layer on top of Sync, and may not scale as well to complex future use cases, like multiple Conversations on the soft phone
+
+## Consequences
+Positive, negative or neutral.

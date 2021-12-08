@@ -11,6 +11,9 @@ const { isSmsUrlSet, isVoiceUrlSet } = require('../phone-number-utils');
 
 const express = require('express');
 
+const AccessToken = require('twilio').jwt.AccessToken;
+const VoiceGrant = AccessToken.VoiceGrant;
+
 const PORT = process.env.PORT || 3001;
 
 const reformatTwilioPns = twilioResponse => {
@@ -26,8 +29,9 @@ class DevPhoneServer extends TwilioClientCommand {
         super(argv, config, secureStorage);
         this.cliSettings = {};
         this.pns = [];
-        this.apikey = {};
-        this.twimlApp = {};
+        this.apikey = null;
+        this.twimlApp = null;
+        this.jwt = null;
     }
 
     async run() {
@@ -116,10 +120,71 @@ class DevPhoneServer extends TwilioClientCommand {
                 });
         })
 
+        app.get("/client-token", async (req, res) => {
+
+            if (! this.jwt){
+                await this.createJwt();
+            }
+
+            res.json({ token: this.jwt});
+        })
+
         app.listen(PORT, () => {
             console.log(`Hello 👋 Your local webserver is listening on port ${PORT}`);
             console.log(`Use ctrl-c to stop it`);
         });
+    }
+
+    async createJwt() {
+
+        // We need an API KEY and SECRET to create the Access Token
+        // Depending on how the user has provided the CLI with creds
+        // we may have one already in this.currentProfile, or we may
+        // need to create a new one
+
+        let apiKey = "";
+        let apiSecret = "";
+
+        if (this.currentProfile.apiKey.startsWith("AC")){
+            // This case is if the user has started the CLI with
+            // $TWILIO_ACCOUNT_SID and $TWILIO_AUTH_TOKEN set in
+            // their environment, using their account creds.
+            console.log("Creating a new API Key")
+            const newKey = await this.twilioClient.newKeys.create({friendlyName: 'dev-phone'});
+
+            apiKey = newKey.sid;
+            apiSecret = newKey.secret;
+
+        } else {
+            // This case is if the user has _not_ used env vars for
+            // their creds. Here we can reuse the api key and secret
+            // that the CLI created when it was installed
+            console.log("Using profile API key");
+            apiKey = this.currentProfile.apiKey;
+            apiSecret = this.currentProfile.apiSecret;
+
+        }
+
+        // TODO: call applications.delete on this when the plugin exits?
+        const application = await this.twilioClient.applications.create({
+            voiceMethod: 'POST',
+            // TODO: This URL should be to a Function created in the user's account,
+            //       not hard-coded (this URL points to a Function in Luis's account).
+            //       We may also need to delete this function when the plugin exits.
+            voiceUrl: 'https://dev-phone-6880.twil.io/outbound-call',
+            friendlyName: 'dev-phone'
+        });
+
+        const accessToken = await new AccessToken(this.twilioClient.accountSid, apiKey, apiSecret);
+        accessToken.identity = 'dev-phone'
+
+        const grant = new VoiceGrant({
+            outgoingApplicationSid: application.sid,
+            incomingAllow: true,
+        });
+        accessToken.addGrant(grant);
+
+        this.jwt = accessToken.toJwt();
     }
 
 
