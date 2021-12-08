@@ -47,7 +47,6 @@ function Caller({ devPhonePn }) {
     }, []);
 
     const makeCall = () => {
-        console.log("yo");
         device.connect({
             "to": calleePn,
             "from": devPhonePn.phoneNumber,
