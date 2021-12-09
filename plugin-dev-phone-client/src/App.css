@@ -1,5 +1,4 @@
 .App {
-  text-align: center;
 }
 
 .App-header {
@@ -37,4 +36,6 @@
 
 .caller {
   margin-top: 1em;
+}
+.pnPicker .pnConfirm {
 }
