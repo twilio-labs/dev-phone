@@ -60,17 +60,16 @@ class DevPhoneServer extends TwilioClientCommand {
         // create JWT Access Token with ChatGrant, VoiceGrant and SyncGrant
         this.jwt = await this.createJwt();
 
-        process.on('SIGINT', async function () {
-            console.log("Caught interrupt signal");
+        const onShutdown = async () => {
+            await this.destroyConversations()
+            await this.destroyTwimlApps()
+            await this.destroyApiKeys()
+            await this.destroySyncs()
+        }
 
-            try {
-                await destroyConversations()
-                await destroyTwimlApps()
-                await destroyApiKeys()
-                await destroySyncs()
-            } catch (e) {
-                console.error(e.message);
-            }
+        process.on('SIGINT', async function () {
+            console.log("\n👋 Shutting down");
+            await onShutdown();
 
             process.exit();
         });
