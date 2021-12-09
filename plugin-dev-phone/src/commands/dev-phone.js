@@ -211,7 +211,7 @@ class DevPhoneServer extends TwilioClientCommand {
     async destroyApiKeys () {
         return await this.twilioClient.keys.list()
         .then( async items => {
-            return items.filter( item => item.friendlyName.startsWith('dev-phone'));
+            return items.filter( item => item.friendlyname && item.friendlyName.startsWith('dev-phone'));
         }).then( async items => {
             for (var item of items) {
                 await this.twilioClient.keys(item.sid)
@@ -240,7 +240,7 @@ class DevPhoneServer extends TwilioClientCommand {
         return await this.twilioClient.applications.list()
         .then( async items => {
             console.log('items ', items);
-            return items.filter( item => item.friendlyName.startsWith('dev-phone'));
+            return items.filter( item => item.friendlyname && item.friendlyName.startsWith('dev-phone'));
         }).then( async items => {
             console.log('filtered items ', items);
             for (var item of items) {
@@ -304,7 +304,7 @@ class DevPhoneServer extends TwilioClientCommand {
     async destroySyncs () {
         return await this.twilioClient.sync.services.list()
         .then( async items => {
-            return items.filter( item => item.friendlyName.startsWith('dev-phone'));
+            return items.filter( item => item.friendlyname && item.friendlyName.startsWith('dev-phone'));
         }).then( async items => {
             for (var item of items) {
                 await this.twilioClient.sync.services(item.sid)
@@ -328,7 +328,7 @@ class DevPhoneServer extends TwilioClientCommand {
     async destroyConversations () {
         return await this.twilioClient.conversations.conversations.list()
         .then( async items => {
-            return items.filter( item => item.friendlyName.startsWith('dev-phone'));
+            return items.filter( item => item.friendlyname && item.friendlyName.startsWith('dev-phone'));
         }).then( async items => {
             for (var item of items) {
                 await this.twilioClient.conversations.conversations(item.sid)
