@@ -60,11 +60,12 @@ function Caller({ devPhonePn }) {
 
     return (
         <Stack orientation="vertical" spacing="space60">
-            <Heading as="h2">Who you gonna call? 👻</Heading>
+            <Heading as="h2" variant="heading20">Who you gonna call? 👻</Heading>
 
             <Stack orientation="vertical">
                 <Label htmlFor="calleePn" required>To</Label>
                 <Input
+                    type="text"
                     id="calleePn"
                     placeholder="E.164 format please"
                     defaultValue={calleePn}

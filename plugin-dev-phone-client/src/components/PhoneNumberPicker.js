@@ -7,7 +7,8 @@ import {
   Option,
   Select,
   Stack,
-  Alert
+  Alert,
+  Text,
 } from "@twilio-paste/core";
 
 const hasExistingSmsConfig = (pn) => {
@@ -70,7 +71,7 @@ function PhoneNumberPicker({ setDevPhonePn }) {
     return (
       <Stack orientation="vertical" spacing="space60">
 
-        <Heading as="h2">Choose a phone number for this dev-phone</Heading>
+        <Heading as="h2" variant="heading20">Choose a phone number for this dev-phone</Heading>
 
         <Stack orientation="vertical">
           <Label htmlFor="devPhonePn" required>
@@ -91,23 +92,23 @@ function PhoneNumberPicker({ setDevPhonePn }) {
         </Stack>
 
         {chosenPn ? (
-          <div className="pnConfirm">
+          <Stack orientation="vertical" spacing="space60">
             {hasExistingConfig(chosenPn) ? (
-              <div>
+              <Stack orientation="vertical" spacing="space30">
                 <Alert variant="warning">
                   This phone number has existing config which will be overwritten
                 </Alert>
                 {hasExistingSmsConfig(chosenPn) ? (
-                  <div>Configured SMS URL: {chosenPn.smsUrl}</div>
+                  <Text >Configured SMS URL: <em>{chosenPn.smsUrl}</em></Text>
                 ) : (
                   ""
                 )}
                 {hasExistingVoiceConfig(chosenPn) ? (
-                  <div>Configured Voice URL: {chosenPn.voiceUrl}</div>
+                  <Text>Configured Voice URL: <em>{chosenPn.voiceUrl}</em></Text>
                 ) : (
                   ""
                 )}
-              </div>
+              </Stack>
             ) : (
               ""
             )}
@@ -115,7 +116,7 @@ function PhoneNumberPicker({ setDevPhonePn }) {
             <Button variant="primary" onClick={(e) => setDevPhonePn(chosenPn)}>
               Use this phone number
             </Button>
-          </div>
+          </Stack>
         ) : (
           ""
         )}
