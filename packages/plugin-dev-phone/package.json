@@ -67,7 +67,7 @@
     "postpack": "rm -f oclif.manifest.json",
     "XX-posttest": "eslint --ignore-path .gitignore . && npm audit",
     "prepack": "oclif-dev manifest && oclif-dev readme",
-    "test": "nyc --check-coverage --lines 90 --reporter=html --reporter=text mocha --forbid-only \"test/**/*.test.js\"",
+    "test": "nyc --check-coverage --lines 20 --reporter=html --reporter=text mocha --forbid-only \"test/**/*.test.js\"",
     "version": "oclif-dev readme && git add README.md"
   },
   "directories": {
