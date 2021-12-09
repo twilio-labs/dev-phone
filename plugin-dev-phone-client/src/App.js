@@ -5,7 +5,15 @@ import PhoneNumberPicker from "./components/PhoneNumberPicker";
 import SendSmsForm from "./components/SendSmsForm";
 import Caller from "./components/Caller";
 
-import { Column, Grid, Stack, Heading, Text } from "@twilio-paste/core";
+import {
+  Box,
+  Column,
+  Flex,
+  Grid,
+  Stack,
+  Heading,
+  Text,
+} from "@twilio-paste/core";
 
 const formatPnForForm = (pn) => `${pn.phoneNumber} [${pn.friendlyName}]`;
 
@@ -49,27 +57,45 @@ function App() {
   }, []);
 
   return (
-    <div className="App">
-      <header>
-        <Heading as="h1">Twilio dev-phone</Heading>
-        <Text>
-          This is {pluginSettings ? pluginSettings.devPhoneName : "loading"}
-        </Text>
-        {devPhonePn ? <Text>We are {formatPnForForm(devPhonePn)}</Text> : ""}
-      </header>
-      <Grid padding="space30">
-        <Column span={8} offset={2}>
-          {devPhonePn ? (
-            <Stack orientation="vertical" spacing="space60">
-              <SendSmsForm devPhonePn={devPhonePn} sendSms={sendSms} />
-              <Caller devPhonePn={devPhonePn} />
-            </Stack>
-          ) : (
-            <PhoneNumberPicker setDevPhonePn={setDevPhonePn} />
-          )}
-        </Column>
-      </Grid>
-    </div>
+    <Grid padding="space30">
+      <Column span={12}>
+        <Flex vAlignContent={true}>
+          <Flex>
+            <Box padding="space40" backgroundColor="colorBackgroundDarker">
+              <Text>Twilio dev-phone</Text>
+            </Box>
+          </Flex>
+          <Flex grow>
+            <Box
+              backgroundColor="colorBackgroundDarker"
+              padding="space40"
+              width="100%"
+            >
+              <Text>
+                This is{" "}
+                {pluginSettings ? pluginSettings.devPhoneName : "loading"}
+              </Text>
+              {devPhonePn ? (
+                <Text>We are {formatPnForForm(devPhonePn)}</Text>
+              ) : (
+                ""
+              )}
+            </Box>
+          </Flex>
+        </Flex>
+        <header></header>
+      </Column>
+      <Column span={8} offset={2}>
+        {devPhonePn ? (
+          <Stack orientation="vertical" spacing="space60">
+            <SendSmsForm devPhonePn={devPhonePn} sendSms={sendSms} />
+            <Caller devPhonePn={devPhonePn} />
+          </Stack>
+        ) : (
+          <PhoneNumberPicker setDevPhonePn={setDevPhonePn} />
+        )}
+      </Column>
+    </Grid>
   );
 }
 
