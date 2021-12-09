@@ -68,7 +68,7 @@ class DevPhoneServer extends TwilioClientCommand {
         }
 
         process.on('SIGINT', async function () {
-            console.log("Shutting down");
+            console.log("\n👋 Shutting down");
             await onShutdown();
 
             process.exit();
