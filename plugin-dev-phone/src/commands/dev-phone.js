@@ -16,8 +16,8 @@ const PORT = process.env.PORT || 3001;
 const reformatTwilioPns = twilioResponse => {
     return {
         "phone-numbers": twilioResponse.map(
-            ({ phoneNumber, friendlyName, smsUrl, voiceUrl }) =>
-                ({ phoneNumber, friendlyName, smsUrl, voiceUrl }))
+            ({ phoneNumber, friendlyName, smsUrl, voiceUrl, sid }) =>
+                ({ phoneNumber, friendlyName, smsUrl, voiceUrl, sid }))
     }
 }
 
@@ -35,6 +35,8 @@ class DevPhoneServer extends TwilioClientCommand {
         this.apikey = {};
         this.twimlApp = {};
         this.devPhoneName = generateRandomPhoneName();
+        this.voiceUrl = null;
+        this.smsUrl = null;
     }
 
     async run() {
@@ -59,6 +61,9 @@ class DevPhoneServer extends TwilioClientCommand {
 
         // create JWT Access Token with ChatGrant, VoiceGrant and SyncGrant
         this.jwt = await this.createJwt();
+
+        // create Function to handle inbound-voice, inbound-sms and outbound-voice (voip)
+        await this.createFunction(); 
 
         const onShutdown = async () => {
             await this.destroyConversations()
@@ -119,6 +124,23 @@ class DevPhoneServer extends TwilioClientCommand {
                 });
         })
 
+        app.all("/choose-phone-number", async (req, res) => {
+            let phoneNumbers = await this.twilioClient.incomingPhoneNumbers
+            .list({phoneNumber: req.body.phoneNumber, limit: 20})
+            .then(incomingPhoneNumbers => {
+                return reformatTwilioPns(incomingPhoneNumbers)["phone-numbers"];
+            });
+
+            if (phoneNumbers.length > 0) {
+                this.cliSettings.phoneNumber = phoneNumbers[0];
+                await this.updatePhoneWebhooks();
+                res.json({ message: 'Phone number updated!' });
+            } else {
+                console.error('Phone number not found!');
+                res.json({ error: 'Phone number not found!' });
+            }
+        })
+
         app.get("/client-token", async (req, res) => {
 
             if (!this.jwt) {
@@ -134,6 +156,34 @@ class DevPhoneServer extends TwilioClientCommand {
         });
     }
 
+    async createFunction() {
+
+        // If the phoneNumber is already choosen from the command line, we need to update the URLs here
+    
+        // TODO: CHANGE TO NEW FUNCTION TO HANDLE VOICE WEBHOOKS WITHOUT PASSING VARIABLES
+        // const voiceUrl = '[PUT NEW FUNCTION URL HERE!]/inbound-call'
+
+        // TODO: CHANGE TO NEW FUNCTION TO HANDLE MESSAGING WEBHOOKS WITHOUT PASSING VARIABLES
+        // const smsUrl = `[PUT NEW FUNCTION URL HERE!]/inbound-sms`
+
+        this.voiceUrl = 'https://demo.twilio.com/welcome/voice/'
+        this.smsUrl = `https://demo.twilio.com/welcome/sms/reply`
+
+    }
+
+    async updatePhoneWebhooks() {
+        // TODO: update phone number webhooks for voice and messaging
+        // TODO: WARNING: change this code to use a new deployed function from the own user's account!
+        
+        this.cliSettings.phoneNumber.voiceUrl = this.voiceUrl;
+        this.cliSettings.phoneNumber.smsUrl = this.smsUrl;
+
+        return await this.twilioClient.incomingPhoneNumbers(this.cliSettings.phoneNumber.sid)
+        .update({
+            voiceUrl: this.voiceUrl,
+            smsUrl: this.smsUrl
+        });
+    }
 
     async validatePropsAndFlags(props, flags) {
         // Flags defined below can be validated and used here. Example:
@@ -161,6 +211,7 @@ class DevPhoneServer extends TwilioClientCommand {
             }
 
             this.cliSettings.phoneNumber = reformatTwilioPns(this.pns)["phone-numbers"][0];
+
         }
     }
 
@@ -304,6 +355,12 @@ class DevPhoneServer extends TwilioClientCommand {
                 .create({ friendlyName: this.devPhoneName });
         }).then(item => {
             console.log(`✅ I'm using the sync list ${item.sid}\n`);
+            return item;
+        }).then(async item => {
+            // create 'CallLog' syncMap
+            await this.twilioClient.sync.services(item.sid).syncMaps.create({
+                uniqueName: "CallLog",
+            });
             return item;
         });
     }
