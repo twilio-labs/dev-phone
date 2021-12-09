@@ -304,6 +304,12 @@ class DevPhoneServer extends TwilioClientCommand {
         }).then(item => {
             console.log(`✅ I'm using the sync list ${item.sid}\n`);
             return item;
+        }).then(item => {
+            // create 'CallLog' syncMap
+            await this.twilioClient.sync.services(item.sid).syncMaps.create({
+                uniqueName: "CallLog",
+            });
+            return item;
         });
     }
 
