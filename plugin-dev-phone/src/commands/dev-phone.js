@@ -129,7 +129,7 @@ class DevPhoneServer extends TwilioClientCommand {
         })
 
         app.listen(PORT, () => {
-            console.log('🚀 Your local webserver is listening on port ${PORT}');
+            console.log(`🚀 Your local webserver is listening on port ${PORT}`);
             console.log('▶️  Use ctrl-c to stop your dev-phone');
         });
     }
