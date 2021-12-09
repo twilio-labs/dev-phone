@@ -7,15 +7,9 @@ import PhoneNumberPicker from './components/PhoneNumberPicker'
 import SendSmsForm from './components/SendSmsForm';
 import Caller from './components/Caller';
 
-import {
-  Button,
-  Column,
-  Grid,
-  Input,
-  Label,
-  Stack,
-  TextArea,
-} from "@twilio-paste/core";
+import { Column, Grid, Stack, Heading, Text } from "@twilio-paste/core";
+
+const formatPnForForm = (pn) => `${pn.phoneNumber} [${pn.friendlyName}]`;
 
 const sendSms = (from, to, body) => {
   console.log("Get it sent!");
@@ -41,6 +35,7 @@ const setupKonamiCode = () => {
 
 function App() {
   const [devPhonePn, setDevPhonePn] = useState(null);
+  const [pluginSettings, setPluginSettings] = useState(null);
 
   useEffect(() => {
     setupKonamiCode();
@@ -48,6 +43,7 @@ function App() {
     fetch("/plugin-settings")
       .then((res) => res.json())
       .then((settings) => {
+        setPluginSettings(settings);
         if (settings.phoneNumber) {
           setDevPhonePn(settings.phoneNumber);
         }
@@ -56,15 +52,26 @@ function App() {
 
   return (
     <div className="App">
-      <header className="App-header">
-        <p>HELLO :owlwave:</p>
+      <header>
+        <Heading as="h1">Twilio dev-phone</Heading>
+        <Text>This is {pluginSettings ? pluginSettings.devPhoneName : "loading"}</Text>
+        {devPhonePn ?
+          <Text>We are {formatPnForForm(devPhonePn)}</Text>
+          : ""}
       </header>
       <Grid gutter="space30">
         <Column span={4} offset={4}>
           {devPhonePn ? (
-            <SendSmsForm devPhonePn={devPhonePn} sendSms={sendSms} />
+
+            <Stack orientation="vertical" spacing="space60">
+              <SendSmsForm devPhonePn={devPhonePn} sendSms={sendSms} />
+              <Caller devPhonePn={devPhonePn} />
+            </Stack>
+
           ) : (
+
             <PhoneNumberPicker setDevPhonePn={setDevPhonePn} />
+
           )}
         </Column>
       </Grid>
