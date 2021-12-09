@@ -62,7 +62,7 @@ function App() {
         <Flex vAlignContent={true}>
           <Flex>
             <Box padding="space40" backgroundColor="colorBackgroundDarker">
-              <Text>Twilio dev-phone</Text>
+              <Heading as="h1">Twilio dev-phone</Heading>
             </Box>
           </Flex>
           <Flex grow>
