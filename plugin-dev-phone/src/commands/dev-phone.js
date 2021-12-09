@@ -119,6 +119,11 @@ class DevPhoneServer extends TwilioClientCommand {
                 });
         })
 
+        app.post("/choose-phone-number", async (req, res) => {
+            this.phoneNumber = req.body.phoneNumber;
+            await this.updatePhoneWebhooks();
+        })
+
         app.get("/client-token", async (req, res) => {
 
             if (!this.jwt) {
@@ -134,6 +139,11 @@ class DevPhoneServer extends TwilioClientCommand {
         });
     }
 
+    async updatePhoneWebhooks() {
+        // TODO: update phone number webhooks for voice and messaging
+        // TODO: WARNING: change this code to use a project function
+
+    }
 
     async validatePropsAndFlags(props, flags) {
         // Flags defined below can be validated and used here. Example:
@@ -161,6 +171,8 @@ class DevPhoneServer extends TwilioClientCommand {
             }
 
             this.cliSettings.phoneNumber = reformatTwilioPns(this.pns)["phone-numbers"][0];
+            await this.updatePhoneWebhooks();
+
         }
     }
 
@@ -304,7 +316,7 @@ class DevPhoneServer extends TwilioClientCommand {
         }).then(item => {
             console.log(`✅ I'm using the sync list ${item.sid}\n`);
             return item;
-        }).then(item => {
+        }).then(async item => {
             // create 'CallLog' syncMap
             await this.twilioClient.sync.services(item.sid).syncMaps.create({
                 uniqueName: "CallLog",
