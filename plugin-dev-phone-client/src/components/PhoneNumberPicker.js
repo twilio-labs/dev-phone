@@ -7,6 +7,7 @@ import {
   Option,
   Select,
   Stack,
+  Alert
 } from "@twilio-paste/core";
 
 const hasExistingSmsConfig = (pn) => {
@@ -68,30 +69,34 @@ function PhoneNumberPicker({ setDevPhonePn }) {
   } else {
     return (
       <Stack orientation="vertical" spacing="space60">
-        <Label htmlFor="devPhonePn">
-          Choose a phone number for this dev-phone
-        </Label>
-        <Select
-          id="devPhonePn"
-          onChange={(e) =>
-            setChosenPn(getPnDetailsByNumber(e.target.value, twilioPns))
-          }
-        >
-          {twilioPns.map((pn) => (
-            <Option key={pn.phoneNumber} value={pn.phoneNumber}>
-              {getSelectLabelForPn(pn)}
-            </Option>
-          ))}
-        </Select>
+
+        <Heading as="h2">Choose a phone number for this dev-phone</Heading>
+
+        <Stack orientation="vertical">
+          <Label htmlFor="devPhonePn" required>
+            Phone number
+          </Label>
+          <Select
+            id="devPhonePn"
+            onChange={(e) =>
+              setChosenPn(getPnDetailsByNumber(e.target.value, twilioPns))
+            }
+          >
+            {twilioPns.map((pn) => (
+              <Option key={pn.phoneNumber} value={pn.phoneNumber}>
+                {getSelectLabelForPn(pn)}
+              </Option>
+            ))}
+          </Select>
+        </Stack>
 
         {chosenPn ? (
           <div className="pnConfirm">
             {hasExistingConfig(chosenPn) ? (
               <div>
-                <Heading as="h4">
-                  ⚠️ This phone number has existing config which will be
-                  overwritten ⚠️
-                </Heading>
+                <Alert variant="warning">
+                  This phone number has existing config which will be overwritten
+                </Alert>
                 {hasExistingSmsConfig(chosenPn) ? (
                   <div>Configured SMS URL: {chosenPn.smsUrl}</div>
                 ) : (
