@@ -1,5 +1,3 @@
-import "./App.css";
-
 import { useEffect, useState } from "react";
 import Konami from "konami";
 
@@ -60,7 +58,7 @@ function App() {
           : ""}
       </header>
       <Grid gutter="space30">
-        <Column span={4} offset={4}>
+        <Column span={8} offset={2}>
           {devPhonePn ? (
 
             <Stack orientation="vertical" spacing="space60">
