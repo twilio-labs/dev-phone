@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Device } from 'twilio-client';
+import { connect } from 'react-redux'
 
 
 const setupDevice = (token, setCallStatus) => {
@@ -31,27 +32,27 @@ const setupDevice = (token, setCallStatus) => {
     return device;
 }
 
-function Caller({ devPhonePn }) {
+function Caller({ devPhonePn, twilioAccessToken }) {
 
     const [callStatus, setCallStatus] = useState({inCall: false, message: "initializing"});
     const [device, setDevice] = useState(null);
     const [calleePn, setCalleePn] = useState("");
 
     useEffect(() => {
-        fetch("/client-token")
-            .then((res) => res.json())
-            .then((data) => {
-                const device = setupDevice(data.token, setCallStatus);
-                setDevice(device);
-            })
-    }, []);
+        const device = setupDevice(twilioAccessToken, setCallStatus);
+        setDevice(device);
+    }, [twilioAccessToken]);
 
     const makeCall = () => {
-        device.connect({
-            "to": calleePn,
-            "from": devPhonePn.phoneNumber,
-            "identity": "dev-phone"
-        });
+        try {
+            device.connect({
+                "to": calleePn,
+                "from": devPhonePn.phoneNumber,
+                "identity": "dev-phone"
+            });
+        } catch (error) {
+            console.error(error)
+        }
     }
 
     const hangUp = () => {
@@ -86,4 +87,8 @@ function Caller({ devPhonePn }) {
     );
 }
 
-export default Caller;
+const mapStateToProps = (state) => ({
+    twilioAccessToken: state.twilioAccessToken,
+  });
+
+export default connect(mapStateToProps)(Caller);

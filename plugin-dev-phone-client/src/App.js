@@ -3,6 +3,9 @@ import "./App.css";
 import { useEffect, useState } from "react";
 import Konami from "konami";
 
+import { fetchChannelData } from "./actions";
+import { connect } from "react-redux";
+
 import PhoneNumberPicker from './components/PhoneNumberPicker'
 import SendSmsForm from './components/SendSmsForm';
 import Caller from './components/Caller';
@@ -39,20 +42,15 @@ const setupKonamiCode = () => {
   ninetiesMode.pattern = "383840403739373949575749";
 };
 
-function App() {
+function App({ channelData, fetchChannelData }) {
   const [devPhonePn, setDevPhonePn] = useState(null);
 
   useEffect(() => {
     setupKonamiCode();
-
-    fetch("/plugin-settings")
-      .then((res) => res.json())
-      .then((settings) => {
-        if (settings.phoneNumber) {
-          setDevPhonePn(settings.phoneNumber);
-        }
-      });
-  }, []);
+    if(channelData) {
+      setDevPhonePn(channelData.phoneNumber)
+    }
+  }, [channelData]);
 
   return (
     <div className="App">
@@ -62,7 +60,10 @@ function App() {
       <Grid gutter="space30">
         <Column span={4} offset={4}>
           {devPhonePn ? (
-            <SendSmsForm devPhonePn={devPhonePn} sendSms={sendSms} />
+            <div>
+              <SendSmsForm devPhonePn={devPhonePn} sendSms={sendSms} />
+              <Caller devPhonePn={devPhonePn} />
+            </div>
           ) : (
             <PhoneNumberPicker setDevPhonePn={setDevPhonePn} />
           )}
@@ -72,4 +73,14 @@ function App() {
   );
 }
 
-export default App;
+const mapStateToProps = (state) => ({
+  channelData: state.channelData,
+});
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    fetchChannelData: () => dispatch(fetchChannelData)
+  }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(App);
