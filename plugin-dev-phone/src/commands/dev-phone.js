@@ -337,7 +337,7 @@ class DevPhoneServer extends TwilioClientCommand {
     async destroyConversations() {
         return await this.twilioClient.conversations.conversations.list()
             .then(async items => {
-                return items.filter(item => item.friendlyName != null && item.friendlyName.startsWith('dev-phone'));
+                return items.filter(item => item.friendlyName !== null && item.friendlyName.startsWith('dev-phone'));
             }).then(async items => {
                 if (items.length > 0) {
                     console.log('🚮 Removing existing conversations');
