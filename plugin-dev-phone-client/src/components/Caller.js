@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Device } from 'twilio-client';
+import { Button, Input, Stack, Heading, Paragraph, Label } from "@twilio-paste/core";
 import { connect } from 'react-redux'
-
 
 const setupDevice = (token, setCallStatus) => {
 
@@ -14,19 +14,19 @@ const setupDevice = (token, setCallStatus) => {
     });
 
     device.on("ready", () => {
-        setCallStatus({inCall: false, message: "ready"});
+        setCallStatus({ inCall: false, message: "ready" });
     });
 
     device.on("error", (error) => {
-        setCallStatus({inCall: false, message: `Error : ${error.message}`});
+        setCallStatus({ inCall: false, message: `Error : ${error.message}` });
     });
 
     device.on("connect", (conn) => {
-        setCallStatus({inCall: true, message: `Connect: ` + JSON.stringify(conn.message)});
+        setCallStatus({ inCall: true, message: `Connect: ` + JSON.stringify(conn.message) });
     });
 
     device.on("disconnect", (conn) => {
-        setCallStatus({inCall: false, message: "ready (disconnected)"});
+        setCallStatus({ inCall: false, message: "ready (disconnected)" });
     });
 
     return device;
@@ -34,7 +34,7 @@ const setupDevice = (token, setCallStatus) => {
 
 function Caller({ devPhonePn, twilioAccessToken }) {
 
-    const [callStatus, setCallStatus] = useState({inCall: false, message: "initializing"});
+    const [callStatus, setCallStatus] = useState({ inCall: false, message: "initializing" });
     const [device, setDevice] = useState(null);
     const [calleePn, setCalleePn] = useState("");
 
@@ -60,30 +60,36 @@ function Caller({ devPhonePn, twilioAccessToken }) {
     }
 
     return (
-        <div className="caller">
-            <h3>Who you gonna call? 👻</h3>
-            <div>
-                <input
+        <Stack orientation="vertical" spacing="space60">
+            <Heading as="h2" variant="heading20">Who you gonna call? 👻</Heading>
+
+            <Stack orientation="vertical">
+                <Label htmlFor="calleePn" required>To</Label>
+                <Input
+                    type="text"
+                    id="calleePn"
                     placeholder="E.164 format please"
                     defaultValue={calleePn}
                     onChange={e => setCalleePn(e.target.value)} />
-            </div>
-            <div>
-                <button
+            </Stack>
+
+            <Stack orientation="horizontal" spacing="space30">
+                <Button
                     disabled={callStatus.inCall || !calleePn || calleePn.length < 6}
                     onClick={makeCall} >
                     Call
-                </button>
-                <button
+                </Button>
+                <Button
                     disabled={!callStatus.inCall}
                     onClick={hangUp} >
                     Hang up
-                </button>
-            </div>
-            <div>
+                </Button>
+            </Stack>
+
+            <Paragraph>
                 Call status: <em>{callStatus.message}</em>
-            </div>
-        </div>
+            </Paragraph>
+        </Stack>
     );
 }
 

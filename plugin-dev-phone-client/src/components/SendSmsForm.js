@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Client } from '@twilio/conversations'
-import { Button, Input, Label, Stack, TextArea } from "@twilio-paste/core";
+import { Button, Input, Label, Stack, TextArea, Heading } from "@twilio-paste/core";
 import { connect } from "react-redux";
 
 const formatPnForForm = (pn) => `${pn.phoneNumber} [${pn.friendlyName}]`;
@@ -39,25 +39,25 @@ function SendSmsForm({ devPhonePn, sendSms, twilioAccessToken, channelData }) {
 
   return (
     <Stack orientation="vertical" spacing="space60">
-      <Label htmlFor="sendSmsFromPn">From</Label>
-      <Input
-        id="sendSmsFromPn"
-        disabled={true}
-        value={formatPnForForm(devPhonePn)}
-      />
 
-      <Label htmlFor="sendSmsToPn">To</Label>
-      <Input
-        id="sendSmsToPn"
-        placeholder="E.164 format please"
-        defaultValue={toPn}
-        onChange={(e) => setToPn(e.target.value)}
-      />
+      <Heading as="h2" variant="heading20">SMS messaging</Heading>
 
-      <Label htmlFor="sendSmsBody">Message</Label>
-      <TextArea id="sendSmsBody" onChange={(e) => setBody(e.target.value)} />
+      <Stack orientation="vertical">
+        <Label htmlFor="sendSmsToPn" required>To</Label>
+        <Input
+          type="text"
+          id="sendSmsToPn"
+          placeholder="E.164 format please"
+          defaultValue={toPn}
+          onChange={(e) => setToPn(e.target.value)} />
+      </Stack>
 
-      <Button variant="primary" onClick={sendIt}>
+      <Stack orientation="vertical">
+        <Label htmlFor="sendSmsBody" required>Message</Label>
+        <TextArea id="sendSmsBody" onChange={(e) => setBody(e.target.value)} />
+      </Stack>
+
+      <Button variant="primary" disabled={!toPn || toPn.length < 6} onClick={sendIt}>
         Send it!
       </Button>
     </Stack>
