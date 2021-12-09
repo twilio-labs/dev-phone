@@ -286,7 +286,8 @@ class DevPhoneServer extends TwilioClientCommand {
             this.apikey.sid,
             this.apikey.secret,
             {
-                identity: this.devPhoneName
+                identity: this.devPhoneName,
+                ttl: 24*60*60
             }
         );
 
