@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import Konami from "konami";
 
-import PhoneNumberPicker from './components/PhoneNumberPicker'
-import SendSmsForm from './components/SendSmsForm';
-import Caller from './components/Caller';
+import PhoneNumberPicker from "./components/PhoneNumberPicker";
+import SendSmsForm from "./components/SendSmsForm";
+import Caller from "./components/Caller";
 
 import { Column, Grid, Stack, Heading, Text } from "@twilio-paste/core";
 
@@ -52,24 +52,20 @@ function App() {
     <div className="App">
       <header>
         <Heading as="h1">Twilio dev-phone</Heading>
-        <Text>This is {pluginSettings ? pluginSettings.devPhoneName : "loading"}</Text>
-        {devPhonePn ?
-          <Text>We are {formatPnForForm(devPhonePn)}</Text>
-          : ""}
+        <Text>
+          This is {pluginSettings ? pluginSettings.devPhoneName : "loading"}
+        </Text>
+        {devPhonePn ? <Text>We are {formatPnForForm(devPhonePn)}</Text> : ""}
       </header>
-      <Grid gutter="space30">
+      <Grid padding="space30">
         <Column span={8} offset={2}>
           {devPhonePn ? (
-
             <Stack orientation="vertical" spacing="space60">
               <SendSmsForm devPhonePn={devPhonePn} sendSms={sendSms} />
               <Caller devPhonePn={devPhonePn} />
             </Stack>
-
           ) : (
-
             <PhoneNumberPicker setDevPhonePn={setDevPhonePn} />
-
           )}
         </Column>
       </Grid>
