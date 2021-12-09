@@ -1,0 +1,25 @@
+name: Tests
+on:
+  push:
+    branches: [ '*' ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up NodeJS
+        uses: actions/setup-node@v2
+        with:
+          node-version: 12
+
+      - name: Run Tests
+        run: |
+          npm install
+          npm test
+        working-directory: plugin-dev-phone
