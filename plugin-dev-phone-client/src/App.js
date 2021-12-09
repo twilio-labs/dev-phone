@@ -59,15 +59,14 @@ function App() {
   return (
     <Grid padding="space30">
       <Column span={12}>
-        <Flex vAlignContent={true}>
+        <Flex>
           <Flex>
-            <Box padding="space40" backgroundColor="colorBackgroundDarker">
-              <Heading as="h1">Twilio dev-phone</Heading>
+            <Box padding="space40">
+              <Heading as="h1" variant="heading20">Twilio dev-phone</Heading>
             </Box>
           </Flex>
           <Flex grow>
             <Box
-              backgroundColor="colorBackgroundDarker"
               padding="space40"
               width="100%"
             >

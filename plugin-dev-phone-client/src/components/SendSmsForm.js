@@ -12,11 +12,12 @@ function SendSmsForm({ devPhonePn, sendSms }) {
   return (
     <Stack orientation="vertical" spacing="space60">
 
-      <Heading as="h2">SMS messaging</Heading>
+      <Heading as="h2" variant="heading20">SMS messaging</Heading>
 
       <Stack orientation="vertical">
         <Label htmlFor="sendSmsToPn" required>To</Label>
         <Input
+          type="text"
           id="sendSmsToPn"
           placeholder="E.164 format please"
           defaultValue={toPn}
