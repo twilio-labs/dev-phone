@@ -99,7 +99,7 @@ class DevPhoneServer extends TwilioClientCommand {
             res.json({
                 ...this.cliSettings,
                 devPhoneName: this.devPhoneName,
-                conversation: this.conversation                
+                conversation: this.conversation
             });
         })
 
@@ -141,7 +141,7 @@ class DevPhoneServer extends TwilioClientCommand {
                 });
 
             if (phoneNumbers.length > 0) {
-                await removePhoneWebhooks();
+                await this.removePhoneWebhooks();
                 this.cliSettings.phoneNumber = phoneNumbers[0];
                 await this.updatePhoneWebhooks();
                 res.json({ message: 'Phone number updated!' });
@@ -239,6 +239,7 @@ class DevPhoneServer extends TwilioClientCommand {
         // Flags defined below can be validated and used here. Example:
         // https://github.com/twilio/plugin-debugger/blob/main/src/commands/debugger/logs/list.js#L46-L56
 
+        this.cliSettings.forceMode = flags['force'];
         if (flags['phone-number']) {
             this.pns = await this.twilioClient.incomingPhoneNumbers
                 .list({ phoneNumber: flags['phone-number'] });
@@ -254,7 +255,7 @@ class DevPhoneServer extends TwilioClientCommand {
                 (isVoiceUrlSet(this.pns[0].voiceUrl) ? "Voice webhook URL" : null),
             ].filter(x => x);
 
-            if (pnConfigAlreadySet.length > 0) {
+            if (pnConfigAlreadySet.length > 0 && !this.cliSettings.forceMode) {
                 throw new TwilioCliError(
                     `Cannot use ${flags['phone-number']} because the following config for that phone number would be overwritten: ` + pnConfigAlreadySet.join(", ")
                 );
@@ -471,6 +472,12 @@ DevPhoneServer.description = `Dev Phone local express server`
 DevPhoneServer.PropertyFlags = {
     "phone-number": flags.string({
         description: 'Phone number from your account to associate this dev-phone with'
+    }),
+    force: flags.boolean({
+        char: 'f',
+        default: false,
+        description: 'Force the phone number configuration to be overwritten',
+        dependsOn: ['phone-number']
     })
 };
 
