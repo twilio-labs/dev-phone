@@ -5,10 +5,12 @@ import {
     REQUEST_CHANNEL_DATA_ERROR,
     ADD_MESSAGES,
     DEV_PHONE_CONFIG_ERROR,
-    CONFIGURE_NUMBER_IN_USE
+    CONFIGURE_NUMBER_IN_USE,
+    ADD_CALL_RECORD
 } from '../actions'
 
 const initialState = {
+    callLog: [],
     channelData: {},
     twilioAccessToken: '',
     voiceDevice: {},
@@ -23,6 +25,8 @@ export default function reducer(state = initialState, action) {
     switch(action.type){
         case ADD_MESSAGES:
             return {...state, messageList: [...state.messageList, ...action.payload]}
+        case ADD_CALL_RECORD:
+            return {...state, callLog: [...state.callLog, action.payload]}
         case CONFIGURE_NUMBER_IN_USE:
             return {...state, numberInUse: action.number}
         case DEV_PHONE_CONFIG_ERROR:
