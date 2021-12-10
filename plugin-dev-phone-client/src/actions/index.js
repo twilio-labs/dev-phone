@@ -12,8 +12,8 @@ export function addMessages(payload) {
 
 export function addCallRecord(payload) {
     return {
-        type: ADD_MESSAGES,
-        payload: payload
+        type: ADD_CALL_RECORD,
+        payload
     }
 }
 
