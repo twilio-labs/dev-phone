@@ -65,7 +65,7 @@ class DevPhoneServer extends TwilioClientCommand {
         this.jwt = await this.createJwt();
 
         // create Function to handle inbound-voice, inbound-sms and outbound-voice (voip)
-        this.serverless = this.createFunction();
+        this.serverless = await this.createFunction();
 
         const onShutdown = async () => {
             await this.destroyConversations()
@@ -160,6 +160,7 @@ class DevPhoneServer extends TwilioClientCommand {
     }
 
     async createFunction() {
+        console.log('💻 Deploying back end to a new serverless environment...');
         const deployedFunctions = await deployServerless(
             this.twilioClient.username,
             this.twilioClient.password,
@@ -206,7 +207,7 @@ class DevPhoneServer extends TwilioClientCommand {
             voiceUrl: this.voiceUrl,
             smsUrl: this.smsUrl,
             statusCallback: this.statusCallback,
-        });
+        }).catch(err => console.log(err));
     }
 
     async validatePropsAndFlags(props, flags) {
