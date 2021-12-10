@@ -39,6 +39,7 @@ class DevPhoneServer extends TwilioClientCommand {
         this.devPhoneName = generateRandomPhoneName();
         this.voiceUrl = null;
         this.smsUrl = null;
+        this.voiceOutboundUrl = null;
     }
 
     async run() {
@@ -52,9 +53,6 @@ class DevPhoneServer extends TwilioClientCommand {
         // create API KEY and API SECRET to be generate JWT AccessToken for ChatGrant, VoiceGrant and SyncGrant
         this.apikey = await this.reuseOrCreateApiKey();
 
-        // create TwiML App
-        this.twimlApp = await this.createTwimlApp();
-
         // create conversation for SMS/web interface
         this.conversation = await this.createConversation();
 
@@ -66,6 +64,9 @@ class DevPhoneServer extends TwilioClientCommand {
 
         // create Function to handle inbound-voice, inbound-sms and outbound-voice (voip)
         this.serverless = await this.createFunction();
+
+        // create TwiML App
+        this.twimlApp = await this.createTwimlApp();
 
         // add webhook config to the phone number, if there is one passed by CLI flag
         await this.updatePhoneWebhooks();
@@ -185,6 +186,7 @@ class DevPhoneServer extends TwilioClientCommand {
         console.log(`✅ I'm using the Serverless Service ${deployedFunctions.serviceSid}\n`);
 
         this.voiceUrl = `https://${deployedFunctions.domain}/${constants.INCOMING_CALL_HANDLER}`
+        this.voiceOutboundUrl = `https://${deployedFunctions.domain}/${constants.OUTBOUND_CALL_HANDLER}`
         this.smsUrl = `https://${deployedFunctions.domain}/${constants.INCOMING_MESSAGE_HANDLER}`
         this.statusCallback = `https://${deployedFunctions.domain}/${constants.SYNC_CALL_HISTORY}`
 
@@ -346,7 +348,7 @@ class DevPhoneServer extends TwilioClientCommand {
         return await this.destroyTwimlApps().then(async () => {
             return await this.twilioClient.applications
                 .create({
-                    voiceUrl: 'https://dev-phone-6880.twil.io/outbound-call',
+                    voiceUrl: this.voiceOutboundUrl,
                     friendlyName: this.devPhoneName
                 });
         }).then(item => {
