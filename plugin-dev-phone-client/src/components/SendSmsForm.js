@@ -2,15 +2,17 @@ import { useState, useEffect } from "react";
 import { Client } from '@twilio/conversations'
 import { Button, Input, Label, Stack, TextArea, Heading } from "@twilio-paste/core";
 import { connect } from "react-redux";
+import { addMessages } from '../actions'
 
 const formatPnForForm = (pn) => `${pn.phoneNumber} [${pn.friendlyName}]`;
 
 const setupConversationClient = (token, setCallStatus) => {
+  // const debugLogs = {logLevel: 'debug'}
   const conversationClient = new Client(token);
   return conversationClient;
 }
 
-function SendSmsForm({ devPhonePn, sendSms, twilioAccessToken, channelData }) {
+function SendSmsForm({ addMessages, devPhonePn, messageList, sendSms, twilioAccessToken, channelData }) {
   const [toPn, setToPn] = useState(null);
   const [body, setBody] = useState(null);
   const [conversationClient, setConversationClient] = useState(null)
@@ -18,17 +20,23 @@ function SendSmsForm({ devPhonePn, sendSms, twilioAccessToken, channelData }) {
 
   const sendIt = () => {
     sendSms(devPhonePn.phoneNumber, toPn, body);
+    if (activeConversation) {
+      activeConversation.sendMessage(body)
+    }
   };
 
-  // TODO: go from the conversation CLient to the Actual Conversation Object
   useEffect(() => {
+    // Gets conversations and adds a listener to dispatch messages to store
     async function getConversationBySid(conversationClient, sid) {
-      console.log(conversationClient, sid)
       try {
-        console.log(conversationClient, sid)
         const conversation = await conversationClient.getConversationBySid(sid)
-        console.log('conversation is', conversation)
         setActiveConversation(conversation)
+        const messages = await conversation.getMessages()
+        addMessages(messages.items)
+        conversation.on('messageAdded', (message) => {
+          console.log('Message added!')
+          addMessages(message)
+        })
       } catch (error) {
         console.error(error)
       }
@@ -57,10 +65,14 @@ function SendSmsForm({ devPhonePn, sendSms, twilioAccessToken, channelData }) {
           console.log('conversations denied')
         }
       })
+
+      client.on('connectionError', (data) => {
+        console.error(data)
+      })
     }
 
 
-}, [activeConversation, twilioAccessToken, channelData.conversation.sid, conversationClient]);
+}, [addMessages, activeConversation, twilioAccessToken, channelData.conversation.sid, conversationClient]);
 
   return (
     <Stack orientation="vertical" spacing="space60">
@@ -77,6 +89,16 @@ function SendSmsForm({ devPhonePn, sendSms, twilioAccessToken, channelData }) {
           onChange={(e) => setToPn(e.target.value)} />
       </Stack>
 
+      <div>
+        {/* TODO: Turn this into a Message List component*/}
+        {messageList.length > 0 ?
+          messageList.map((message, i) => {
+            return <p key={i}>{`${message.author}: ${message.body}`}</p>
+          })
+          : 'Go ahead and send your first message!'
+        }
+      </div>
+
       <Stack orientation="vertical">
         <Label htmlFor="sendSmsBody" required>Message</Label>
         <TextArea id="sendSmsBody" onChange={(e) => setBody(e.target.value)} />
@@ -91,7 +113,12 @@ function SendSmsForm({ devPhonePn, sendSms, twilioAccessToken, channelData }) {
 
 const mapStateToProps = (state) => ({
   twilioAccessToken: state.twilioAccessToken,
-  channelData: state.channelData
+  channelData: state.channelData,
+  messageList: state.messageList
 });
 
-export default connect(mapStateToProps)(SendSmsForm);
+const mapDispatchToProps = (dispatch) => ({
+  addMessages: (messages) => dispatch(addMessages(messages))
+})
+
+export default connect(mapStateToProps, mapDispatchToProps)(SendSmsForm);

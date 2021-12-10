@@ -320,7 +320,7 @@ class DevPhoneServer extends TwilioClientCommand {
     async createJwt() {
 
         const chatGrant = new ChatGrant({
-            serviceSid: this.cliSettings.conversation.sid
+            serviceSid: this.cliSettings.conversation.serviceSid
         });
 
         const voiceGrant = new VoiceGrant({
@@ -380,20 +380,25 @@ class DevPhoneServer extends TwilioClientCommand {
             });
     }
 
-
+    // Creates a new conversation service, a conversation, and makes the dev phone a participant
     async createConversation() {
-        return await this.destroyConversations().then(async () => {
-            console.log('💻 Creating a new conversation...');
-            return await this.twilioClient.conversations.conversations
-                .create({ friendlyName: this.devPhoneName });
-        }).then(item => {
-            console.log(`✅ I'm using the conversation ${item.sid}\n`);
-            return item;
-        });
+        await this.destroyConversations()
+        console.log('💻 Creating a new conversation...');
+        const service = await this.twilioClient.conversations.services
+                .create({ friendlyName: 'dev-phone' });
+        const conversationService = this.twilioClient.conversations.services(service.sid)
+        const newConversation = await conversationService.conversations.create({ friendlyName: this.devPhoneName })
+        await conversationService.conversations(newConversation.sid)
+            .participants.create({identity: this.devPhoneName})
+        console.log(`✅ I'm using the conversation ${newConversation.sid} from service ${service.sid}\n`);
+        return {
+            serviceSid: service.sid,
+            sid: newConversation.sid
+        }
     }
 
     async destroyConversations() {
-        return await this.twilioClient.conversations.conversations.list()
+        return await this.twilioClient.conversations.services.list()
             .then(async items => {
                 return items.filter(item => item.friendlyName !== null && item.friendlyName.startsWith('dev-phone'));
             }).then(async items => {
@@ -401,7 +406,7 @@ class DevPhoneServer extends TwilioClientCommand {
                     console.log('🚮 Removing existing conversations');
                 }
                 for (var item of items) {
-                    await this.twilioClient.conversations.conversations(item.sid)
+                    await this.twilioClient.conversations.services(item.sid)
                         .remove();
                 }
             });

@@ -1,3 +1,13 @@
+export const ADD_MESSAGES = "ADD_MESSAGES"
+
+export function addMessages(payload) {
+    const payloadArray = Array.isArray(payload) ? payload : [payload]
+    return {
+        type: ADD_MESSAGES,
+        payload: payloadArray.length > 0 && payloadArray[0].conversation ? payloadArray : []
+    }
+}
+
 export const REQUEST_CLIENT_TOKEN = "REQUEST_CLIENT_TOKEN"
 export const REQUEST_CLIENT_TOKEN_SUCCESS = "REQUEST_CLIENT_TOKEN_SUCCESS"
 export const REQUEST_CLIENT_TOKEN_ERROR = "REQUEST_CLIENT_TOKEN_ERROR"
