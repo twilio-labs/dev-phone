@@ -177,15 +177,15 @@ class DevPhoneServer extends TwilioClientCommand {
             {
                 SYNC_SERVICE_SID: this.sync.sid,
                 CONVERSATION_SID: this.conversation.sid,
+                CONVERSATION_SERVICE_SID: this.conversation.serviceSid,
                 DEV_PHONE_NAME: this.devPhoneName,
-                // DEV_PHONE_NUMBER: this.cliSettings.phoneNumber.phoneNumber,
                 CALL_LOG_MAP_NAME,
             });
 
         console.log(`✅ I'm using the Serverless Service ${deployedFunctions.serviceSid}\n`);
 
         this.voiceUrl = `https://${deployedFunctions.domain}/${constants.INCOMING_CALL_HANDLER}`
-        this.smsUrl = `https://${deployedFunctions.domain}/${constants.INCOMING_MESSAGE_HANDLER}?conversationSid=${this.conversation.sid}&serviceSid=${this.conversation.serviceSid}`
+        this.smsUrl = `https://${deployedFunctions.domain}/${constants.INCOMING_MESSAGE_HANDLER}`
         this.statusCallback = `https://${deployedFunctions.domain}/${constants.SYNC_CALL_HISTORY}`
 
         return deployedFunctions;
@@ -370,7 +370,6 @@ class DevPhoneServer extends TwilioClientCommand {
             });
     }
 
-
     async createJwt() {
 
         const chatGrant = new ChatGrant({
@@ -478,7 +477,6 @@ DevPhoneServer.PropertyFlags = {
     }),
     force: flags.boolean({
         char: 'f',
-        default: false,
         description: 'Force the phone number configuration to be overwritten',
         dependsOn: ['phone-number']
     })

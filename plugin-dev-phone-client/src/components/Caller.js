@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Device } from '@twilio/voice-sdk';
+import { Device } from 'twilio-client';
 import { Button, Input, Stack, Heading, Paragraph, Label } from "@twilio-paste/core";
 import { connect } from 'react-redux'
 
