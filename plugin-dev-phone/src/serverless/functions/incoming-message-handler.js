@@ -3,9 +3,10 @@
 exports.handler = async function(context, event, callback) {
     // receive an SMS and put into a conversation
 
-    // Webhook URL should be https://dev-phone-[RANDOM].twil.io/inbound-sms?conversation=[YOUR_CONVERSATION_SID]
     const client = context.getTwilioClient();
-    await client.conversations.conversations(context.CONVERSATION_SID) //conversation.sid)
+    await client.conversations
+        .services(context.CONVERSATION_SERVICE_SID)
+        .conversations(context.CONVERSATION_SID)
         .messages
         .create({
             author: event.From,
