@@ -174,8 +174,8 @@ class DevPhoneServer extends TwilioClientCommand {
             {
                 SYNC_SERVICE_SID: this.sync.sid,
                 CONVERSATION_SID: this.conversation.sid,
+                CONVERSATION_SERVICE_SID: this.conversation.serviceSid,
                 DEV_PHONE_NAME: this.devPhoneName,
-                // DEV_PHONE_NUMBER: this.cliSettings.phoneNumber.phoneNumber,
                 CALL_LOG_MAP_NAME,
             });
 
