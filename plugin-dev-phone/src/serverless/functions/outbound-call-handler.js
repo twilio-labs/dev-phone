@@ -11,7 +11,12 @@ exports.handler = function(context, event, callback) {
 
     const dial = twiml.dial({
         callerId: event.from,
+    });
+    dial.number({
+        statusCallback: `https://${context.DOMAIN_NAME}/sync-call-history`,
+        statusCallbackEvent: 'initiated ringing answered completed'
     }, event.to);
+    console.log(twiml.toString());
 
     return callback(null, twiml);
 };
