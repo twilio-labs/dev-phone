@@ -40,7 +40,7 @@ const sortUnconfiguredNumbersFirstThenAlphabetically = (pn1, pn2) => {
   return pn1.phoneNumber.localeCompare(pn2.phoneNumber);
 };
 
-function PhoneNumberPicker({ setDevPhonePn }) {
+function PhoneNumberPicker({ configureNumberInUse }) {
   const [twilioPns, setTwilioPns] = useState(null);
   const [chosenPn, setChosenPn] = useState(null);
 
@@ -113,7 +113,7 @@ function PhoneNumberPicker({ setDevPhonePn }) {
               ""
             )}
 
-            <Button variant="primary" onClick={(e) => setDevPhonePn(chosenPn)}>
+            <Button variant="primary" onClick={(e) => configureNumberInUse(chosenPn)}>
               Use this phone number
             </Button>
           </Stack>

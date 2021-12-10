@@ -12,17 +12,18 @@ const setupConversationClient = (token, setCallStatus) => {
   return conversationClient;
 }
 
-function SendSmsForm({ addMessages, devPhonePn, messageList, sendSms, twilioAccessToken, channelData }) {
+function SendSmsForm({ addMessages, numberInUse, messageList, sendSms, twilioAccessToken, channelData }) {
   const [toPn, setToPn] = useState(null);
-  const [body, setBody] = useState(null);
+  const [messageBody, setBody] = useState(null);
   const [conversationClient, setConversationClient] = useState(null)
   const [activeConversation, setActiveConversation] = useState(null)
 
-  const sendIt = () => {
-    sendSms(devPhonePn.phoneNumber, toPn, body);
+  const sendIt = async () => {
+    sendSms(numberInUse, toPn, messageBody);
     if (activeConversation) {
-      activeConversation.sendMessage(body)
+      await activeConversation.sendMessage(messageBody)
     }
+    setBody(null)
   };
 
   useEffect(() => {

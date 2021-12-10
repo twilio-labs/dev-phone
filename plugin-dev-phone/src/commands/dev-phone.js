@@ -110,7 +110,7 @@ class DevPhoneServer extends TwilioClientCommand {
                         this.pns = pns;
                         res.json(reformatTwilioPns(pns));
                     }).catch(err => {
-                        console.error('APIs throwed an error', err);
+                        console.error('Phone number API threw an error', err);
                         res.status(err.data ? err.data.status : 400).send({ error: err });
                     });
             } else {
@@ -127,27 +127,30 @@ class DevPhoneServer extends TwilioClientCommand {
                 })
                 .then(message => res.json({ result: message }))
                 .catch(err => {
-                    console.error('APIs throwed an error', err);
+                    console.error('SMS API threw an error', err);
                     res.status(err.data ? err.data.status : 400).send({ error: err });
                 });
         })
 
         app.all("/choose-phone-number", async (req, res) => {
-            console.log("Changing phone number")
-            let phoneNumbers = await this.twilioClient.incomingPhoneNumbers
+            const rawNumbers = await this.twilioClient.incomingPhoneNumbers
                 .list({ phoneNumber: req.body.phoneNumber, limit: 20 })
-                .then(incomingPhoneNumbers => {
-                    return reformatTwilioPns(incomingPhoneNumbers)["phone-numbers"];
-                });
+            const selectedNumber = reformatTwilioPns(rawNumbers)["phone-numbers"];
 
-            if (phoneNumbers.length > 0) {
+            // Should only have a single number
+            if (selectedNumber.length === 1) {
                 await this.removePhoneWebhooks();
-                this.cliSettings.phoneNumber = phoneNumbers[0];
+                this.cliSettings.phoneNumber = selectedNumber[0];
                 await this.updatePhoneWebhooks();
-                res.json({ message: 'Phone number updated!' });
+                res.json({
+                    phoneNumber: this.cliSettings.phoneNumber,
+                    message: 'Phone number updated!'
+                });
             } else {
                 console.error('Phone number not found!');
-                res.json({ error: 'Phone number not found!' });
+                res.status(400).send({
+                    message: 'Phone number not found!'
+                });
             }
         })
 

@@ -22,17 +22,22 @@ const setupDevice = (token, setCallStatus) => {
     });
 
     device.on("connect", (conn) => {
-        setCallStatus({ inCall: true, message: `Connect: ` + JSON.stringify(conn.message) });
+        console.log('connected', conn)
+        setCallStatus({ inCall: true, message: `${Object.keys(conn.message).length === 0 ? 'Speaking with ' + conn.parameters.From :  JSON.stringify(conn.message)}` });
     });
 
     device.on("disconnect", (conn) => {
         setCallStatus({ inCall: false, message: "ready (disconnected)" });
     });
+    
+    device.on("incoming", (connection) => {
+        setCallStatus({ connection, inCall: true, message: `Incoming call from ${connection.parameters.From}`})
+    })
 
     return device;
 }
 
-function Caller({ devPhonePn, twilioAccessToken }) {
+function Caller({ numberInUse, twilioAccessToken }) {
 
     const [callStatus, setCallStatus] = useState({ inCall: false, message: "initializing" });
     const [device, setDevice] = useState(null);
@@ -47,7 +52,7 @@ function Caller({ devPhonePn, twilioAccessToken }) {
         try {
             device.connect({
                 "to": calleePn,
-                "from": devPhonePn.phoneNumber,
+                "from": numberInUse,
                 "identity": "dev-phone"
             });
         } catch (error) {
@@ -74,11 +79,18 @@ function Caller({ devPhonePn, twilioAccessToken }) {
             </Stack>
 
             <Stack orientation="horizontal" spacing="space30">
-                <Button
-                    disabled={callStatus.inCall || !calleePn || calleePn.length < 6}
-                    onClick={makeCall} >
-                    Call
-                </Button>
+                {callStatus.connection ? 
+                    <Button
+                        disabled={!callStatus.connection}
+                        onClick={() => callStatus.connection.accept()} >
+                        Accept Call
+                    </Button>
+                    :<Button
+                        disabled={callStatus.inCall || !calleePn || calleePn.length < 6}
+                        onClick={makeCall} >
+                        Call
+                    </Button>
+                }
                 <Button
                     disabled={!callStatus.inCall}
                     onClick={hangUp} >
