@@ -174,9 +174,9 @@ class DevPhoneServer extends TwilioClientCommand {
 
         console.log(`✅ I'm using the Serverless Service ${deployedFunctions.serviceSid}\n`);
 
-        this.voiceUrl = `${deployedFunctions.domain}/${constants.INCOMING_CALL_HANDLER}`
-        this.smsUrl = `${deployedFunctions.domain}/${constants.INCOMING_MESSAGE_HANDLER}`
-        this.statusCallback = `${deployedFunctions.domain}/${constants.SYNC_CALL_HISTORY}`
+        this.voiceUrl = `https://${deployedFunctions.domain}/${constants.INCOMING_CALL_HANDLER}`
+        this.smsUrl = `https://${deployedFunctions.domain}/${constants.INCOMING_MESSAGE_HANDLER}`
+        this.statusCallback = `https://${deployedFunctions.domain}/${constants.SYNC_CALL_HISTORY}`
         await this.updatePhoneWebhooks();
 
         return deployedFunctions;
