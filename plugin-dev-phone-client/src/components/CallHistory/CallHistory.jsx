@@ -12,17 +12,27 @@ const setupSyncClient = (token) => {
   return syncClient
 }
 
-function CallHistory({ addCallRecord, twilioAccessToken }) {
-  const [callList, setCallList] = useState([]);
+function CallHistory({ callLog, addCallRecord, twilioAccessToken }) {
   const [syncClient, setSyncClient] = useState(null)
 
   useEffect(() => {
 
     async function configureCallLog(client) {
+        // TODO: Maybe don't hardcode the CallLog map name
         const callLog = await client.map('CallLog')
 
-        callLog.on('itemAdded', (syncMapItem) => {
-            addCallRecord(syncMapItem.data)
+        console.log('checking for existing logs')
+        const existingLogs = await callLog.getItems()
+        console.log(existingLogs)
+
+        existingLogs.items.forEach(call => {
+            addCallRecord(call.data)
+        })
+
+        callLog.on('itemAdded', async (syncMapItem) => {
+            const item = await syncMapItem.item
+            console.log('raw sync map item', syncMapItem, item)
+            addCallRecord(item.data)
         })
     }
 
@@ -38,9 +48,15 @@ function CallHistory({ addCallRecord, twilioAccessToken }) {
   return (
     <Stack orientation="vertical" spacing="space60">
       <Heading as="h2" variant="heading20">Call History</Heading>
-      {["Hello", "Hello2"].map(call => {
-          <Box></Box>
-      })}
+      {callLog.length > 0 ? 
+        callLog.map(call => {
+            return <Box key={call.Sid}>
+              <p>{call.From}</p>
+              <p>{call.To}</p>
+              <p>{call.Status}</p>
+              <p>{call.Sid}</p></Box>
+        }) : ''
+      }
     </Stack>
   );
 }
