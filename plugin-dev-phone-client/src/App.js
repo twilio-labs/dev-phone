@@ -121,22 +121,17 @@ function App({
           </Box>
         </Box>
       </Column>
-      <Column span={4}>
-        {numberInUse ? (
-          <Caller numberInUse={numberInUse} />
-        ) : (
-          <PhoneNumberPicker configureNumberInUse={configureNumberInUse} />
-        )}
-      </Column>
-      <Column span={8}>
-        {numberInUse ? (
-          <SendSmsForm numberInUse={numberInUse} sendSms={sendSms} />
-        ) : (
-          <PhoneNumberPicker configureNumberInUse={configureNumberInUse} />
-        )}
-      </Column>
       {numberInUse ? (
-        <Stack orientation="vertical" spacing="space60"></Stack>
+        <Column span={12}>
+          <Grid>
+            <Column span={4}>
+              <Caller numberInUse={numberInUse} />
+            </Column>
+            <Column span={8}>
+              <SendSmsForm numberInUse={numberInUse} sendSms={sendSms} />
+            </Column>
+          </Grid>
+        </Column>
       ) : (
         <PhoneNumberPicker configureNumberInUse={configureNumberInUse} />
       )}
