@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Device } from 'twilio-client';
-import { Button, Input, Stack, Heading, Paragraph, Label } from "@twilio-paste/core";
+import { Button, Input, Stack, Heading, Paragraph, Label, Grid, Column } from "@twilio-paste/core";
 import { connect } from 'react-redux'
 
 const setupDevice = (token, setCallStatus) => {
@@ -23,15 +23,23 @@ const setupDevice = (token, setCallStatus) => {
 
     device.on("connect", (conn) => {
         console.log('connected', conn)
-        setCallStatus({ inCall: true, message: `${Object.keys(conn.message).length === 0 ? 'Speaking with ' + conn.parameters.From :  JSON.stringify(conn.message)}` });
+        setCallStatus({
+            inCall: true,
+            message: `${Object.keys(conn.message).length === 0 ? 'Speaking with ' + conn.parameters.From : JSON.stringify(conn.message)}`,
+            connection: conn
+        });
     });
 
     device.on("disconnect", (conn) => {
-        setCallStatus({ inCall: false, message: "ready (disconnected)" });
+        setCallStatus({ inCall: false, message: "ready (disconnected)", connection: null });
     });
-    
-    device.on("incoming", (connection) => {
-        setCallStatus({ connection, inCall: true, message: `Incoming call from ${connection.parameters.From}`})
+
+    device.on("incoming", (conn) => {
+        setCallStatus({
+            inCall: true,
+            message: `Incoming call from ${conn.parameters.From}`,
+            connection: conn
+        })
     })
 
     return device;
@@ -64,6 +72,13 @@ function Caller({ numberInUse, twilioAccessToken }) {
         device.disconnectAll();
     }
 
+    const sendDTMF = (num) => {
+        if (callStatus.connection) {
+            console.log("Sending DTMF " + num);
+            callStatus.connection.sendDigits(num);
+        }
+    }
+
     return (
         <Stack orientation="vertical" spacing="space60">
             <Heading as="h2" variant="heading20">Who you gonna call? 👻</Heading>
@@ -78,25 +93,61 @@ function Caller({ numberInUse, twilioAccessToken }) {
                     onChange={e => setCalleePn(e.target.value)} />
             </Stack>
 
-            <Stack orientation="horizontal" spacing="space30">
-                {callStatus.connection ? 
+            <Grid>
+                <Column span={4} offset={1}>
+                    {callStatus.connection ?
+                        <Button
+                            fullWidth={true}
+                            disabled={!callStatus.connection}
+                            onClick={() => callStatus.connection.accept()} >
+                            Accept Call
+                        </Button>
+                        : <Button
+                            fullWidth={true}
+                            disabled={callStatus.inCall || !calleePn || calleePn.length < 6}
+                            onClick={makeCall} >
+                            Call
+                        </Button>
+                    }
+                </Column>
+                <Column span={4} offset={1}>
                     <Button
-                        disabled={!callStatus.connection}
-                        onClick={() => callStatus.connection.accept()} >
-                        Accept Call
+                        fullWidth={true}
+                        disabled={!callStatus.inCall}
+                        onClick={hangUp} >
+                        Hang up
                     </Button>
-                    :<Button
-                        disabled={callStatus.inCall || !calleePn || calleePn.length < 6}
-                        onClick={makeCall} >
-                        Call
-                    </Button>
-                }
-                <Button
-                    disabled={!callStatus.inCall}
-                    onClick={hangUp} >
-                    Hang up
-                </Button>
-            </Stack>
+                </Column>
+
+            </Grid>
+
+            <Grid spacing="space30" gutter="space30">
+                <Column span={3} offset={1}>
+                    <Stack orientation="vertical" spacing="space30">
+                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('1')}>1</Button>
+                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('4')}>4</Button>
+                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('7')}>7</Button>
+                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('*')}>*</Button>
+                    </Stack>
+                </Column>
+                <Column span={3}>
+                    <Stack orientation="vertical" spacing="space30">
+                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('2')}>2</Button>
+                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('5')}>5</Button>
+                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('8')}>8</Button>
+                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('0')}>0</Button>
+                    </Stack>
+                </Column>
+                <Column span={3}>
+                    <Stack orientation="vertical" spacing="space30">
+                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('3')}>3</Button>
+                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('6')}>6</Button>
+                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('9')}>9</Button>
+                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('#')}>#</Button>
+                    </Stack>
+                </Column>
+
+            </Grid>
 
             <Paragraph>
                 Call status: <em>{callStatus.message}</em>
@@ -107,6 +158,6 @@ function Caller({ numberInUse, twilioAccessToken }) {
 
 const mapStateToProps = (state) => ({
     twilioAccessToken: state.twilioAccessToken,
-  });
+});
 
 export default connect(mapStateToProps)(Caller);
