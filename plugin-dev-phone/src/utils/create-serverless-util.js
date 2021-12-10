@@ -23,7 +23,7 @@ async function deployServerless(
         env,
         pkgJson: {
             "dependencies" : {
-                "twilio": "3.71.3"
+                "twilio": "^3.71.3"
             }
         },
         serviceName: env.DEV_PHONE_NAME,
