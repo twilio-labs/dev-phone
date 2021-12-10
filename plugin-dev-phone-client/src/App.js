@@ -41,7 +41,6 @@ const setupKonamiCode = () => {
 
 function App({ channelData }) {
   const [devPhonePn, setDevPhonePn] = useState(null);
-  const [pluginSettings, setPluginSettings] = useState(null);
 
   useEffect(() => {
     setupKonamiCode();
@@ -66,7 +65,7 @@ function App({ channelData }) {
             >
               <Text>
                 This is{" "}
-                {pluginSettings ? pluginSettings.devPhoneName : "loading"}
+                {channelData ? channelData.devPhoneName : "loading"}
               </Text>
               {devPhonePn ? (
                 <Text>We are {formatPnForForm(devPhonePn)}</Text>
