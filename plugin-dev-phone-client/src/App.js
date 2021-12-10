@@ -54,7 +54,7 @@ function App({
   }, [changeNumberInUse, channelData]);
 
   return (
-    <Grid padding="space30">
+    <Grid>
       <Column span={12}>
         <Box
           as="header"
@@ -100,9 +100,13 @@ function App({
             width="100%"
           >
             <Box marginTop="space10">
-              <Stack orientation="horizontal" spacing="space60" alignItems="right">
+              <Stack
+                orientation="horizontal"
+                spacing="space60"
+                alignItems="right"
+              >
                 <Text>
-                  Dev Phone Name: {" "}
+                  Dev Phone Name:{" "}
                   {channelData ? channelData.devPhoneName : "loading"}
                 </Text>
                 {numberInUse ? (
@@ -117,16 +121,17 @@ function App({
           </Box>
         </Box>
       </Column>
-      <Column span={8} offset={2}>
-        {numberInUse ? (
-          <Stack orientation="vertical" spacing="space60">
-            <SendSmsForm numberInUse={numberInUse} sendSms={sendSms} />
-            <Caller numberInUse={numberInUse} />
-          </Stack>
-        ) : (
-          <PhoneNumberPicker configureNumberInUse={configureNumberInUse} />
-        )}
+      <Column span={4}>
+        <Caller numberInUse={numberInUse} />
       </Column>
+      <Column span={8}>
+        <SendSmsForm numberInUse={numberInUse} sendSms={sendSms} />
+      </Column>
+      {numberInUse ? (
+        <Stack orientation="vertical" spacing="space60"></Stack>
+      ) : (
+        <PhoneNumberPicker configureNumberInUse={configureNumberInUse} />
+      )}
     </Grid>
   );
 }
