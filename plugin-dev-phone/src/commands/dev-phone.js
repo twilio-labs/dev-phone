@@ -59,14 +59,14 @@ class DevPhoneServer extends TwilioClientCommand {
         // create Sync for Call History interface
         this.sync = await this.createSync();
 
-        // create JWT Access Token with ChatGrant, VoiceGrant and SyncGrant
-        this.jwt = await this.createJwt();
-
         // create Function to handle inbound-voice, inbound-sms and outbound-voice (voip)
         this.serverless = await this.createFunction();
 
         // create TwiML App
         this.twimlApp = await this.createTwimlApp();
+
+        // create JWT Access Token with ChatGrant, VoiceGrant and SyncGrant
+        this.jwt = await this.createJwt();
 
         // add webhook config to the phone number, if there is one passed by CLI flag
         await this.updatePhoneWebhooks();
@@ -344,7 +344,6 @@ class DevPhoneServer extends TwilioClientCommand {
 
     async createTwimlApp() {
         console.log('💻 Creating a new TwiMl App to allow Voip calls from your browser...');
-        // create TwiML App and points to https://dev-phone-6880.twil.io/outbound-call
         return await this.destroyTwimlApps().then(async () => {
             return await this.twilioClient.applications
                 .create({
