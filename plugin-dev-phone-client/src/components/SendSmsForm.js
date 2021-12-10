@@ -6,10 +6,7 @@ import { connect } from "react-redux";
 const formatPnForForm = (pn) => `${pn.phoneNumber} [${pn.friendlyName}]`;
 
 const setupConversationClient = (token, setCallStatus) => {
-
-  // See: https://www.twilio.com/docs/voice/tutorials/browser-calls-node-express
   const conversationClient = new Client(token);
-
   return conversationClient;
 }
 
@@ -25,17 +22,45 @@ function SendSmsForm({ devPhonePn, sendSms, twilioAccessToken, channelData }) {
 
   // TODO: go from the conversation CLient to the Actual Conversation Object
   useEffect(() => {
-    // async function getConversationBySid(conversationClient, sid) {
-    //   if (conversationClient) {
-    //     const conversation = await conversationClient.getConversationBySid(channelData.conversation.sid)
-    //     setActiveConversation(conversation)
-    //   }
-    // }
+    async function getConversationBySid(conversationClient, sid) {
+      console.log(conversationClient, sid)
+      try {
+        console.log(conversationClient, sid)
+        const conversation = await conversationClient.getConversationBySid(sid)
+        console.log('conversation is', conversation)
+        setActiveConversation(conversation)
+      } catch (error) {
+        console.error(error)
+      }
+    }
 
-    const client = setupConversationClient(twilioAccessToken);
-    setConversationClient(client);
-    // getConversationBySid(conversationClient, channelData.conversation.sid)
-}, [twilioAccessToken, channelData.conversation.sid, conversationClient]);
+    if (!conversationClient) {
+      const client = setupConversationClient(twilioAccessToken);
+      setConversationClient(client);
+
+      client.on('connectionStateChanged', (connectionState) => {
+        if (connectionState === 'connecting') {
+          console.log('connecting conversations')
+        }
+
+        if (connectionState === "connected") {
+          console.log('conversations connected')
+          getConversationBySid(client, channelData.conversation.sid)
+        }
+        if (connectionState === "disconnecting") {
+          console.log('conversations disconnecting')
+        }
+        if (connectionState === "disconnected") {
+          console.log('conversations disconnected')
+        }
+        if (connectionState === "denied") {
+          console.log('conversations denied')
+        }
+      })
+    }
+
+
+}, [activeConversation, twilioAccessToken, channelData.conversation.sid, conversationClient]);
 
   return (
     <Stack orientation="vertical" spacing="space60">
