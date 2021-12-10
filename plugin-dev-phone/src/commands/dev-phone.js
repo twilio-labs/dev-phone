@@ -98,7 +98,8 @@ class DevPhoneServer extends TwilioClientCommand {
         app.get("/plugin-settings", (req, res) => {
             res.json({
                 ...this.cliSettings,
-                devPhoneName: this.devPhoneName
+                devPhoneName: this.devPhoneName,
+                conversation: this.conversation                
             });
         })
 
