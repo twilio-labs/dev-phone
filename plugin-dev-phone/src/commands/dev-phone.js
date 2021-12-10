@@ -1,6 +1,7 @@
 const { flags } = require('@oclif/command');
 const { TwilioClientCommand } = require('@twilio/cli-core').baseCommands;
 const { TwilioCliError } = require('@twilio/cli-core').services.error;
+const { deployServerless, constants } = require('../utils/create-serverless-util');
 
 const AccessToken = require('twilio').jwt.AccessToken;
 const ChatGrant = AccessToken.ChatGrant;
@@ -12,6 +13,7 @@ const { isSmsUrlSet, isVoiceUrlSet } = require('../phone-number-utils');
 const express = require('express');
 
 const PORT = process.env.PORT || 3001;
+const CALL_LOG_MAP_NAME = 'CallLog'
 
 const reformatTwilioPns = twilioResponse => {
     return {
@@ -47,29 +49,30 @@ class DevPhoneServer extends TwilioClientCommand {
 
         console.log(`Hello 👋 I'm your dev-phone and my name is ${this.devPhoneName}\n`);
 
-        // create conversation for SMS/web interface
-        this.cliSettings.conversation = await this.createConversation();
-
-        // create Sync for Call History interface
-        this.cliSettings.sync = await this.createSync();
-
         // create API KEY and API SECRET to be generate JWT AccessToken for ChatGrant, VoiceGrant and SyncGrant
         this.apikey = await this.reuseOrCreateApiKey();
 
         // create TwiML App
         this.twimlApp = await this.createTwimlApp();
 
+        // create conversation for SMS/web interface
+        this.conversation = await this.createConversation();
+
+        // create Sync for Call History interface
+        this.sync = await this.createSync();
+
         // create JWT Access Token with ChatGrant, VoiceGrant and SyncGrant
         this.jwt = await this.createJwt();
 
         // create Function to handle inbound-voice, inbound-sms and outbound-voice (voip)
-        await this.createFunction(); 
+        this.serverless = this.createFunction();
 
         const onShutdown = async () => {
             await this.destroyConversations()
             await this.destroyTwimlApps()
             await this.destroyApiKeys()
             await this.destroySyncs()
+            await this.destroyFunction()
         }
 
         process.on('SIGINT', async function () {
@@ -157,31 +160,52 @@ class DevPhoneServer extends TwilioClientCommand {
     }
 
     async createFunction() {
+        const deployedFunctions = await deployServerless(
+            this.twilioClient.username,
+            this.twilioClient.password,
+            {
+                SYNC_SERVICE_SID: this.sync.sid,
+                CONVERSATION_SID: this.conversation.sid,
+                DEV_PHONE_NAME: this.devPhoneName,
+                DEV_PHONE_NUMBER: this.cliSettings.phoneNumber.phoneNumber,
+                CALL_LOG_MAP_NAME,
+            });
 
-        // If the phoneNumber is already choosen from the command line, we need to update the URLs here
-    
-        // TODO: CHANGE TO NEW FUNCTION TO HANDLE VOICE WEBHOOKS WITHOUT PASSING VARIABLES
-        // const voiceUrl = '[PUT NEW FUNCTION URL HERE!]/inbound-call'
+        console.log(`✅ I'm using the Serverless Service ${deployedFunctions.serviceSid}\n`);
 
-        // TODO: CHANGE TO NEW FUNCTION TO HANDLE MESSAGING WEBHOOKS WITHOUT PASSING VARIABLES
-        // const smsUrl = `[PUT NEW FUNCTION URL HERE!]/inbound-sms`
+        this.voiceUrl = `${deployedFunctions.domain}/${constants.INCOMING_CALL_HANDLER}`
+        this.smsUrl = `${deployedFunctions.domain}/${constants.INCOMING_MESSAGE_HANDLER}`
+        this.statusCallback = `${deployedFunctions.domain}/${constants.SYNC_CALL_HISTORY}`
+        await this.updatePhoneWebhooks();
 
-        this.voiceUrl = 'https://demo.twilio.com/welcome/voice/'
-        this.smsUrl = `https://demo.twilio.com/welcome/sms/reply`
+        return deployedFunctions;
+    }
 
+    async destroyFunction() {
+        return await this.twilioClient.serverless.services.list()
+            .then(async items => {
+                return items.filter(item => item.friendlyName !== null && item.friendlyName === this.devPhoneName);
+            }).then(async items => {
+                if (items.length > 0) {
+                    console.log('🚮 Removing serverless functions');
+                }
+                for (var item of items) {
+                    await this.twilioClient.serverless.services(item.sid)
+                        .remove();
+                }
+            }).catch(err => console.log(err));
     }
 
     async updatePhoneWebhooks() {
-        // TODO: update phone number webhooks for voice and messaging
-        // TODO: WARNING: change this code to use a new deployed function from the own user's account!
-        
         this.cliSettings.phoneNumber.voiceUrl = this.voiceUrl;
         this.cliSettings.phoneNumber.smsUrl = this.smsUrl;
+        this.cliSettings.phoneNumber.statusCallback = this.statusCallback;
 
         return await this.twilioClient.incomingPhoneNumbers(this.cliSettings.phoneNumber.sid)
         .update({
             voiceUrl: this.voiceUrl,
-            smsUrl: this.smsUrl
+            smsUrl: this.smsUrl,
+            statusCallback: this.statusCallback,
         });
     }
 
@@ -320,7 +344,7 @@ class DevPhoneServer extends TwilioClientCommand {
     async createJwt() {
 
         const chatGrant = new ChatGrant({
-            serviceSid: this.cliSettings.conversation.sid
+            serviceSid: this.conversation.sid
         });
 
         const voiceGrant = new VoiceGrant({
@@ -329,7 +353,7 @@ class DevPhoneServer extends TwilioClientCommand {
         });
 
         const syncGrant = new SyncGrant({
-            serviceSid: this.cliSettings.sync.sid,
+            serviceSid: this.sync.sid,
         })
 
         const token = new AccessToken(
@@ -358,7 +382,7 @@ class DevPhoneServer extends TwilioClientCommand {
         }).then(async item => {
             // create 'CallLog' syncMap
             await this.twilioClient.sync.services(item.sid).syncMaps.create({
-                uniqueName: "CallLog",
+                uniqueName: CALL_LOG_MAP_NAME,
             });
             return item;
         });
