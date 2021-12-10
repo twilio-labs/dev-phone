@@ -367,7 +367,6 @@ class DevPhoneServer extends TwilioClientCommand {
             });
     }
 
-
     async createJwt() {
 
         const chatGrant = new ChatGrant({
@@ -475,7 +474,6 @@ DevPhoneServer.PropertyFlags = {
     }),
     force: flags.boolean({
         char: 'f',
-        default: false,
         description: 'Force the phone number configuration to be overwritten',
         dependsOn: ['phone-number']
     })
