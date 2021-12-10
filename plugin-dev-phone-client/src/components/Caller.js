@@ -32,7 +32,7 @@ const setupDevice = (token, setCallStatus) => {
     return device;
 }
 
-function Caller({ devPhonePn, twilioAccessToken }) {
+function Caller({ numberInUse, twilioAccessToken }) {
 
     const [callStatus, setCallStatus] = useState({ inCall: false, message: "initializing" });
     const [device, setDevice] = useState(null);
@@ -47,7 +47,7 @@ function Caller({ devPhonePn, twilioAccessToken }) {
         try {
             device.connect({
                 "to": calleePn,
-                "from": devPhonePn.phoneNumber,
+                "from": numberInUse,
                 "identity": "dev-phone"
             });
         } catch (error) {

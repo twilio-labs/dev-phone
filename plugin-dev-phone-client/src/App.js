@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Konami from "konami";
 import { connect } from "react-redux";
+import { changeNumberInUse, configureNumberInUse } from './actions'
 import PhoneNumberPicker from './components/PhoneNumberPicker'
 import SendSmsForm from './components/SendSmsForm';
 import Caller from './components/Caller';
@@ -15,7 +16,7 @@ import {
   Text,
 } from "@twilio-paste/core";
 
-const formatPnForForm = (pn) => `${pn.phoneNumber} [${pn.friendlyName}]`;
+const formatPnForForm = (number) => `${number} [${number}]`;
 
 const sendSms = (from, to, body) => {
   console.log("Get it sent!");
@@ -39,15 +40,13 @@ const setupKonamiCode = () => {
   ninetiesMode.pattern = "383840403739373949575749";
 };
 
-function App({ channelData }) {
-  const [devPhonePn, setDevPhonePn] = useState(null);
-
+function App({ channelData, changeNumberInUse, configureNumberInUse, numberInUse }) {
   useEffect(() => {
     setupKonamiCode();
-    if(channelData) {
-      setDevPhonePn(channelData.phoneNumber)
+    if(channelData.phoneNumber) {
+      changeNumberInUse(channelData.phoneNumber)
     }
-  }, [channelData]);
+  }, [changeNumberInUse, channelData]);
 
   return (
     <Grid padding="space30">
@@ -67,8 +66,8 @@ function App({ channelData }) {
                 This is{" "}
                 {channelData ? channelData.devPhoneName : "loading"}
               </Text>
-              {devPhonePn ? (
-                <Text>We are {formatPnForForm(devPhonePn)}</Text>
+              {numberInUse ? (
+                <Text>We are {formatPnForForm(numberInUse)}</Text>
               ) : (
                 ""
               )}
@@ -78,13 +77,13 @@ function App({ channelData }) {
         <header></header>
       </Column>
       <Column span={8} offset={2}>
-        {devPhonePn ? (
+        {numberInUse ? (
           <Stack orientation="vertical" spacing="space60">
-            <SendSmsForm devPhonePn={devPhonePn} sendSms={sendSms} />
-            <Caller devPhonePn={devPhonePn} />
+            <SendSmsForm numberInUse={numberInUse} sendSms={sendSms} />
+            <Caller numberInUse={numberInUse} />
           </Stack>
         ) : (
-          <PhoneNumberPicker setDevPhonePn={setDevPhonePn} />
+          <PhoneNumberPicker configureNumberInUse={configureNumberInUse} />
         )}
       </Column>
     </Grid>
@@ -93,6 +92,12 @@ function App({ channelData }) {
 
 const mapStateToProps = (state) => ({
   channelData: state.channelData,
+  numberInUse: state.numberInUse ? state.numberInUse.phoneNumber : ''
 });
 
-export default connect(mapStateToProps)(App);
+const mapDispatchToProps = (dispatch) => ({
+  changeNumberInUse: (number) => dispatch(changeNumberInUse(number)),
+  configureNumberInUse: (number) => dispatch(configureNumberInUse(number))
+})
+
+export default connect(mapStateToProps, mapDispatchToProps)(App);
