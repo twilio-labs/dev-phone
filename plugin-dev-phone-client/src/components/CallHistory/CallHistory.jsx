@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { SyncClient } from 'twilio-sync';
-import { Box, Stack, Heading } from "@twilio-paste/core";
+import { Box, Stack, Heading, Paragraph } from "@twilio-paste/core";
 import { connect } from "react-redux";
-import { addCallRecord } from '../../actions'
+import { addCallRecord, updateCallRecord } from '../../actions'
 
 const formatPnForForm = (pn) => `${pn.phoneNumber} [${pn.friendlyName}]`;
 
@@ -12,7 +12,7 @@ const setupSyncClient = (token) => {
   return syncClient
 }
 
-function CallHistory({ callLog, addCallRecord, twilioAccessToken }) {
+function CallHistory({ callLog, addCallRecord, twilioAccessToken, updateCallRecord }) {
   const [syncClient, setSyncClient] = useState(null)
 
   useEffect(() => {
@@ -21,18 +21,14 @@ function CallHistory({ callLog, addCallRecord, twilioAccessToken }) {
         // TODO: Maybe don't hardcode the CallLog map name
         const callLog = await client.map('CallLog')
 
-        console.log('checking for existing logs')
-        const existingLogs = await callLog.getItems()
-        console.log(existingLogs)
-
-        existingLogs.items.forEach(call => {
-            addCallRecord(call.data)
-        })
-
         callLog.on('itemAdded', async (syncMapItem) => {
             const item = await syncMapItem.item
-            console.log('raw sync map item', syncMapItem, item)
             addCallRecord(item.data)
+        })
+
+        callLog.on('itemUpdated', async (syncMapItem) => {
+            const item = await syncMapItem.item
+            updateCallRecord(item.data)
         })
     }
 
@@ -43,20 +39,25 @@ function CallHistory({ callLog, addCallRecord, twilioAccessToken }) {
     }
 
 
-}, [addCallRecord, setSyncClient, syncClient, twilioAccessToken]);
+}, [addCallRecord, setSyncClient, syncClient, twilioAccessToken, updateCallRecord]);
 
   return (
-    <Stack orientation="vertical" spacing="space60">
+    <Stack orientation="vertical" spacing="space30">
       <Heading as="h2" variant="heading20">Call History</Heading>
-      {callLog.length > 0 ? 
-        callLog.map(call => {
-            return <Box key={call.Sid}>
-              <p>{call.From}</p>
-              <p>{call.To}</p>
-              <p>{call.Status}</p>
-              <p>{call.Sid}</p></Box>
-        }) : ''
-      }
+        <Stack orientation="vertical" spacing="space30">
+          {callLog.length > 0 ?
+            callLog.map(call => {
+                return (
+                    <Box key={call.Sid} padding="space30">
+                        <Paragraph marginBottom={"space0"}><strong>From:</strong> {call.From} <strong>To:</strong> {call.To}</Paragraph>
+                        <Paragraph marginBottom={"space0"}><strong>Status:</strong> {call.Status} </Paragraph>
+                        <Paragraph marginBottom={"space0"}><strong>Call Sid:</strong> {call.Sid}</Paragraph>
+                        <Paragraph marginBottom={"space0"}><strong>Timestamp:</strong> {call.Timestamp}</Paragraph>
+                    </Box>
+                )
+            }) : ''
+          }
+        </Stack>
     </Stack>
   );
 }
@@ -67,7 +68,8 @@ const mapStateToProps = (state) => ({
 });
 
 const mapDispatchToProps = (dispatch) => ({
-  addCallRecord: (call) => dispatch(addCallRecord(call))
+  addCallRecord: (call) => dispatch(addCallRecord(call)),
+  updateCallRecord: (call) => dispatch(updateCallRecord(call)),
 })
 
 export default connect(mapStateToProps, mapDispatchToProps)(CallHistory);

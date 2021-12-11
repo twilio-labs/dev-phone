@@ -127,8 +127,8 @@ function App({
       {numberInUse ? (
           <Grid gutter="space30">
             <Column span={3} offset={1}>
-              <CallHistory></CallHistory>
               <Caller numberInUse={numberInUse} />
+              <CallHistory />
             </Column>
             <Column span={6} offset={1}>
               <SendSmsForm numberInUse={numberInUse} sendSms={sendSms} />
