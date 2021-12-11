@@ -56,7 +56,7 @@ function App({
   return (
     <Box>
       <Grid width="100%">
-        <Box 
+        <Box
           width="100%"
           backgroundColor="colorBackgroundBrandHighlight"
           color="colorTextInverse"
@@ -76,10 +76,10 @@ function App({
             <Flex grow hAlignContent="center" padding="space60">
               <Stack orientation={"horizontal"} >
                 <Heading as="h3" variant="heading30">
-                  <Badge variant="default">Dev Phone Name:</Badge>&nbsp;
-                    {channelData ? channelData.devPhoneName : "loading"}
+                  <Badge as="span" variant="default">Dev Phone Name:</Badge>&nbsp;
+                  {channelData ? channelData.devPhoneName : "loading"}
                 </Heading>
-    
+
                 {numberInUse ? (
                   <Separator orientation="vertical" horizontalSpacing="space40" />
                 ) : (
@@ -88,7 +88,7 @@ function App({
 
                 {numberInUse ? (
                   <Heading as="h3" variant="heading30">
-                    <Badge variant="default">
+                    <Badge as="span" variant="default">
                       <ProductVoiceIcon decorative size="sizeIcon10" />
                       Selected Number:</Badge>&nbsp;
                     {numberInUse}
@@ -99,7 +99,7 @@ function App({
               </Stack>
             </Flex>
           </Flex>
-            
+
         </Box>
       </Grid>
 
