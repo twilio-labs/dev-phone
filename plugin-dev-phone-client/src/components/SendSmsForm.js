@@ -84,7 +84,7 @@ function SendSmsForm({ addMessages, numberInUse, messageList, sendSms, twilioAcc
 
         <Heading as="h2" variant="heading20">SMS messaging</Heading>
 
-        <Box width="size50">
+        <Box>
           <Card>
             <Stack orientation="vertical" spacing="space60">
               <Stack>
@@ -111,13 +111,13 @@ function SendSmsForm({ addMessages, numberInUse, messageList, sendSms, twilioAcc
         <Card>
           <Heading as="h2" variant="heading20">SMS Log</Heading>
 
-          <Box>
+          <Box maxHeight={'20rem'} overflow={'scroll'}>
             {/* TODO: Turn this into a Message List component */}
             {messageList.length > 0 ?
               messageList.map((message, i) => {
                 return (
-                  <Grid padding="space30">
-                    <Column span={8} offset={message.author == channelData.devPhoneName ? 4 : 0}>
+                  <Grid key={message.sid} padding="space30">
+                    <Column span={8} offset={message.author === channelData.devPhoneName ? 4 : 0}>
                       <Box padding="space30">
                         <Card>
                           {message.author}: {message.body}

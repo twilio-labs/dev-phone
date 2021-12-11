@@ -5,8 +5,9 @@ import { changeNumberInUse, configureNumberInUse } from "./actions";
 import PhoneNumberPicker from "./components/PhoneNumberPicker";
 import SendSmsForm from "./components/SendSmsForm";
 import Caller from "./components/Caller";
+import CallHistory from "./components/CallHistory/CallHistory.jsx"
 
-import { Box, Flex, Stack, Badge, Heading, Separator } from "@twilio-paste/core";
+import { Box, Column, Grid, Flex, Stack, Badge, Heading, Separator } from "@twilio-paste/core";
 
 import {
   MediaObject,
@@ -56,8 +57,8 @@ function App({
   }, [changeNumberInUse, channelData]);
 
   return (
-    <Flex vertical width="100%">
-      <Flex width="100%">
+    <Box>
+      <Grid width="100%">
         <Box 
           width="100%"
           backgroundColor="colorBackgroundBrandHighlight"
@@ -92,8 +93,8 @@ function App({
                   <Heading as="h3" variant="heading30">
                     <Badge variant="default">
                       <ProductVoiceIcon decorative size="sizeIcon10" />
-                      Calling/Messaging From:</Badge>&nbsp;
-                    {formatPnForForm(numberInUse)}
+                      Selected Number:</Badge>&nbsp;
+                    {numberInUse}
                   </Heading>
                 ) : (
                   ""
@@ -103,23 +104,26 @@ function App({
           </Flex>
             
         </Box>
-      </Flex>
+      </Grid>
 
       {numberInUse ? (
-        <Flex width="100%" height="100%">
-          <Flex grow width="size50">
-            <Caller numberInUse={numberInUse} />
-          </Flex>
-          <Flex grow>
-            <SendSmsForm numberInUse={numberInUse} sendSms={sendSms} />
-          </Flex>
-        </Flex>
+          <Grid gutter="space30">
+            <Column span={3} offset={1}>
+              <Caller numberInUse={numberInUse} />
+              <CallHistory />
+            </Column>
+            <Column span={6} offset={1}>
+              <SendSmsForm numberInUse={numberInUse} sendSms={sendSms} />
+            </Column>
+          </Grid>
       ) : (
-        <Flex width="100%" padding="space100" hAlignContent="center">
-          <PhoneNumberPicker configureNumberInUse={configureNumberInUse} />
-        </Flex>
+       <Grid gutter="space30">
+          <Column span={6} offset={3}>
+            <PhoneNumberPicker configureNumberInUse={configureNumberInUse} />
+          </Column>
+       </Grid>
       )}
-    </Flex>
+    </Box>
 
   );
 }

@@ -4,7 +4,6 @@ import { Button, Input, Stack, Heading, Paragraph, Label, Grid, Column, Card, Bo
 import { connect } from 'react-redux'
 
 const setupDevice = (token, setCallStatus) => {
-
     // See: https://www.twilio.com/docs/voice/tutorials/browser-calls-node-express
     const device = new Device(token, {
         codecPreferences: ["opus", "pcmu"],
@@ -80,11 +79,7 @@ function Caller({ numberInUse, twilioAccessToken }) {
     }
 
     return (
-        <Box
-            padding="space60"
-            width="100%"
-        >
-    
+        <Box width="100%" paddingTop="space60">
             <Stack orientation="vertical" spacing="space60">
                 <Heading as="h2" variant="heading20">Who you gonna call? 👻</Heading>
                 <Box width="size40">

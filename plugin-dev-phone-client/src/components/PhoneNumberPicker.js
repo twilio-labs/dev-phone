@@ -46,6 +46,10 @@ function PhoneNumberPicker({ configureNumberInUse }) {
   const [chosenPn, setChosenPn] = useState(null);
 
   useEffect(() => {
+    if(chosenPn) {
+      return 
+    }
+
     fetch("/phone-numbers")
       .then((res) => res.json())
       .then((data) => {
@@ -62,7 +66,7 @@ function PhoneNumberPicker({ configureNumberInUse }) {
           );
         }
       });
-  }, []);
+  }, [chosenPn]);
 
   if (twilioPns === null) {
     return "loading phone numbers...";
