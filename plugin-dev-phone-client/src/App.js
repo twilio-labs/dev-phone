@@ -107,7 +107,7 @@ function App({
 
       {numberInUse ? (
         <Flex width="100%" height="100%">
-          <Flex grow>
+          <Flex grow width="size50">
             <Caller numberInUse={numberInUse} />
           </Flex>
           <Flex grow>
