@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Konami from "konami";
 import { connect } from "react-redux";
 import { changeNumberInUse, configureNumberInUse } from "./actions";
@@ -33,9 +33,10 @@ const sendSms = (from, to, body) => {
   }
 };
 
-const setupKonamiCode = () => {
+const setupKonamiCode = (setNinetiesMode) => {
   const ninetiesMode = new Konami(() => {
-    window.alert("Lets party like it's 1991!");
+    // window.alert("Lets party like it's 1991!");
+    setNinetiesMode(true)
   });
   ninetiesMode.pattern = "383840403739373949575749";
 };
@@ -46,33 +47,40 @@ function App({
   configureNumberInUse,
   numberInUse,
 }) {
+
+  const [ninetiesMode, setNinetiesMode] = useState(false);
+
   useEffect(() => {
-    setupKonamiCode();
+    setupKonamiCode(setNinetiesMode);
     if (channelData.phoneNumber) {
       changeNumberInUse(channelData.phoneNumber);
     }
   }, [changeNumberInUse, channelData]);
 
   return (
-    <Box>
-      <Grid width="100%">
+    <Box style={{maxWidth: '99%'}}>
+      { ninetiesMode ? <img src='letsgetradical.png' style={{position: "absolute", bottom: '32px', right: '32px', width: '400px'}} /> :
+      ""}
+      <Grid>
         <Box
           width="100%"
-          backgroundColor="colorBackgroundBrandHighlight"
+          backgroundColor={ninetiesMode ? "#feb6e8" : "colorBackgroundBrandHighlight"}
           color="colorTextInverse"
         >
           <Flex wrap>
-            <Flex hAlignContent="center" vAlignContent="center" padding="space60">
-              <MediaObject verticalAlign="center" margin="0" padding="0">
-                <MediaFigure as="h1" spacing="space40" margin="0">
-                  <LogoTwilioIcon
-                    decorative={false}
-                    title="Twilio Icon"
-                  />
-                </MediaFigure>
-                <MediaBody as="h2">Dev-Phone</MediaBody>
-              </MediaObject>
-            </Flex>
+              <Flex hAlignContent="center" vAlignContent="center" padding="space60">
+                <MediaObject verticalAlign="center" margin="0" padding="0">
+                  <MediaFigure as="h1" spacing="space40" margin="0">
+                    <LogoTwilioIcon
+                      decorative={false}
+                      title="Twilio Icon"
+                    />
+                  </MediaFigure>
+                  {ninetiesMode ? <img alt='LETS GET RADICAL' src='/dev-phone-sparkly.gif' style={{ height: '100px', margin: '16px' }} /> :
+                    <MediaBody as="h2">Dev-Phone</MediaBody>
+                  }
+                </MediaObject>
+              </Flex>
             <Flex grow hAlignContent="center" padding="space60">
               <Stack orientation={"horizontal"} >
                 <Heading as="h3" variant="heading30">
@@ -104,21 +112,21 @@ function App({
       </Grid>
 
       {numberInUse ? (
-          <Grid gutter="space30">
-            <Column span={3} offset={1}>
-              <Caller numberInUse={numberInUse} />
-              <CallHistory />
-            </Column>
-            <Column span={6} offset={1}>
-              <SendSmsForm numberInUse={numberInUse} sendSms={sendSms} />
-            </Column>
-          </Grid>
+        <Grid gutter="space30">
+          <Column span={3} offset={1}>
+            <Caller numberInUse={numberInUse} ninetiesMode={ninetiesMode} />
+            <CallHistory ninetiesMode={ninetiesMode} />
+          </Column>
+          <Column span={6} offset={1}>
+            <SendSmsForm numberInUse={numberInUse} sendSms={sendSms} ninetiesMode={ninetiesMode} />
+          </Column>
+        </Grid>
       ) : (
-       <Grid gutter="space30">
+        <Grid gutter="space30">
           <Column span={6} offset={3}>
             <PhoneNumberPicker configureNumberInUse={configureNumberInUse} />
           </Column>
-       </Grid>
+        </Grid>
       )}
     </Box>
 

@@ -44,7 +44,7 @@ const setupDevice = (token, setCallStatus) => {
     return device;
 }
 
-function Caller({ numberInUse, twilioAccessToken }) {
+function Caller({ numberInUse, twilioAccessToken, ninetiesMode }) {
 
     const [callStatus, setCallStatus] = useState({ inCall: false, message: "initializing" });
     const [device, setDevice] = useState(null);
@@ -81,7 +81,7 @@ function Caller({ numberInUse, twilioAccessToken }) {
     return (
         <Box width="100%" paddingTop="space60">
             <Stack orientation="vertical" spacing="space60">
-                <Heading as="h2" variant="heading20">Who you gonna call? 👻</Heading>
+                <Heading as="h2" variant="heading20">{ninetiesMode ? "👻 Who you gonna call?" : "Voice calls"}</Heading>
                 <Box width="size40">
                     <Card>
                         <Stack orientation="vertical" spacing="space60">
@@ -117,7 +117,7 @@ function Caller({ numberInUse, twilioAccessToken }) {
                                     <Button
                                         fullWidth={true}
                                         disabled={!callStatus.inCall}
-                                        onClick={hangUp} 
+                                        onClick={hangUp}
                                         variant="destructive" >
                                         Hang up
                                     </Button>

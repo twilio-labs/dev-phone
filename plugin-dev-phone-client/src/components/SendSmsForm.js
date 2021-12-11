@@ -10,7 +10,7 @@ const setupConversationClient = (token, setCallStatus) => {
   return conversationClient;
 }
 
-function SendSmsForm({ addMessages, numberInUse, messageList, sendSms, twilioAccessToken, channelData }) {
+function SendSmsForm({ addMessages, numberInUse, messageList, sendSms, twilioAccessToken, channelData, ninetiesMode }) {
   const [toPn, setToPn] = useState(null);
   const [messageBody, setBody] = useState(null);
   const [conversationClient, setConversationClient] = useState(null)
@@ -80,7 +80,7 @@ function SendSmsForm({ addMessages, numberInUse, messageList, sendSms, twilioAcc
     >
       <Stack orientation="vertical" spacing="space60">
 
-        <Heading as="h2" variant="heading20">SMS messaging</Heading>
+        <Heading as="h2" variant="heading20">{ninetiesMode ? "📟 Page me later" : "SMS messaging" }</Heading>
 
         <Box>
           <Card>
@@ -107,9 +107,9 @@ function SendSmsForm({ addMessages, numberInUse, messageList, sendSms, twilioAcc
         </Box>
 
         <Card>
-          <Heading as="h2" variant="heading20">SMS Log</Heading>
+          <Heading as="h2" variant="heading20">{ninetiesMode ? "📌 Messageboard" : "SMS Log"}</Heading>
 
-          <Box maxHeight={'20rem'} overflow={'scroll'}>
+          <Box maxHeight={'20rem'} overflowY={'scroll'} overflowX={'hidden'}>
             {/* TODO: Turn this into a Message List component */}
             {messageList.length > 0 ?
               messageList.map((message, i) => {
@@ -130,7 +130,7 @@ function SendSmsForm({ addMessages, numberInUse, messageList, sendSms, twilioAcc
           </Box>
         </Card>
       </Stack>
-    </Box> 
+    </Box>
 
   );
 }
