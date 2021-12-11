@@ -15,6 +15,8 @@ import {
 } from "@twilio-paste/media-object";
 
 import { LogoTwilioIcon } from "@twilio-paste/icons/esm/LogoTwilioIcon";
+import { ProductVoiceIcon } from "@twilio-paste/icons/esm/ProductVoiceIcon";
+
 
 const formatPnForForm = (number) => `${number} [${number}]`;
 
@@ -88,7 +90,9 @@ function App({
 
                 {numberInUse ? (
                   <Heading as="h3" variant="heading30">
-                    <Badge variant="default">Calling/Messaging From:</Badge>&nbsp;
+                    <Badge variant="default">
+                      <ProductVoiceIcon decorative size="sizeIcon10" />
+                      Calling/Messaging From:</Badge>&nbsp;
                     {formatPnForForm(numberInUse)}
                   </Heading>
                 ) : (
@@ -103,21 +107,11 @@ function App({
 
       {numberInUse ? (
         <Flex width="100%" height="100%">
-          <Flex>
-            <Box
-              padding="space60"
-              width="size40"
-            >
-              <Caller numberInUse={numberInUse} />
-            </Box> 
+          <Flex grow>
+            <Caller numberInUse={numberInUse} />
           </Flex>
           <Flex grow>
-          <Box
-              padding="space60"
-              width="100%"
-            >
-              <SendSmsForm numberInUse={numberInUse} sendSms={sendSms} />
-            </Box> 
+            <SendSmsForm numberInUse={numberInUse} sendSms={sendSms} />
           </Flex>
         </Flex>
       ) : (
