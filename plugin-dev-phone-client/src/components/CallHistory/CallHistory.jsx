@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { SyncClient } from 'twilio-sync';
-import { Box, Card, Stack, Heading, Text } from "@twilio-paste/core";
+import { Box, Card, Heading, Text } from "@twilio-paste/core";
 import { connect } from "react-redux";
 import { addCallRecord, updateCallRecord } from '../../actions'
 
@@ -29,9 +29,7 @@ function CallHistory({ callLog, addCallRecord, twilioAccessToken, updateCallReco
         // TODO: Maybe don't hardcode the CallLog map name
         const callLog = await client.map('CallLog')
 
-        console.log('checking for existing logs')
         const existingLogs = await callLog.getItems()
-        console.log(existingLogs)
 
         existingLogs.items.forEach(call => {
             addCallRecord(call.data)

@@ -4,8 +4,6 @@ import { Button, Input, Label, Stack, TextArea, Heading, Card, Box, Grid, Column
 import { connect } from "react-redux";
 import { addMessages } from '../actions'
 
-const formatPnForForm = (pn) => `${pn.phoneNumber} [${pn.friendlyName}]`;
-
 const setupConversationClient = (token, setCallStatus) => {
   // const debugLogs = {logLevel: 'debug'}
   const conversationClient = new Client(token);
@@ -86,7 +84,7 @@ function SendSmsForm({ addMessages, numberInUse, messageList, sendSms, twilioAcc
 
         <Box>
           <Card>
-            <Stack orientation="vertical" spacing="space60">
+            <Stack orientation={"vertical"} spacing={"space60"}>
               <Stack>
                 <Label htmlFor="sendSmsToPn" required>To</Label>
                 <Input

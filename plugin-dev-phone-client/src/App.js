@@ -18,9 +18,6 @@ import {
 import { LogoTwilioIcon } from "@twilio-paste/icons/esm/LogoTwilioIcon";
 import { ProductVoiceIcon } from "@twilio-paste/icons/esm/ProductVoiceIcon";
 
-
-const formatPnForForm = (number) => `${number} [${number}]`;
-
 const sendSms = (from, to, body) => {
   console.log("Get it sent!");
   console.table({ from, to, body });
@@ -77,7 +74,7 @@ function App({
               </MediaObject>
             </Flex>
             <Flex grow hAlignContent="center" padding="space60">
-              <Stack orientation="horizontal" >
+              <Stack orientation={"horizontal"} >
                 <Heading as="h3" variant="heading30">
                   <Badge variant="default">Dev Phone Name:</Badge>&nbsp;
                     {channelData ? channelData.devPhoneName : "loading"}
