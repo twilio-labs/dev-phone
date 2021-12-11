@@ -1,3 +1,7 @@
+const path = require('path');
+const fs = require('fs');
+const open = require('open');
+
 const { flags } = require('@oclif/command');
 const { TwilioClientCommand } = require('@twilio/cli-core').baseCommands;
 const { TwilioCliError } = require('@twilio/cli-core').services.error;
@@ -88,7 +92,12 @@ class DevPhoneServer extends TwilioClientCommand {
         });
 
         const app = express();
-        app.use(express.json()); // request body parser
+
+        // serve assets from the "public" directory
+        // __dirname is the path to _this_ file, so ../../public to find index.html
+        app.use(express.static(path.join(__dirname, '..', '..', 'public')));
+
+        app.use(express.json()); // response body writer
 
         app.get("/ping", (req, res) => {
             res.json({ pong: true });
@@ -164,9 +173,29 @@ class DevPhoneServer extends TwilioClientCommand {
             res.json({ token: this.jwt });
         })
 
+        const isHeadless = () => !!this.flags.headless;
+
         app.listen(PORT, () => {
             console.log(`🚀 Your local webserver is listening on port ${PORT}`);
-            console.log('▶️  Use ctrl-c to stop your dev-phone');
+
+            if (fs.existsSync(path.join(__dirname, '..', '..', 'public', 'index.html'))) {
+
+                const uiUrl = `http://localhost:${PORT}/`
+
+                if (isHeadless()) {
+                    console.log(`🌐 UI is available at ${uiUrl}`)
+                } else {
+                    console.log(`🌐 Opening ${uiUrl} your browser`);
+                    open(uiUrl);
+                }
+
+            } else {
+                console.log('Hello friend! Front end files are missing, ie you are developing this pluign.');
+                console.log('Run: `cd plugin-dev-phone-client` then `npm start` to run dev front-end')
+                console.log('To build the front-end so that the local backend will serve it: ./build-for-release.sh')
+            }
+
+            console.log('▶️  Use ctrl-c to stop your dev-phone\n');
         });
     }
 
@@ -480,6 +509,10 @@ DevPhoneServer.PropertyFlags = {
         char: 'f',
         description: 'Force the phone number configuration to be overwritten',
         dependsOn: ['phone-number']
+    }),
+    headless: flags.boolean({
+        description: 'Headless mode. Prevents automatic opening of UI in the browser',
+        default: false,
     })
 };
 

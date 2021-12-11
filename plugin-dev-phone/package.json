@@ -7,9 +7,10 @@
   "dependencies": {
     "@oclif/command": "^1.5.20",
     "@oclif/config": "^1.15.1",
-    "@twilio/cli-core": "^5.0.0",
     "@twilio-labs/serverless-api": "^5.4.0",
-    "express": "^4.17.1"
+    "@twilio/cli-core": "^5.0.0",
+    "express": "^4.17.1",
+    "open": "^8.4.0"
   },
   "devDependencies": {
     "@oclif/dev-cli": "^1.22.2",

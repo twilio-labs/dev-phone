@@ -54,3 +54,8 @@ Work in `plugin-dev-phone-client/`. Start with `src/App.js`.
 This does hot-reload, so changes will be reflected in your browser as soon as you save.
 
 Run tests with `npm test`. There are no tests at the moment but the place to add them is `
+
+### Build and Release
+You can build the front-end code and move it into place to be served by the back-end with `./build-for-release.sh`
+
+If you do this you will _not_ need to run the local front end as described above, as it will be served by the express app. You will lose hot-reloading, though.

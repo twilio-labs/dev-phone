@@ -19,7 +19,8 @@ coverage
 /coverage
 
 # production
-/build
+plugin-dev-phone-client/build
+plugin-dev-phone/public
 
 # misc
 .DS_Store
