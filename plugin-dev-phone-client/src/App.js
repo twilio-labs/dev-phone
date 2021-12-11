@@ -6,7 +6,7 @@ import PhoneNumberPicker from "./components/PhoneNumberPicker";
 import SendSmsForm from "./components/SendSmsForm";
 import Caller from "./components/Caller";
 
-import { Box, Column, Grid, Stack, Text } from "@twilio-paste/core";
+import { Box, Flex, Stack, Badge, Heading, Separator } from "@twilio-paste/core";
 
 import {
   MediaObject,
@@ -54,88 +54,79 @@ function App({
   }, [changeNumberInUse, channelData]);
 
   return (
-    <Grid>
-      <Column span={12}>
-        <Box
-          as="header"
-          display={["none", "none", "flex"]}
-          alignItems="stretch"
+    <Flex vertical width="100%">
+      <Flex width="100%">
+        <Box 
+          width="100%"
           backgroundColor="colorBackgroundBrandHighlight"
-          borderBottomColor="colorBorderInverseWeaker"
-          borderBottomWidth="borderWidth10"
-          borderBottomStyle="solid"
-          position="sticky"
-          top="0px"
-          zIndex="zIndex80"
+          color="colorTextInverse"
         >
-          <Box
-            display="flex"
-            alignItems="center"
-            paddingRight="space70"
-            paddingLeft="space70"
-            borderRightColor="colorBorderInverseWeaker"
-            borderRightWidth={["borderWidth0", "borderWidth0", "borderWidth10"]}
-            width="100%"
-          >
-            <MediaObject verticalAlign="center">
-              <MediaFigure as="h1" spacing="space40">
-                <LogoTwilioIcon
-                  decorative={false}
-                  title="Description of icon"
-                />
-              </MediaFigure>
-              <MediaBody as="h2">Dev-Phone</MediaBody>
-            </MediaObject>
-          </Box>
-
-          <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-            flexDirection="row"
-            paddingTop="space60"
-            paddingRight="space70"
-            paddingBottom="space60"
-            paddingLeft="space70"
-            width="100%"
-          >
-            <Box marginTop="space10">
-              <Stack
-                orientation="horizontal"
-                spacing="space60"
-                alignItems="right"
-              >
-                <Text>
-                  Dev Phone Name:{" "}
-                  {channelData ? channelData.devPhoneName : "loading"}
-                </Text>
+          <Flex wrap>
+            <Flex hAlignContent="center" vAlignContent="center" padding="space60">
+              <MediaObject verticalAlign="center" margin="0" padding="0">
+                <MediaFigure as="h1" spacing="space40" margin="0">
+                  <LogoTwilioIcon
+                    decorative={false}
+                    title="Twilio Icon"
+                  />
+                </MediaFigure>
+                <MediaBody as="h2">Dev-Phone</MediaBody>
+              </MediaObject>
+            </Flex>
+            <Flex grow hAlignContent="center" padding="space60">
+              <Stack orientation="horizontal" >
+                <Heading as="h3" variant="heading30">
+                  <Badge variant="default">Dev Phone Name:</Badge>&nbsp;
+                    {channelData ? channelData.devPhoneName : "loading"}
+                </Heading>
+    
                 {numberInUse ? (
-                  <Text>
-                    Calling/Messaging From: {formatPnForForm(numberInUse)}
-                  </Text>
+                  <Separator orientation="vertical" horizontalSpacing="space40" />
+                ) : (
+                  ""
+                )}
+
+                {numberInUse ? (
+                  <Heading as="h3" variant="heading30">
+                    <Badge variant="default">Calling/Messaging From:</Badge>&nbsp;
+                    {formatPnForForm(numberInUse)}
+                  </Heading>
                 ) : (
                   ""
                 )}
               </Stack>
-            </Box>
-          </Box>
+            </Flex>
+          </Flex>
+            
         </Box>
-      </Column>
+      </Flex>
+
       {numberInUse ? (
-        <Column span={12}>
-          <Grid>
-            <Column span={4}>
+        <Flex width="100%" height="100%">
+          <Flex>
+            <Box
+              padding="space60"
+              width="size40"
+            >
               <Caller numberInUse={numberInUse} />
-            </Column>
-            <Column span={8}>
+            </Box> 
+          </Flex>
+          <Flex grow>
+          <Box
+              padding="space60"
+              width="100%"
+            >
               <SendSmsForm numberInUse={numberInUse} sendSms={sendSms} />
-            </Column>
-          </Grid>
-        </Column>
+            </Box> 
+          </Flex>
+        </Flex>
       ) : (
-        <PhoneNumberPicker configureNumberInUse={configureNumberInUse} />
+        <Flex width="100%" padding="space100" hAlignContent="center">
+          <PhoneNumberPicker configureNumberInUse={configureNumberInUse} />
+        </Flex>
       )}
-    </Grid>
+    </Flex>
+
   );
 }
 

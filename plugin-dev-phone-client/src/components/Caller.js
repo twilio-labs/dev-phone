@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Device } from 'twilio-client';
-import { Button, Input, Stack, Heading, Paragraph, Label, Grid, Column } from "@twilio-paste/core";
+import { Button, Input, Stack, Heading, Paragraph, Label, Grid, Column, Card } from "@twilio-paste/core";
 import { connect } from 'react-redux'
 
 const setupDevice = (token, setCallStatus) => {
@@ -93,61 +93,64 @@ function Caller({ numberInUse, twilioAccessToken }) {
                     onChange={e => setCalleePn(e.target.value)} />
             </Stack>
 
-            <Grid>
-                <Column span={4} offset={1}>
-                    {callStatus.connection ?
+            <Card>
+                <Grid spacing="space30" gutter="space30" marginBottom="space40">
+                    <Column span={6}>
+                        {callStatus.connection ?
+                            <Button
+                                fullWidth={true}
+                                disabled={!callStatus.connection}
+                                onClick={() => callStatus.connection.accept()}
+                                variant="primary" >
+                                Accept Call
+                            </Button>
+                            : <Button
+                                fullWidth={true}
+                                disabled={callStatus.inCall || !calleePn || calleePn.length < 6}
+                                onClick={makeCall} >
+                                Call
+                            </Button>
+                        }
+                    </Column>
+                    <Column span={6}>
                         <Button
                             fullWidth={true}
-                            disabled={!callStatus.connection}
-                            onClick={() => callStatus.connection.accept()} >
-                            Accept Call
+                            disabled={!callStatus.inCall}
+                            onClick={hangUp} 
+                            variant="destructive" >
+                            Hang up
                         </Button>
-                        : <Button
-                            fullWidth={true}
-                            disabled={callStatus.inCall || !calleePn || calleePn.length < 6}
-                            onClick={makeCall} >
-                            Call
-                        </Button>
-                    }
-                </Column>
-                <Column span={4} offset={1}>
-                    <Button
-                        fullWidth={true}
-                        disabled={!callStatus.inCall}
-                        onClick={hangUp} >
-                        Hang up
-                    </Button>
-                </Column>
+                    </Column>
 
-            </Grid>
+                </Grid>
+                <Grid spacing="space30" gutter="space30">
+                    <Column span={4}>
+                        <Stack orientation="vertical" spacing="space40">
+                            <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('1')}>1</Button>
+                            <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('4')}>4</Button>
+                            <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('7')}>7</Button>
+                            <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('*')}>*</Button>
+                        </Stack>
+                    </Column>
+                    <Column span={4}>
+                        <Stack orientation="vertical" spacing="space40">
+                            <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('2')}>2</Button>
+                            <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('5')}>5</Button>
+                            <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('8')}>8</Button>
+                            <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('0')}>0</Button>
+                        </Stack>
+                    </Column>
+                    <Column span={4}>
+                        <Stack orientation="vertical" spacing="space40">
+                            <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('3')}>3</Button>
+                            <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('6')}>6</Button>
+                            <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('9')}>9</Button>
+                            <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('#')}>#</Button>
+                        </Stack>
+                    </Column>
 
-            <Grid spacing="space30" gutter="space30">
-                <Column span={3} offset={1}>
-                    <Stack orientation="vertical" spacing="space30">
-                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('1')}>1</Button>
-                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('4')}>4</Button>
-                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('7')}>7</Button>
-                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('*')}>*</Button>
-                    </Stack>
-                </Column>
-                <Column span={3}>
-                    <Stack orientation="vertical" spacing="space30">
-                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('2')}>2</Button>
-                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('5')}>5</Button>
-                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('8')}>8</Button>
-                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('0')}>0</Button>
-                    </Stack>
-                </Column>
-                <Column span={3}>
-                    <Stack orientation="vertical" spacing="space30">
-                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('3')}>3</Button>
-                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('6')}>6</Button>
-                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('9')}>9</Button>
-                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('#')}>#</Button>
-                    </Stack>
-                </Column>
-
-            </Grid>
+                </Grid>
+            </Card>
 
             <Paragraph>
                 Call status: <em>{callStatus.message}</em>
