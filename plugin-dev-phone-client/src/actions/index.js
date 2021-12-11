@@ -38,7 +38,6 @@ export function selectDevPhoneNumberRequest() {
 }
 
 export function changeNumberInUse(number) {
-    console.trace(number)
     return {
         type: CONFIGURE_NUMBER_IN_USE,
         number

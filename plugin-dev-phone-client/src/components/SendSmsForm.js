@@ -1,10 +1,8 @@
 import { useState, useEffect } from "react";
 import { Client } from '@twilio/conversations'
-import { Button, Input, Label, Stack, TextArea, Heading } from "@twilio-paste/core";
+import { Button, Input, Label, Stack, TextArea, Heading, Card, Box, Grid, Column } from "@twilio-paste/core";
 import { connect } from "react-redux";
 import { addMessages } from '../actions'
-
-const formatPnForForm = (pn) => `${pn.phoneNumber} [${pn.friendlyName}]`;
 
 const setupConversationClient = (token, setCallStatus) => {
   // const debugLogs = {logLevel: 'debug'}
@@ -76,46 +74,71 @@ function SendSmsForm({ addMessages, numberInUse, messageList, sendSms, twilioAcc
 }, [addMessages, activeConversation, twilioAccessToken, channelData.conversation.sid, conversationClient]);
 
   return (
-    <Stack orientation="vertical" spacing="space60">
+    <Box
+      padding="space60"
+      width="100%"
+    >
+      <Stack orientation="vertical" spacing="space60">
 
-      <Heading as="h2" variant="heading20">SMS messaging</Heading>
+        <Heading as="h2" variant="heading20">SMS messaging</Heading>
 
-      <Stack orientation="vertical">
-        <Label htmlFor="sendSmsToPn" required>To</Label>
-        <Input
-          type="text"
-          id="sendSmsToPn"
-          placeholder="E.164 format please"
-          defaultValue={toPn}
-          onChange={(e) => setToPn(e.target.value)} />
+        <Box>
+          <Card>
+            <Stack orientation={"vertical"} spacing={"space60"}>
+              <Stack>
+                <Label htmlFor="sendSmsToPn" required>To</Label>
+                <Input
+                  type="text"
+                  id="sendSmsToPn"
+                  placeholder="E.164 format please"
+                  defaultValue={toPn}
+                  onChange={(e) => setToPn(e.target.value)} />
+              </Stack>
+              <Stack>
+                <Label htmlFor="sendSmsBody" required>Message</Label>
+                <TextArea id="sendSmsBody" onChange={(e) => setBody(e.target.value)} />
+              </Stack>
+
+              <Button variant="primary" disabled={!toPn || toPn.length < 6} onClick={sendIt}>
+                Send it!
+              </Button>
+            </Stack>
+          </Card>
+        </Box>
+
+        <Card>
+          <Heading as="h2" variant="heading20">SMS Log</Heading>
+
+          <Box maxHeight={'20rem'} overflow={'scroll'}>
+            {/* TODO: Turn this into a Message List component */}
+            {messageList.length > 0 ?
+              messageList.map((message, i) => {
+                return (
+                  <Grid key={message.sid} padding="space30">
+                    <Column span={8} offset={message.author === channelData.devPhoneName ? 4 : 0}>
+                      <Box padding="space30">
+                        <Card>
+                          {message.author}: {message.body}
+                        </Card>
+                      </Box>
+                    </Column>
+                  </Grid>
+                )
+              })
+              : 'Go ahead and send your first message!'
+            }
+          </Box>
+        </Card>
       </Stack>
+    </Box> 
 
-      <div>
-        {/* TODO: Turn this into a Message List component*/}
-        {messageList.length > 0 ?
-          messageList.map((message, i) => {
-            return <p key={i}>{`${message.author}: ${message.body}`}</p>
-          })
-          : 'Go ahead and send your first message!'
-        }
-      </div>
-
-      <Stack orientation="vertical">
-        <Label htmlFor="sendSmsBody" required>Message</Label>
-        <TextArea id="sendSmsBody" onChange={(e) => setBody(e.target.value)} />
-      </Stack>
-
-      <Button variant="primary" disabled={!toPn || toPn.length < 6} onClick={sendIt}>
-        Send it!
-      </Button>
-    </Stack>
   );
 }
 
 const mapStateToProps = (state) => ({
   twilioAccessToken: state.twilioAccessToken,
   channelData: state.channelData,
-  messageList: state.messageList
+  messageList: state.messageList,
 });
 
 const mapDispatchToProps = (dispatch) => ({

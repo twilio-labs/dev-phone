@@ -7,7 +7,7 @@ import SendSmsForm from "./components/SendSmsForm";
 import Caller from "./components/Caller";
 import CallHistory from "./components/CallHistory/CallHistory.jsx"
 
-import { Box, Column, Grid, Stack, Text } from "@twilio-paste/core";
+import { Box, Column, Grid, Flex, Stack, Badge, Heading, Separator } from "@twilio-paste/core";
 
 import {
   MediaObject,
@@ -16,8 +16,7 @@ import {
 } from "@twilio-paste/media-object";
 
 import { LogoTwilioIcon } from "@twilio-paste/icons/esm/LogoTwilioIcon";
-
-const formatPnForForm = (number) => `${number} [${number}]`;
+import { ProductVoiceIcon } from "@twilio-paste/icons/esm/ProductVoiceIcon";
 
 const sendSms = (from, to, body) => {
   console.log("Get it sent!");
@@ -56,74 +55,54 @@ function App({
 
   return (
     <Box>
-      <Grid gutter="space30">
-        <Column span={12}>
-          <Box
-            as="header"
-            display={["none", "none", "flex"]}
-            alignItems="stretch"
-            backgroundColor="colorBackgroundBrandHighlight"
-            borderBottomColor="colorBorderInverseWeaker"
-            borderBottomWidth="borderWidth10"
-            borderBottomStyle="solid"
-            position="sticky"
-            top="0px"
-            zIndex="zIndex80"
-          >
-            <Box
-              display="flex"
-              alignItems="center"
-              paddingRight="space70"
-              paddingLeft="space70"
-              borderRightColor="colorBorderInverseWeaker"
-              borderRightWidth={["borderWidth0", "borderWidth0", "borderWidth10"]}
-              width="100%"
-            >
-              <MediaObject verticalAlign="center">
-                <MediaFigure as="h1" spacing="space40">
+      <Grid width="100%">
+        <Box 
+          width="100%"
+          backgroundColor="colorBackgroundBrandHighlight"
+          color="colorTextInverse"
+        >
+          <Flex wrap>
+            <Flex hAlignContent="center" vAlignContent="center" padding="space60">
+              <MediaObject verticalAlign="center" margin="0" padding="0">
+                <MediaFigure as="h1" spacing="space40" margin="0">
                   <LogoTwilioIcon
                     decorative={false}
-                    title="Description of icon"
+                    title="Twilio Icon"
                   />
                 </MediaFigure>
                 <MediaBody as="h2">Dev-Phone</MediaBody>
               </MediaObject>
-            </Box>
-
-            <Box
-              display="flex"
-              justifyContent="space-between"
-              alignItems="center"
-              flexDirection="row"
-              paddingTop="space60"
-              paddingRight="space70"
-              paddingBottom="space60"
-              paddingLeft="space70"
-              width="100%"
-            >
-              <Box marginTop="space10">
-                <Stack
-                  orientation="horizontal"
-                  spacing="space60"
-                  alignItems="right"
-                >
-                  <Text>
-                    Dev Phone Name:{" "}
+            </Flex>
+            <Flex grow hAlignContent="center" padding="space60">
+              <Stack orientation={"horizontal"} >
+                <Heading as="h3" variant="heading30">
+                  <Badge variant="default">Dev Phone Name:</Badge>&nbsp;
                     {channelData ? channelData.devPhoneName : "loading"}
-                  </Text>
-                  {numberInUse ? (
-                    <Text>
-                      Calling/Messaging From: {formatPnForForm(numberInUse)}
-                    </Text>
-                  ) : (
-                    ""
-                  )}
-                </Stack>
-              </Box>
-            </Box>
-          </Box>
-        </Column>
+                </Heading>
+    
+                {numberInUse ? (
+                  <Separator orientation="vertical" horizontalSpacing="space40" />
+                ) : (
+                  ""
+                )}
+
+                {numberInUse ? (
+                  <Heading as="h3" variant="heading30">
+                    <Badge variant="default">
+                      <ProductVoiceIcon decorative size="sizeIcon10" />
+                      Selected Number:</Badge>&nbsp;
+                    {numberInUse}
+                  </Heading>
+                ) : (
+                  ""
+                )}
+              </Stack>
+            </Flex>
+          </Flex>
+            
+        </Box>
       </Grid>
+
       {numberInUse ? (
           <Grid gutter="space30">
             <Column span={3} offset={1}>
@@ -142,6 +121,7 @@ function App({
        </Grid>
       )}
     </Box>
+
   );
 }
 
