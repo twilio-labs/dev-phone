@@ -1,5 +1,7 @@
-// Actions for handling messaging logic in the UI
+// Actions for handling history logic in the UI
 export const ADD_MESSAGES = "ADD_MESSAGES"
+export const ADD_CALL_RECORD = "ADD_CALL_RECORD"
+export const UPDATE_CALL_RECORD = "UPDATE_CALL_RECORD"
 
 export function addMessages(payload) {
     const payloadArray = Array.isArray(payload) ? payload : [payload]
@@ -8,6 +10,21 @@ export function addMessages(payload) {
         payload: payloadArray.length > 0 && payloadArray[0].conversation ? payloadArray : []
     }
 }
+
+export function addCallRecord(payload) {
+    return {
+        type: ADD_CALL_RECORD,
+        payload
+    }
+}
+
+export function updateCallRecord(payload) {
+    return {
+        type: UPDATE_CALL_RECORD,
+        payload
+    }
+}
+
 
 // Logic for communicating with the local backend
 export const DEV_PHONE_NUMBER_SELECTED = "DEV_PHONE_NUMBER_SELECTED"
@@ -47,7 +64,7 @@ export function configureNumberInUse(number) {
                 },
                 body: JSON.stringify(number),
               })
-            
+
             // A success response suggests that the backend was able to configure serverless correctly
             const data = await response.json()
             dispatch(changeNumberInUse(data.phoneNumber))

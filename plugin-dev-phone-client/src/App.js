@@ -5,6 +5,7 @@ import { changeNumberInUse, configureNumberInUse } from "./actions";
 import PhoneNumberPicker from "./components/PhoneNumberPicker";
 import SendSmsForm from "./components/SendSmsForm";
 import Caller from "./components/Caller";
+import CallHistory from "./components/CallHistory/CallHistory.jsx"
 
 import { Box, Column, Grid, Stack, Text } from "@twilio-paste/core";
 
@@ -54,88 +55,93 @@ function App({
   }, [changeNumberInUse, channelData]);
 
   return (
-    <Grid>
-      <Column span={12}>
-        <Box
-          as="header"
-          display={["none", "none", "flex"]}
-          alignItems="stretch"
-          backgroundColor="colorBackgroundBrandHighlight"
-          borderBottomColor="colorBorderInverseWeaker"
-          borderBottomWidth="borderWidth10"
-          borderBottomStyle="solid"
-          position="sticky"
-          top="0px"
-          zIndex="zIndex80"
-        >
+    <Box>
+      <Grid gutter="space30">
+        <Column span={12}>
           <Box
-            display="flex"
-            alignItems="center"
-            paddingRight="space70"
-            paddingLeft="space70"
-            borderRightColor="colorBorderInverseWeaker"
-            borderRightWidth={["borderWidth0", "borderWidth0", "borderWidth10"]}
-            width="100%"
+            as="header"
+            display={["none", "none", "flex"]}
+            alignItems="stretch"
+            backgroundColor="colorBackgroundBrandHighlight"
+            borderBottomColor="colorBorderInverseWeaker"
+            borderBottomWidth="borderWidth10"
+            borderBottomStyle="solid"
+            position="sticky"
+            top="0px"
+            zIndex="zIndex80"
           >
-            <MediaObject verticalAlign="center">
-              <MediaFigure as="h1" spacing="space40">
-                <LogoTwilioIcon
-                  decorative={false}
-                  title="Description of icon"
-                />
-              </MediaFigure>
-              <MediaBody as="h2">Dev-Phone</MediaBody>
-            </MediaObject>
-          </Box>
+            <Box
+              display="flex"
+              alignItems="center"
+              paddingRight="space70"
+              paddingLeft="space70"
+              borderRightColor="colorBorderInverseWeaker"
+              borderRightWidth={["borderWidth0", "borderWidth0", "borderWidth10"]}
+              width="100%"
+            >
+              <MediaObject verticalAlign="center">
+                <MediaFigure as="h1" spacing="space40">
+                  <LogoTwilioIcon
+                    decorative={false}
+                    title="Description of icon"
+                  />
+                </MediaFigure>
+                <MediaBody as="h2">Dev-Phone</MediaBody>
+              </MediaObject>
+            </Box>
 
-          <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-            flexDirection="row"
-            paddingTop="space60"
-            paddingRight="space70"
-            paddingBottom="space60"
-            paddingLeft="space70"
-            width="100%"
-          >
-            <Box marginTop="space10">
-              <Stack
-                orientation="horizontal"
-                spacing="space60"
-                alignItems="right"
-              >
-                <Text>
-                  Dev Phone Name:{" "}
-                  {channelData ? channelData.devPhoneName : "loading"}
-                </Text>
-                {numberInUse ? (
+            <Box
+              display="flex"
+              justifyContent="space-between"
+              alignItems="center"
+              flexDirection="row"
+              paddingTop="space60"
+              paddingRight="space70"
+              paddingBottom="space60"
+              paddingLeft="space70"
+              width="100%"
+            >
+              <Box marginTop="space10">
+                <Stack
+                  orientation="horizontal"
+                  spacing="space60"
+                  alignItems="right"
+                >
                   <Text>
-                    Calling/Messaging From: {formatPnForForm(numberInUse)}
+                    Dev Phone Name:{" "}
+                    {channelData ? channelData.devPhoneName : "loading"}
                   </Text>
-                ) : (
-                  ""
-                )}
-              </Stack>
+                  {numberInUse ? (
+                    <Text>
+                      Calling/Messaging From: {formatPnForForm(numberInUse)}
+                    </Text>
+                  ) : (
+                    ""
+                  )}
+                </Stack>
+              </Box>
             </Box>
           </Box>
-        </Box>
-      </Column>
+        </Column>
+      </Grid>
       {numberInUse ? (
-        <Column span={12}>
-          <Grid>
-            <Column span={4}>
+          <Grid gutter="space30">
+            <Column span={3} offset={1}>
               <Caller numberInUse={numberInUse} />
+              <CallHistory />
             </Column>
-            <Column span={8}>
+            <Column span={6} offset={1}>
               <SendSmsForm numberInUse={numberInUse} sendSms={sendSms} />
             </Column>
           </Grid>
-        </Column>
       ) : (
-        <PhoneNumberPicker configureNumberInUse={configureNumberInUse} />
+       <Grid gutter="space30">
+          <Column span={6} offset={3}>
+            <PhoneNumberPicker configureNumberInUse={configureNumberInUse} />
+          </Column>
+       </Grid>
       )}
-    </Grid>
+    </Box>
   );
 }
 
