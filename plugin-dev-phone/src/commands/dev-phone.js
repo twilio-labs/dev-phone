@@ -1,3 +1,4 @@
+const path = require('path');
 const { flags } = require('@oclif/command');
 const { TwilioClientCommand } = require('@twilio/cli-core').baseCommands;
 const { TwilioCliError } = require('@twilio/cli-core').services.error;
@@ -88,7 +89,12 @@ class DevPhoneServer extends TwilioClientCommand {
         });
 
         const app = express();
-        app.use(express.json()); // request body parser
+
+        // serve assets from the "public" directory
+        // __dirname is the path to _this_ file, so ../../public to find index.html
+        app.use(express.static(path.join(__dirname, '..', '..', 'public')));
+
+        app.use(express.json()); // response body writer
 
         app.get("/ping", (req, res) => {
             res.json({ pong: true });
