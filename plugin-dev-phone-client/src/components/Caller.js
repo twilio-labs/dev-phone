@@ -1,81 +1,23 @@
-import { useState, useEffect } from 'react';
-import { Device } from 'twilio-client';
+import { useState, useContext } from 'react';
 import { Button, Input, Stack, Heading, Paragraph, Label, Grid, Column, Card, Box} from "@twilio-paste/core";
-import { connect } from 'react-redux'
+import { useSelector } from 'react-redux'
+import { TwilioVoiceContext } from './VoiceManager/VoiceManager';
 
-const setupDevice = (token, setCallStatus) => {
-    // See: https://www.twilio.com/docs/voice/tutorials/browser-calls-node-express
-    const device = new Device(token, {
-        codecPreferences: ["opus", "pcmu"],
-        fakeLocalDTMF: true,
-        debug: true,
-        enableRingingState: true
-    });
+function Caller({ ninetiesMode }) {
+    const [destination, setCallDestination] = useState("");
+    const callStatus = useSelector(state => state.callStatus)
+    const dialer = useContext(TwilioVoiceContext)
 
-    device.on("ready", () => {
-        setCallStatus({ inCall: false, message: "ready" });
-    });
-
-    device.on("error", (error) => {
-        setCallStatus({ inCall: false, message: `Error : ${error.message}` });
-    });
-
-    device.on("connect", (conn) => {
-        console.log('connected', conn)
-        setCallStatus({
-            inCall: true,
-            message: `${Object.keys(conn.message).length === 0 ? 'Speaking with ' + conn.parameters.From : JSON.stringify(conn.message)}`,
-            connection: conn
-        });
-    });
-
-    device.on("disconnect", (conn) => {
-        setCallStatus({ inCall: false, message: "ready (disconnected)", connection: null });
-    });
-
-    device.on("incoming", (conn) => {
-        setCallStatus({
-            inCall: true,
-            message: `Incoming call from ${conn.parameters.From}`,
-            connection: conn
-        })
-    })
-
-    return device;
-}
-
-function Caller({ numberInUse, twilioAccessToken, ninetiesMode }) {
-
-    const [callStatus, setCallStatus] = useState({ inCall: false, message: "initializing" });
-    const [device, setDevice] = useState(null);
-    const [calleePn, setCalleePn] = useState("");
-
-    useEffect(() => {
-        const device = setupDevice(twilioAccessToken, setCallStatus);
-        setDevice(device);
-    }, [twilioAccessToken]);
-
-    const makeCall = () => {
-        try {
-            device.connect({
-                "to": calleePn,
-                "from": numberInUse,
-                "identity": "dev-phone"
-            });
-        } catch (error) {
-            console.error(error)
-        }
+    function makeCall() {
+        dialer.makeCall(destination)
     }
 
-    const hangUp = () => {
-        device.disconnectAll();
+    function hangUp() {
+        dialer.hangUp()
     }
 
-    const sendDTMF = (num) => {
-        if (callStatus.connection) {
-            console.log("Sending DTMF " + num);
-            callStatus.connection.sendDigits(num);
-        }
+    function sendDTMF(num) {
+        dialer.sendDTMF(num)
     }
 
     return (
@@ -91,8 +33,8 @@ function Caller({ numberInUse, twilioAccessToken, ninetiesMode }) {
                                     type="text"
                                     id="calleePn"
                                     placeholder="E.164 format please"
-                                    defaultValue={calleePn}
-                                    onChange={e => setCalleePn(e.target.value)} />
+                                    defaultValue={destination}
+                                    onChange={e => setCallDestination(e.target.value)} />
                             </Box>
 
                             <Grid spacing="space30" gutter="space30" marginBottom="space40">
@@ -107,7 +49,7 @@ function Caller({ numberInUse, twilioAccessToken, ninetiesMode }) {
                                         </Button>
                                         : <Button
                                             fullWidth={true}
-                                            disabled={callStatus.inCall || !calleePn || calleePn.length < 6}
+                                            disabled={callStatus.inCall || !destination || destination.length < 6}
                                             onClick={makeCall} >
                                             Call
                                         </Button>
@@ -164,8 +106,4 @@ function Caller({ numberInUse, twilioAccessToken, ninetiesMode }) {
     );
 }
 
-const mapStateToProps = (state) => ({
-    twilioAccessToken: state.twilioAccessToken,
-});
-
-export default connect(mapStateToProps)(Caller);
+export default Caller;

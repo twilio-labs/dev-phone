@@ -25,6 +25,17 @@ export function updateCallRecord(payload) {
     }
 }
 
+// Voice Device Actions
+export const SET_CALL_STATUS = "SET_CALL_STATUS"
+
+export function setCallStatus(call) {
+    // TODO: Check if we're in a call, maybe make call payload more explicit
+    return {
+        type: SET_CALL_STATUS,
+        call
+    }
+}
+
 
 // Logic for communicating with the local backend
 export const DEV_PHONE_NUMBER_SELECTED = "DEV_PHONE_NUMBER_SELECTED"

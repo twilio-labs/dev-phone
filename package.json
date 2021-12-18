@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@twilio/voice-sdk": "^2.0.1",
+    "open": "^8.4.0"
+  }
+}

@@ -7,11 +7,13 @@ import {
     DEV_PHONE_CONFIG_ERROR,
     CONFIGURE_NUMBER_IN_USE,
     ADD_CALL_RECORD,
-    UPDATE_CALL_RECORD
+    UPDATE_CALL_RECORD,
+    SET_CALL_STATUS
 } from '../actions'
 
 const initialState = {
     callLog: [],
+    callStatus: { inCall: false, message: "initializing" },
     channelData: {},
     twilioAccessToken: '',
     voiceDevice: {},
@@ -50,6 +52,8 @@ export default function reducer(state = initialState, action) {
             return {...state, channelData: action.payload}
         case REQUEST_CHANNEL_DATA_ERROR:
             return {...state, error: action.error}
+        case SET_CALL_STATUS:
+            return {...state, callStatus: action.call}
         default:
             return state
     }
