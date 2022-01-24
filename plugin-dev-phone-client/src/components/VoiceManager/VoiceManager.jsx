@@ -29,11 +29,13 @@ const TwilioVoiceManager = ({ children }) => {
     const dispatch = useDispatch()
 
     let voiceDevice
+    let activeCall
     let deviceDetails
 
+    // responsible for making calls with Twilio Voice SDK
     const makeCall = async (destination) => {
         try {
-            const activeCall = await voiceDevice.connect({
+            activeCall = await voiceDevice.connect({
                 params: {
                     "to": destination,
                     "from": numberInUse,
@@ -52,10 +54,15 @@ const TwilioVoiceManager = ({ children }) => {
         }
     }
 
+    // Responsible for disconnecting a specific call
     const hangUp = () => {
-        voiceDevice.disconnectAll();
+        console.log('voicemanager hangup invoked')
+        if(activeCall) {
+            activeCall.disconnect()
+        }
     }
 
+    // Responsible for 
     const sendDTMF = (num) => {
         if (callStatus.connection) {
             console.log("Sending DTMF " + num);
@@ -69,7 +76,8 @@ const TwilioVoiceManager = ({ children }) => {
             codecPreferences: ["opus", "pcmu"],
             fakeLocalDTMF: true,
             debug: true,
-            enableRingingState: true
+            enableRingingState: true,
+            logLevel: '1'
         })
 
         voiceDevice.on("registered", () => {
@@ -77,6 +85,7 @@ const TwilioVoiceManager = ({ children }) => {
         });
 
         voiceDevice.on("incoming", (call) => {
+            activeCall = call
             setCallStatus({
                 inCall: true,
                 message: `Incoming call from ${call.parameters.From}`,
@@ -85,13 +94,21 @@ const TwilioVoiceManager = ({ children }) => {
         })
 
         voiceDevice.on('connect', call => {
+            call.on('disconnect', call => {
+                console.log('voicemanager disconnect event called')
+                dispatch(setCallStatus(call))
+                // setCallStatus({ inCall: false, message: "ready (disconnected)", connection: null });
+            })
+
             dispatch(setCallStatus(call))
         })
 
-        voiceDevice.on('disconnect', call => {
-            dispatch(setCallStatus(call))
-            // setCallStatus({ inCall: false, message: "ready (disconnected)", connection: null });
-        })
+        // voiceDevice.on('disconnect', call => {
+        //     console.log('voicemanager disconnect event called')
+        //     dispatch(setCallStatus(call))
+        //     // setCallStatus({ inCall: false, message: "ready (disconnected)", connection: null });
+        // })
+
 
         deviceDetails = {
             voiceDevice: voiceDevice,

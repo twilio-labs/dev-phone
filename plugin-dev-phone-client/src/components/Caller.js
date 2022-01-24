@@ -13,6 +13,7 @@ function Caller({ ninetiesMode }) {
     }
 
     function hangUp() {
+        console.log('voicemanager hangup invoked')
         dialer.hangUp()
     }
 
