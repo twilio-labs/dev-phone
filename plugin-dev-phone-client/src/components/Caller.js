@@ -1,12 +1,12 @@
 import { useState, useContext } from 'react';
 import { Button, Input, Stack, Heading, Paragraph, Label, Grid, Column, Card, Box} from "@twilio-paste/core";
-import { useSelector } from 'react-redux'
 import { TwilioVoiceContext } from './VoiceManager/VoiceManager';
 
 function Caller({ ninetiesMode }) {
     const [destination, setCallDestination] = useState("");
-    const callStatus = useSelector(state => state.callStatus)
     const dialer = useContext(TwilioVoiceContext)
+
+    const { voiceDevice, activeCall } = dialer
 
     function makeCall() {
         dialer.makeCall(destination)
@@ -21,6 +21,35 @@ function Caller({ ninetiesMode }) {
         dialer.sendDTMF(num)
     }
 
+    function generateDTMFColumn(col) {
+        return col.map(tone => {
+            return <Button 
+                    key={tone}
+                    fullWidth={true}
+                    disabled={!activeCall}
+                    onClick={e => sendDTMF({tone})}>{tone}</Button>
+        })
+    }
+
+    function generateStatusMessage () {
+        if(voiceDevice && !activeCall) {
+            return 'ready'
+        } 
+        
+        if(voiceDevice && activeCall) {
+            console.log(JSON.stringify(activeCall))
+            if (activeCall._wasConnected) {
+                return 'connected'
+            }
+
+            return activeCall._direction === 'OUTGOING' ?
+                `calling ${activeCall._options.twimlParams.to}` :
+                `call from ${activeCall._options.twimlParams.from}`
+        }
+            
+        return 'initializing'
+    }
+
     return (
         <Box width="100%" paddingTop="space60">
             <Stack orientation="vertical" spacing="space60">
@@ -33,24 +62,24 @@ function Caller({ ninetiesMode }) {
                                 <Input
                                     type="text"
                                     id="calleePn"
-                                    placeholder="E.164 format please"
+                                    placeholder="E.164 format, e.g., +15551234567"
                                     defaultValue={destination}
                                     onChange={e => setCallDestination(e.target.value)} />
                             </Box>
 
                             <Grid spacing="space30" gutter="space30" marginBottom="space40">
                                 <Column span={6}>
-                                    {callStatus.connection ?
+                                    {activeCall && activeCall._direction === "INCOMING" ?
                                         <Button
                                             fullWidth={true}
-                                            disabled={!callStatus.connection}
-                                            onClick={() => callStatus.connection.accept()}
+                                            disabled={activeCall._direction !== "INCOMING"}
+                                            onClick={() => activeCall.accept()}
                                             variant="primary" >
                                             Accept Call
                                         </Button>
                                         : <Button
                                             fullWidth={true}
-                                            disabled={callStatus.inCall || !destination || destination.length < 6}
+                                            disabled={activeCall || !destination || destination.length < 6}
                                             onClick={makeCall} >
                                             Call
                                         </Button>
@@ -59,7 +88,7 @@ function Caller({ ninetiesMode }) {
                                 <Column span={6}>
                                     <Button
                                         fullWidth={true}
-                                        disabled={!callStatus.inCall}
+                                        disabled={!activeCall}
                                         onClick={hangUp}
                                         variant="destructive" >
                                         Hang up
@@ -70,37 +99,26 @@ function Caller({ ninetiesMode }) {
                             <Grid spacing="space30" gutter="space30">
                                 <Column span={4}>
                                     <Stack orientation="vertical" spacing="space40">
-                                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('1')}>1</Button>
-                                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('4')}>4</Button>
-                                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('7')}>7</Button>
-                                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('*')}>*</Button>
+                                        {generateDTMFColumn(['1', '4', '7', '*'])}
                                     </Stack>
                                 </Column>
                                 <Column span={4}>
                                     <Stack orientation="vertical" spacing="space40">
-                                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('2')}>2</Button>
-                                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('5')}>5</Button>
-                                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('8')}>8</Button>
-                                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('0')}>0</Button>
+                                        {generateDTMFColumn(['2', '5', '8', '0'])}
                                     </Stack>
                                 </Column>
                                 <Column span={4}>
                                     <Stack orientation="vertical" spacing="space40">
-                                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('3')}>3</Button>
-                                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('6')}>6</Button>
-                                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('9')}>9</Button>
-                                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('#')}>#</Button>
+                                        {generateDTMFColumn(['3', '6', '9', '#'])}
                                     </Stack>
                                 </Column>
-
                             </Grid>
                         </Stack>
-
                     </Card>
                 </Box>
 
                 <Paragraph>
-                    Call status: <em>{callStatus.message}</em>
+                    <em>{generateStatusMessage()}</em>
                 </Paragraph>
             </Stack>
         </Box>

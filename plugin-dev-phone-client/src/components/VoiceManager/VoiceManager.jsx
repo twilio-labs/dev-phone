@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { Device } from '@twilio/voice-sdk'
 import { setCallStatus } from '../../actions'
@@ -26,22 +26,15 @@ const TwilioVoiceManager = ({ children }) => {
     const twilioAccessToken = useSelector(state => state.twilioAccessToken)
     const numberInUse = useSelector(state => state.numberInUse ? state.numberInUse.phoneNumber : "")
     const callStatus = useSelector(state => state.callStatus)
+    const [activeCall, setActiveCall] = useState(null);
     const dispatch = useDispatch()
 
     let voiceDevice
-    let activeCall
     let deviceDetails
 
-    // responsible for making calls with Twilio Voice SDK
-    const makeCall = async (destination) => {
-        try {
-            activeCall = await voiceDevice.connect({
-                params: {
-                    "to": destination,
-                    "from": numberInUse,
-                    "identity": "dev-phone"
-                }
-            });
+    // responsible for handling call events
+    useEffect(() => {
+        if (activeCall) {
             activeCall.on('accept', call => {
                 console.log('connected', call)
                 dispatch(setCallStatus({
@@ -49,6 +42,20 @@ const TwilioVoiceManager = ({ children }) => {
                     connection: call
                 }))
             })
+        }
+    }, [activeCall, dispatch])
+
+    // responsible for making calls with Twilio Voice SDK
+    const makeCall = async (destination) => {
+        try {
+            const call = await voiceDevice.connect({
+                params: {
+                    "to": destination,
+                    "from": numberInUse,
+                    "identity": "dev-phone"
+                }
+            })
+            setActiveCall(call)
         } catch (error) {
             console.error(error)
         }
@@ -59,14 +66,15 @@ const TwilioVoiceManager = ({ children }) => {
         console.log('voicemanager hangup invoked')
         if(activeCall) {
             activeCall.disconnect()
+            setActiveCall(null)
         }
     }
 
-    // Responsible for 
+    // Responsible for sending DTMF over the call
     const sendDTMF = (num) => {
-        if (callStatus.connection) {
+        if (activeCall) {
             console.log("Sending DTMF " + num);
-            callStatus.connection.sendDigits(num);
+            activeCall.sendDigits(num);
         }
     }
 
@@ -81,26 +89,18 @@ const TwilioVoiceManager = ({ children }) => {
         })
 
         voiceDevice.on("registered", () => {
-            setCallStatus({ inCall: false, message: "ready" });
+            console.log("Registered voice device")
         });
 
         voiceDevice.on("incoming", (call) => {
-            activeCall = call
-            setCallStatus({
-                inCall: true,
-                message: `Incoming call from ${call.parameters.From}`,
-                call
-            })
+            console.log("Receiving incoming call")
+            setActiveCall(call)
         })
 
         voiceDevice.on('connect', call => {
             call.on('disconnect', call => {
                 console.log('voicemanager disconnect event called')
-                dispatch(setCallStatus(call))
-                // setCallStatus({ inCall: false, message: "ready (disconnected)", connection: null });
             })
-
-            dispatch(setCallStatus(call))
         })
 
         // voiceDevice.on('disconnect', call => {
@@ -112,9 +112,11 @@ const TwilioVoiceManager = ({ children }) => {
 
         deviceDetails = {
             voiceDevice: voiceDevice,
+            activeCall,
+            callStatus,
             makeCall,
             sendDTMF,
-            hangUp
+            hangUp,
         }
     }
 
