@@ -1,12 +1,30 @@
-import { useState, useContext } from 'react';
+import { useState, useContext, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux'
 import { Button, Input, Stack, Heading, Paragraph, Label, Grid, Column, Card, Box} from "@twilio-paste/core";
 import { TwilioVoiceContext } from './VoiceManager/VoiceManager';
 
 function Caller({ ninetiesMode }) {
     const [destination, setCallDestination] = useState("");
     const dialer = useContext(TwilioVoiceContext)
+    const activeCall = useSelector((state) => state.activeCall)
+    const { addCallToStore, voiceDevice } = dialer
 
-    const { voiceDevice, activeCall } = dialer
+    // responsible for handling call events
+    useEffect(() => {
+        if (activeCall) {
+            activeCall.on('accept', call => {
+                addCallToStore(call)
+            })
+
+            activeCall.on('connect', call => {
+                addCallToStore(call)
+            })
+
+            activeCall.on('disconnect', call => {
+                addCallToStore(null)
+            })
+        }
+    }, [activeCall, addCallToStore])
 
     function makeCall() {
         dialer.makeCall(destination)
@@ -14,11 +32,11 @@ function Caller({ ninetiesMode }) {
 
     function hangUp() {
         console.log('voicemanager hangup invoked')
-        dialer.hangUp()
+        dialer.hangUp(activeCall)
     }
 
     function sendDTMF(num) {
-        dialer.sendDTMF(num)
+        dialer.sendDTMF(num, activeCall)
     }
 
     function generateDTMFColumn(col) {
@@ -37,14 +55,15 @@ function Caller({ ninetiesMode }) {
         } 
         
         if(voiceDevice && activeCall) {
-            console.log(JSON.stringify(activeCall))
+            console.log('determining status message')
+            console.log(activeCall)
             if (activeCall._wasConnected) {
                 return 'connected'
             }
 
             return activeCall._direction === 'OUTGOING' ?
                 `calling ${activeCall._options.twimlParams.to}` :
-                `call from ${activeCall._options.twimlParams.from}`
+                `call from ${activeCall.parameters.From}`
         }
             
         return 'initializing'
@@ -72,7 +91,7 @@ function Caller({ ninetiesMode }) {
                                     {activeCall && activeCall._direction === "INCOMING" ?
                                         <Button
                                             fullWidth={true}
-                                            disabled={activeCall._direction !== "INCOMING"}
+                                            disabled={activeCall._mediaStatus === "open"}
                                             onClick={() => activeCall.accept()}
                                             variant="primary" >
                                             Accept Call

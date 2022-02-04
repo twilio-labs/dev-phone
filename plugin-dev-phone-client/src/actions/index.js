@@ -26,12 +26,11 @@ export function updateCallRecord(payload) {
 }
 
 // Voice Device Actions
-export const SET_CALL_STATUS = "SET_CALL_STATUS"
+export const SET_ACTIVE_CALL = "SET_ACTIVE_CALL"
 
-export function setCallStatus(call) {
-    // TODO: Check if we're in a call, maybe make call payload more explicit
+export function setActiveCall(call) {
     return {
-        type: SET_CALL_STATUS,
+        type: SET_ACTIVE_CALL,
         call
     }
 }
