@@ -1,42 +1,24 @@
-import { useState, useContext, useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux'
+import { useState, useContext } from 'react';
+import { useSelector } from 'react-redux'
 import { Button, Input, Stack, Heading, Paragraph, Label, Grid, Column, Card, Box} from "@twilio-paste/core";
 import { TwilioVoiceContext } from './VoiceManager/VoiceManager';
 
 function Caller({ ninetiesMode }) {
     const [destination, setCallDestination] = useState("");
     const dialer = useContext(TwilioVoiceContext)
-    const activeCall = useSelector((state) => state.activeCall)
-    const { addCallToStore, voiceDevice } = dialer
-
-    // responsible for handling call events
-    useEffect(() => {
-        if (activeCall) {
-            activeCall.on('accept', call => {
-                addCallToStore(call)
-            })
-
-            activeCall.on('connect', call => {
-                addCallToStore(call)
-            })
-
-            activeCall.on('disconnect', call => {
-                addCallToStore(null)
-            })
-        }
-    }, [activeCall, addCallToStore])
+    const currentCallInfo = useSelector((state) => state.currentCallInfo)
+    const { acceptCall, voiceDevice } = dialer
 
     function makeCall() {
         dialer.makeCall(destination)
     }
 
     function hangUp() {
-        console.log('voicemanager hangup invoked')
-        dialer.hangUp(activeCall)
+        dialer.hangUp()
     }
 
     function sendDTMF(num) {
-        dialer.sendDTMF(num, activeCall)
+        dialer.sendDTMF(num)
     }
 
     function generateDTMFColumn(col) {
@@ -44,26 +26,24 @@ function Caller({ ninetiesMode }) {
             return <Button 
                     key={tone}
                     fullWidth={true}
-                    disabled={!activeCall}
-                    onClick={e => sendDTMF({tone})}>{tone}</Button>
+                    disabled={!currentCallInfo}
+                    onClick={e => sendDTMF(tone)}>{tone}</Button>
         })
     }
 
     function generateStatusMessage () {
-        if(voiceDevice && !activeCall) {
+        if (voiceDevice && !currentCallInfo) {
             return 'ready'
-        } 
+        }
         
-        if(voiceDevice && activeCall) {
-            console.log('determining status message')
-            console.log(activeCall)
-            if (activeCall._wasConnected) {
+        if(voiceDevice && currentCallInfo) {
+            if (currentCallInfo && currentCallInfo._wasConnected) {
                 return 'connected'
             }
 
-            return activeCall._direction === 'OUTGOING' ?
-                `calling ${activeCall._options.twimlParams.to}` :
-                `call from ${activeCall.parameters.From}`
+            return currentCallInfo._direction === 'OUTGOING' ?
+                `calling ${currentCallInfo._options.twimlParams.to}` :
+                `call from ${currentCallInfo.parameters.From}`
         }
             
         return 'initializing'
@@ -88,17 +68,17 @@ function Caller({ ninetiesMode }) {
 
                             <Grid spacing="space30" gutter="space30" marginBottom="space40">
                                 <Column span={6}>
-                                    {activeCall && activeCall._direction === "INCOMING" ?
+                                    {acceptCall && currentCallInfo && currentCallInfo._direction === "INCOMING" ?
                                         <Button
                                             fullWidth={true}
-                                            disabled={activeCall._mediaStatus === "open"}
-                                            onClick={() => activeCall.accept()}
+                                            disabled={currentCallInfo._mediaStatus === "open"}
+                                            onClick={acceptCall}
                                             variant="primary" >
                                             Accept Call
                                         </Button>
                                         : <Button
                                             fullWidth={true}
-                                            disabled={activeCall || !destination || destination.length < 6}
+                                            disabled={!!currentCallInfo || !destination || destination.length < 6}
                                             onClick={makeCall} >
                                             Call
                                         </Button>
@@ -107,7 +87,7 @@ function Caller({ ninetiesMode }) {
                                 <Column span={6}>
                                     <Button
                                         fullWidth={true}
-                                        disabled={!activeCall}
+                                        disabled={!currentCallInfo}
                                         onClick={hangUp}
                                         variant="destructive" >
                                         Hang up

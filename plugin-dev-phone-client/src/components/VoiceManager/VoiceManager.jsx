@@ -1,100 +1,107 @@
-import React from 'react'
+import React, {useCallback, useState, useEffect, useRef} from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { Device } from '@twilio/voice-sdk'
-import { setActiveCall } from '../../actions'
+import { updateCallInformation } from '../../actions'
 
-// Establish context with default values
+// Establish context with relevant websocket resources for child components
 const TwilioVoiceContext = React.createContext(null)
 export { TwilioVoiceContext }
-// export const useTwilioVoice = () => React.useContext(TwilioVoiceContext)
-
-// const setupDevice = (token, dispatch) => {
-//     // See: https://www.twilio.com/docs/voice/tutorials/browser-calls-node-express
-
-//     device.on("connect", (conn) => {
-//         console.log('connected', conn)
-//         dispatch(setCallStatus({
-//             inCall: true,
-//             message: `${Object.keys(conn.message).length === 0 ? 'Speaking with ' + conn.parameters.From : JSON.stringify(conn.message)}`,
-//             connection: conn
-//         }))
-//     });
-// }
 
 const TwilioVoiceManager = ({ children }) => {
+    const voiceDevice = useRef(null)
+    const deviceDetails = useRef({})
     const twilioAccessToken = useSelector(state => state.twilioAccessToken)
     const numberInUse = useSelector(state => state.numberInUse ? state.numberInUse.phoneNumber : "")
-    const callStatus = useSelector(state => state.callStatus)
     const dispatch = useDispatch()
+    const [activeCall, setActiveCall] = useState(null)
 
-    let voiceDevice
-    let deviceDetails
-
-    const addCallToStore = (call) => {
-        dispatch(setActiveCall(call))
-    }
+    const updateCallInfo = useCallback((call) => {
+        dispatch(updateCallInformation(call))
+    }, [dispatch])
 
     // responsible for making calls with Twilio Voice SDK
     const makeCall = async (destination) => {
         try {
-            const call = await voiceDevice.connect({
+            const call = await voiceDevice.current.connect({
                 params: {
                     "to": destination,
                     "from": numberInUse,
                     "identity": "dev-phone"
                 }
             })
-            addCallToStore(call)
+            setActiveCall(call)
         } catch (error) {
             console.error(error)
         }
     }
 
-    // Responsible for disconnecting a specific call
-    const hangUp = (call) => {
-        call.disconnect()
-        addCallToStore(null)
-    }
+    // responsible for handling call events and defining call methods
+    useEffect(() => {
+        if (activeCall) {
+            deviceDetails.current.acceptCall = () => activeCall.accept()
+            updateCallInfo(activeCall)
 
-    // Responsible for sending DTMF over the call
-    const sendDTMF = (num, call) => {
-        console.log("Sending DTMF " + num);
-        call.sendDigits(num);
-    }
+            // Responsible for disconnecting a specific call
+            deviceDetails.current.hangUp = () => {
+                activeCall.disconnect()
+                setActiveCall(null)
+            }
 
-    if (!voiceDevice) {
-        // initialize voiceDevice with Access Token Action/State from Redux?
-        voiceDevice = new Device(twilioAccessToken, {
+            // Responsible for sending DTMF over the call
+            deviceDetails.current.sendDTMF = (num) => {
+                console.log("Sending DTMF " + JSON.stringify(num));
+                activeCall.sendDigits(num);
+            }
+
+            activeCall.on('accept', call => {
+                updateCallInfo(call)
+            })
+
+            activeCall.on('connect', call => {
+                updateCallInfo(call)
+            })
+
+            activeCall.on('disconnect', call => {
+                call.removeAllListeners()
+                updateCallInfo(null)
+            })
+        }
+    }, [activeCall, updateCallInfo])
+
+    // Creates the Twilio Voice Device basis for this context
+    if (!voiceDevice.current) {
+        const device = new Device(twilioAccessToken, {
             codecPreferences: ["opus", "pcmu"],
             fakeLocalDTMF: true,
-            debug: true,
+            debug: false,
             enableRingingState: true,
             logLevel: '1'
         })
 
-        voiceDevice.register()
 
-        voiceDevice.on("registered", () => {
+        device.register()
+
+        device.on("registered", () => {
             console.log("Registered voice device")
-        });
-
-        voiceDevice.on("incoming", (call) => {
-            console.log("Receiving incoming call")
-            addCallToStore(call)
         })
 
-        deviceDetails = {
+        device.on("incoming", (call) => {
+            setActiveCall(call)
+        })
+
+        voiceDevice.current = device
+
+        deviceDetails.current = {
             voiceDevice: voiceDevice,
-            callStatus,
-            addCallToStore,
-            hangUp,
-            makeCall,
-            sendDTMF
+            hangUp: () => {},
+            sendDTMF: () => {},
+            updateCallInfo,
+            makeCall
         }
     }
 
     return (
-        <TwilioVoiceContext.Provider value={deviceDetails}>
+        <TwilioVoiceContext.Provider value={deviceDetails.current}>
             {children}
         </TwilioVoiceContext.Provider>
     )
