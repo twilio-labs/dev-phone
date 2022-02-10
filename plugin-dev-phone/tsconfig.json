@@ -1,0 +1,12 @@
+{
+    "compilerOptions": {
+        "outDir": "./built",
+        "allowJs": true,
+        "target": "ES5",
+        "strict": true,
+        "noImplicitReturns": true,
+        "noUnusedLocals": true,
+        "forceConsistentCasingInFileNames": true
+    },
+    "include": ["./src/**/*"]
+}
