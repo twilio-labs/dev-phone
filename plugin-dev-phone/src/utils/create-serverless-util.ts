@@ -9,9 +9,9 @@ export const constants = {
     INCOMING_MESSAGE_HANDLER: 'incoming-message-handler'
 }
 
-type deployEvent = {status: string, message: string}
+interface deployEvent {status: string, message: string}
 
-type devPhoneServerlessConfig = {
+interface devPhoneServerlessConfig {
     username: string,
     password: string,
     env: {

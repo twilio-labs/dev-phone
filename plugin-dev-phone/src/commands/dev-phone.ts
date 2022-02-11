@@ -262,7 +262,7 @@ class DevPhoneServer extends TwilioClientCommand {
                 voiceUrl: this.voiceUrl,
                 smsUrl: this.smsUrl,
                 statusCallback: this.statusCallback,
-            }).catch((err: unknown) => console.log(err));
+            }).catch((err: RestException) => console.log(err));
         console.log('✅ Webhooks updated\n');
         return updated;
     }
@@ -372,7 +372,7 @@ class DevPhoneServer extends TwilioClientCommand {
                     return keys.filter(key => key.friendlyName !== null && key.friendlyName.startsWith('dev-phone'));
                 }).then((keys: KeyInstance[]) => {
                     if (keys.length === 0) {
-                        console.log('🚮 No existing API Keys for the dev phone found');
+                        console.log('🤷‍♂️ No existing API Keys for the dev phone found');
                     }
                     console.log('🚮 Removing existing dev phone API Keys');
                     keys.forEach(async (key: KeyInstance) => {
@@ -402,7 +402,7 @@ class DevPhoneServer extends TwilioClientCommand {
                 return twilioApps.filter(twilioApp => twilioApp.friendlyName !== null && twilioApp.friendlyName.startsWith('dev-phone'));
             }).then((twilioApps: ApplicationInstance[]) => {
                 if (twilioApps.length === 0) {
-                    console.log('🤷‍♂️ existing dev phone TwiML apps found');
+                    console.log('🤷‍♂️ No existing dev phone TwiML apps found');
                 }
                 console.log('🚮 Removing existing TwiML apps');
                 twilioApps.forEach(async (twimlApp: ApplicationInstance) => {
@@ -466,7 +466,7 @@ class DevPhoneServer extends TwilioClientCommand {
                 return syncServices.filter(syncService => syncService.friendlyName !== null && syncService.friendlyName.startsWith('dev-phone'));
             }).then((syncServices: SyncServiceInstance[]) => {
                 if (syncServices.length === 0) {
-                    console.log('🚮 No existing dev phone Sync Services found');
+                    console.log('🤷‍♂️ No existing dev phone Sync Services found');
                 }
                 console.log('🚮 Removing existing Sync Services');
                 syncServices.forEach(async (syncService: SyncServiceInstance) => {
@@ -501,7 +501,7 @@ class DevPhoneServer extends TwilioClientCommand {
                 });
             }).then((convoServices: ConversationServiceInstance[]) => {
                 if (convoServices.length === 0) {
-                    console.log('🚮 No dev phone conversation instances found');
+                    console.log('🤷‍♂️ No dev phone conversation instances found');
                 }
                 console.log('🚮 Removing existing conversations')
                 convoServices.forEach(async (convoService: ConversationServiceInstance) => {
