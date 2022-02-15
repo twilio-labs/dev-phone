@@ -9,7 +9,6 @@
             "dom"
           ],
         "strict": true,
-        "noImplicitReturns": true,
         "noUnusedLocals": true,
         "forceConsistentCasingInFileNames": true,
         "esModuleInterop": true,

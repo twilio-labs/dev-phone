@@ -13,11 +13,9 @@ const { TwilioCliError } = require('@twilio/cli-core').services.error;
 import { ServiceInstance as ServerlessServiceInstance } from 'twilio/lib/rest/serverless/v1/service'
 import { ServiceInstance as SyncServiceInstance } from 'twilio/lib/rest/sync/v1/service'
 import { ServiceInstance as ConversationServiceInstance } from 'twilio/lib/rest/conversations/v1/service'
-import { MessageInstance } from 'twilio/lib/rest/api/v2010/account/message'
 import { KeyInstance } from 'twilio/lib/rest/api/v2010/account/key'
 import { ApplicationInstance } from 'twilio/lib/rest/api/v2010/account/application'
 import { IncomingPhoneNumberInstance } from 'twilio/lib/rest/api/v2010/account/incomingPhoneNumber'
-import RestException = require('twilio/lib/base/RestException')
 
 const AccessToken = require('twilio').jwt.AccessToken;
 const ChatGrant = AccessToken.ChatGrant;
@@ -46,7 +44,7 @@ class DevPhoneServer extends TwilioClientCommand {
         this.pns = [];
         this.jwt = null;
         this.apikey = {};
-        this.twimlApp = {};
+        this.functionServices = {};
         this.devPhoneName = generateRandomPhoneName();
         this.voiceUrl = null;
         this.smsUrl = null;
@@ -74,7 +72,7 @@ class DevPhoneServer extends TwilioClientCommand {
         this.serverless = await this.createFunction();
 
         // create TwiML App
-        this.twimlApp = await this.createTwimlApp();
+        this.functionServices = await this.createTwimlApp();
 
         // create JWT Access Token with ChatGrant, VoiceGrant and SyncGrant
         this.jwt = await this.createJwt();
@@ -120,65 +118,74 @@ class DevPhoneServer extends TwilioClientCommand {
             });
         })
 
-        app.get("/phone-numbers", (req: express.Request, res: express.Response) => {
+        app.get("/phone-numbers", async (req: express.Request, res: express.Response) => {
             if (this.pns.length === 0) {
-                return this.twilioClient.incomingPhoneNumbers.list()
-                    .then((pns: IncomingPhoneNumberInstance[]) => {
-                        this.pns = pns;
-                        res.json(reformatTwilioPns(pns));
-                    }).catch((err: RestException) => {
-                        console.error('Phone number API threw an error', err);
-                        res.status(err.status ? err.status : 400).send({ error: err });
-                    });
+                try {
+                    const pns = await this.twilioClient.incomingPhoneNumbers.list()
+                    this.pns = pns
+                    res.json(reformatTwilioPns(pns))
+                } catch (err: any) {
+                    console.error('Phone number API threw an error', err);
+                    res.status(err.status ? err.status : 400).send({ error: err })
+                }
             } else {
-                return res.json(reformatTwilioPns(this.pns));
+                res.json(reformatTwilioPns(this.pns));
             }
         })
 
-        app.post("/send-sms", (req:express.Request, res:express.Response) => {
+        app.post("/send-sms", async (req:express.Request, res:express.Response) => {
             const {body, from, to} = req.body
-            this.twilioClient.messages
-                .create({
-                    body,
-                    from,
-                    to
-                })
-                .then((message: MessageInstance) => res.json({ result: message }))
-                .catch((err: RestException) => {
-                    console.error('SMS API threw an error', err);
-                    res.status(err.status ? err.status : 400).send({ error: err });
-                });
+            try {
+                const message = await this.twilioClient.messages
+                    .create({
+                        body,
+                        from,
+                        to
+                    })
+                res.json({result: message})
+            } catch (err: any) {
+                console.error('SMS API threw an error', err);
+                res.status(err.status ? err.status : 400).send({ error: err });
+            };
         })
 
         app.all("/choose-phone-number", async (req:express.Request, res:express.Response) => {
-            const rawNumbers = await this.twilioClient.incomingPhoneNumbers
-                .list({ phoneNumber: req.body.phoneNumber, limit: 20 })
-            const selectedNumber = reformatTwilioPns(rawNumbers)["phone-numbers"];
+            try {
+                const rawNumbers = await this.twilioClient.incomingPhoneNumbers
+                    .list({ phoneNumber: req.body.phoneNumber, limit: 20 })
+                const selectedNumber = reformatTwilioPns(rawNumbers)["phone-numbers"];
 
-            // Should only have a single number
-            if (selectedNumber.length === 1) {
-                await this.removePhoneWebhooks();
-                this.cliSettings.phoneNumber = selectedNumber[0];
-                await this.updatePhoneWebhooks();
-                res.json({
-                    phoneNumber: this.cliSettings.phoneNumber,
-                    message: 'Phone number updated!'
-                });
-            } else {
-                console.error('Phone number not found!');
-                res.status(400).send({
-                    message: 'Phone number not found!'
-                });
+                // Should only have a single number
+                if (selectedNumber.length === 1) {
+                    await this.removePhoneWebhooks();
+                    this.cliSettings.phoneNumber = selectedNumber[0];
+                    await this.updatePhoneWebhooks();
+                    res.json({
+                        phoneNumber: this.cliSettings.phoneNumber,
+                        message: 'Phone number updated!'
+                    });
+                } else {
+                    console.error('Phone number not found!');
+                    res.status(400).send({
+                        message: 'Phone number not found!'
+                    });
+                }
+            } catch (err) {
+                console.error(err)
+                res.status(400).send(err);
             }
         })
 
         app.get("/client-token", async (req:express.Request, res:express.Response) => {
-
-            if (!this.jwt) {
-                this.jwt = await this.createJwt();
+            try {
+                if (!this.jwt) {
+                    this.jwt = await this.createJwt();
+                }
+    
+                res.json({ token: this.jwt });
+            } catch (err) {
+                res.status(400).send(err)
             }
-
-            res.json({ token: this.jwt });
         })
 
         const isHeadless = () => !!this.flags.headless;
@@ -232,18 +239,22 @@ class DevPhoneServer extends TwilioClientCommand {
     }
 
     async destroyFunction() {
-        return await this.twilioClient.serverless.services.list()
-            .then(async (services: ServerlessServiceInstance[]) => {
-                return services.filter(service => service.friendlyName !== null && service.friendlyName === this.devPhoneName);
-            }).then(async (services: ServerlessServiceInstance[]) => {
-                if (services.length > 0) {
-                    console.log('🚮 Removing serverless functions');
-                }
-                services.forEach(async (service: ServerlessServiceInstance) => {
-                    await this.twilioClient.serverless.services(service.sid)
+        try {
+            const functionServices = await this.twilioClient.serverless.services.list()
+            const devPhoneFunctionServices = functionServices.filter((functionServices: ServerlessServiceInstance) => {
+            return functionServices.friendlyName !== null && functionServices.friendlyName.startsWith('dev-phone')
+        })
+
+        if(devPhoneFunctionServices.length > 0) {
+            console.log('🚮 Removing existing dev phone Serverless Functions');
+            devPhoneFunctionServices.forEach(async (functionService: ServerlessServiceInstance) => {
+                await this.twilioClient.serverless.services(functionService.sid)
                         .remove();
-                })
-            }).catch((err: RestException) => console.log(err));
+            })
+        }
+        } catch (err) {
+            console.error(err)
+        }
     }
 
     async updatePhoneWebhooks() {
@@ -255,27 +266,36 @@ class DevPhoneServer extends TwilioClientCommand {
         this.cliSettings.phoneNumber.smsUrl = this.smsUrl;
         this.cliSettings.phoneNumber.statusCallback = this.statusCallback;
 
-        const updated = await this.twilioClient.incomingPhoneNumbers(this.cliSettings.phoneNumber.sid)
-            .update({
-                voiceUrl: this.voiceUrl,
-                smsUrl: this.smsUrl,
-                statusCallback: this.statusCallback,
-            }).catch((err: RestException) => console.log(err));
-        console.log('✅ Webhooks updated\n');
-        return updated;
+        try {
+            const updated = await this.twilioClient.incomingPhoneNumbers(this.cliSettings.phoneNumber.sid)
+                .update({
+                    voiceUrl: this.voiceUrl,
+                    smsUrl: this.smsUrl,
+                    statusCallback: this.statusCallback,
+                })
+            console.log('✅ Webhooks updated\n');
+            return updated;
+        } catch(err) {
+            console.error(err)
+        }
     }
 
     async removePhoneWebhooks() {
         if (!this.cliSettings.phoneNumber) return;
 
         console.log(`🚮 Removing incoming Voice and SMS webhooks for ${this.cliSettings.phoneNumber.phoneNumber}`);
-        const updated = await this.twilioClient.incomingPhoneNumbers(this.cliSettings.phoneNumber.sid)
-            .update({
-                voiceUrl: "",
-                smsUrl: "",
-                statusCallback: "",
-            }).catch((err: RestException) => console.log(err));
-        return updated;
+        try {
+            const updated = await this.twilioClient
+                .incomingPhoneNumbers(this.cliSettings.phoneNumber.sid)
+                .update({
+                    voiceUrl: "",
+                    smsUrl: "",
+                    statusCallback: "",
+                })
+            return updated
+        }catch(err) {
+            console.error(err)
+        }
     }
 
     async validatePropsAndFlags(props: any, flags: any) {
@@ -322,10 +342,10 @@ class DevPhoneServer extends TwilioClientCommand {
 
         if (this.twilioCliIsConfiguredWithApiKey()) {
             // This case is if the user has _not_ used env vars for
-            // their creds. Here we can reuse the api key and secret
+            // their creds. Here we can reuse the api functionServices and secret
             // that the CLI created when it was installed
 
-            console.log("✅ I'm using your profile API key.\n");
+            console.log("✅ I'm using your profile API functionServices.\n");
             return {
                 sid: this.currentProfile.apiKey,
                 secret: this.currentProfile.apiSecret
@@ -337,22 +357,22 @@ class DevPhoneServer extends TwilioClientCommand {
             // their environment, using their account creds but
             // their API_KEY and SECRET are not properly set.
             // the CLI uses the ACCOUNT_SID into currentProfile.apiKey
-            // and we need to generate another key
+            // and we need to generate another functionServices
 
-            console.log("💻 I'm creating a new API key...");
-            let key = await this.destroyApiKeys().then(async () => {
-                return await this.twilioClient.newKeys
-                    .create({ friendlyName: this.devPhoneName });
-            }).then(item => {
-                console.log(`✅ I'm using the API Key ${item.sid}\n`);
-                return item;
-            });
+            console.log("💻 I'm creating a new API functionServices...");
+            await this.destroyApiKeys()
+            try {
+                const functionServices = await this.twilioClient.newKeys.create({ friendlyName: this.devPhoneName });
+                console.log(`✅ I'm using the API Key ${functionServices.sid}\n`);
 
-            this.currentProfile.apiKey = key.sid;
-            this.currentProfile.apiSecret = key.secret;
-            return {
-                sid: this.currentProfile.apiKey,
-                secret: this.currentProfile.apiSecret
+                this.currentProfile.apiKey = functionServices.sid;
+                this.currentProfile.apiSecret = functionServices.secret;
+                return {
+                    sid: this.currentProfile.apiKey,
+                    secret: this.currentProfile.apiSecret
+                }
+            } catch (err) {
+                console.error(err)
             }
         }
     }
@@ -361,51 +381,59 @@ class DevPhoneServer extends TwilioClientCommand {
 
         if (this.twilioCliIsConfiguredWithApiKey()) {
             // we never created one
-            return;
-
+            return
         } else {
-
-            return await this.twilioClient.keys.list()
-                .then(async (keys: KeyInstance[]) => {
-                    return keys.filter(key => key.friendlyName !== null && key.friendlyName.startsWith('dev-phone'));
-                }).then((keys: KeyInstance[]) => {
-                    if (keys.length > 0) {
-                        console.log('🚮 Removing existing dev phone API Keys');
-                    }
-                    keys.forEach(async (key: KeyInstance) => {
+            try {
+                const keys = await this.twilioClient.keys.list()
+                const devPhoneKeys = keys.filter((key: KeyInstance) => {
+                    return key.friendlyName !== null && key.friendlyName.startsWith('dev-phone')
+                })
+                
+                if(devPhoneKeys.length > 0) {
+                    console.log('🚮 Removing existing dev phone API Keys');
+                    devPhoneKeys.forEach(async (key: KeyInstance) => {
                         await this.twilioClient.keys(key.sid).remove();
                     })
-                });
+                }
+            } catch (err) {
+                console.error(err)
+            }
         }
     }
 
     async createTwimlApp() {
-        console.log('💻 Creating a new TwiMl App to allow Voip calls from your browser...');
-        return await this.destroyTwimlApps().then(async () => {
-            return await this.twilioClient.applications
+        console.log('💻 Creating a new TwiMl App to allow Voip calls from your browser...'); 
+        await this.destroyTwimlApps()
+        try {
+            const app = await this.twilioClient.applications
                 .create({
                     voiceUrl: this.voiceOutboundUrl,
                     friendlyName: this.devPhoneName
                 });
-        }).then(item => {
-            console.log(`✅ I'm using the TwiMl App ${item.sid}\n`);
-            return item;
-        });
+            console.log(`✅ I'm using the TwiMl App ${app.sid}\n`);
+            return app;
+        } catch (err) {
+            console.error(err)
+        }
     }
 
     async destroyTwimlApps() {
-        return await this.twilioClient.applications.list()
-            .then(async (twilioApps: ApplicationInstance[]) => {
-                return twilioApps.filter(twilioApp => twilioApp.friendlyName !== null && twilioApp.friendlyName.startsWith('dev-phone'));
-            }).then((twilioApps: ApplicationInstance[]) => {
-                if (twilioApps.length > 0) {
-                    console.log('🚮 Removing existing TwiML apps');
-                }
-                twilioApps.forEach(async (twimlApp: ApplicationInstance) => {
-                    await this.twilioClient.applications(twimlApp.sid)
+        try {
+            const applications = await this.twilioClient.applications.list()
+            const devPhoneApps = applications.filter((functionServices: ApplicationInstance) => {
+                return functionServices.friendlyName !== null && functionServices.friendlyName.startsWith('dev-phone')
+            })
+
+            if(devPhoneApps.length > 0) {
+                console.log('🚮 Removing existing dev phone TwiML apps');
+                devPhoneApps.forEach(async (functionServices: ApplicationInstance) => {
+                    await this.twilioClient.applications(functionServices.sid)
                         .remove();
                 })
-            });
+            }
+        } catch (err) {
+            console.error(err)
+        }
     }
 
     async createJwt() {
@@ -416,7 +444,7 @@ class DevPhoneServer extends TwilioClientCommand {
 
         const voiceGrant = new VoiceGrant({
             incomingAllow: true,
-            outgoingApplicationSid: this.twimlApp.sid
+            outgoingApplicationSid: this.functionServices.sid
         });
 
         const syncGrant = new SyncGrant({
@@ -441,70 +469,80 @@ class DevPhoneServer extends TwilioClientCommand {
 
     async createSync() {
         console.log('💻 Creating a new sync list for call history...');
-        return await this.destroySyncs().then(async () => {
-            return await this.twilioClient.sync.services
+        await this.destroySyncs()
+        
+        try {
+            const syncService = await this.twilioClient.sync.services
                 .create({ friendlyName: this.devPhoneName });
-        }).then(item => {
-            console.log(`✅ I'm using the sync list ${item.sid}\n`);
-            return item;
-        }).then(async item => {
+            console.log(`✅ I'm using the sync service ${syncService.sid}\n`);
             // create 'CallLog' syncMap
-            await this.twilioClient.sync.services(item.sid).syncMaps.create({
+            await this.twilioClient.sync.services(syncService.sid).syncMaps.create({
                 uniqueName: CALL_LOG_MAP_NAME,
             });
-            return item;
-        });
+            return syncService
+        } catch (err) {
+            console.error(err)
+        }
     }
 
     async destroySyncs() {
-        return await this.twilioClient.sync.services.list()
-            .then(async (syncServices: SyncServiceInstance[]) => {
-                return syncServices.filter(syncService => syncService.friendlyName !== null && syncService.friendlyName.startsWith('dev-phone'));
-            }).then((syncServices: SyncServiceInstance[]) => {
-                if (syncServices.length > 0) {
-                    console.log('🚮 Removing existing Sync Services');
-                }
-                syncServices.forEach(async (syncService: SyncServiceInstance) => {
+        try {
+            const syncServices = await this.twilioClient.sync.services.list()
+            const devPhoneSyncServices = syncServices.filter((syncService: SyncServiceInstance) => {
+                return syncService.friendlyName !== null && syncService.friendlyName.startsWith('dev-phone')
+            })
+            
+            if(devPhoneSyncServices.length > 0) {
+                console.log('🚮 Removing existing dev phone Sync Services');
+                devPhoneSyncServices.forEach(async (syncService: SyncServiceInstance) => {
                     await this.twilioClient.sync.services(syncService.sid)
-                        .remove();
+                            .remove();
                 })
-            });
+            }
+        } catch (err) {
+            console.error(err)
+        }
     }
 
     // Creates a new conversation service, a conversation, and makes the dev phone a participant
     async createConversation() {
         await this.destroyConversations()
         console.log('💻 Creating a new conversation...');
-        const service = await this.twilioClient.conversations.services
+        try {
+            const service = await this.twilioClient.conversations.services
                 .create({ friendlyName: 'dev-phone' });
-        const conversationService = this.twilioClient.conversations.services(service.sid)
-        const newConversation = await conversationService.conversations.create({ friendlyName: this.devPhoneName })
-        await conversationService.conversations(newConversation.sid)
-            .participants.create({identity: this.devPhoneName})
-        console.log(`✅ I'm using the conversation ${newConversation.sid} from service ${service.sid}\n`);
-        return {
-            serviceSid: service.sid,
-            sid: newConversation.sid
+            const conversationService = this.twilioClient.conversations.services(service.sid)
+            const newConversation = await conversationService.conversations.create({ friendlyName: this.devPhoneName })
+            await conversationService.conversations(newConversation.sid)
+                .participants.create({identity: this.devPhoneName})
+            console.log(`✅ I'm using the conversation ${newConversation.sid} from service ${service.sid}\n`);
+            return {
+                serviceSid: service.sid,
+                sid: newConversation.sid
+            }
+        } catch (err) {
+            console.error(err)
         }
     }
 
     async destroyConversations() {
-        return await this.twilioClient.conversations.services.list()
-            .then(async (convoServices: ConversationServiceInstance[]) => {
-                return convoServices.filter((convoService: ConversationServiceInstance) => {
-                    convoService.friendlyName !== null && convoService.friendlyName.startsWith('dev-phone')
-                });
-            }).then((convoServices: ConversationServiceInstance[]) => {
-                if (convoServices.length > 0) {
-                    console.log('🚮 Removing existing conversations')
-                }
-                convoServices.forEach(async (convoService: ConversationServiceInstance) => {
+        try {
+            const convoServices = await this.twilioClient.conversations.services.list()
+            const devPhoneConvoServices = convoServices.filter((convoService: SyncServiceInstance) => {
+                return convoService.friendlyName !== null && convoService.friendlyName.startsWith('dev-phone')
+            })
+            
+            if(devPhoneConvoServices.length > 0) {
+                console.log('🚮 Removing existing dev phone Conversation Services');
+                devPhoneConvoServices.forEach(async (convoService: ConversationServiceInstance) => {
                     await this.twilioClient.conversations.services(convoService.sid)
-                        .remove();
+                            .remove();
                 })
-            });
+            }
+        } catch (err) {
+            console.error(err)
+        }
     }
-
 }
 
 DevPhoneServer.description = `Dev Phone local express server`
