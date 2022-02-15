@@ -44,7 +44,7 @@ class DevPhoneServer extends TwilioClientCommand {
         this.pns = [];
         this.jwt = null;
         this.apikey = {};
-        this.functionServices = {};
+        this.twimlApp = {};
         this.devPhoneName = generateRandomPhoneName();
         this.voiceUrl = null;
         this.smsUrl = null;
@@ -72,7 +72,7 @@ class DevPhoneServer extends TwilioClientCommand {
         this.serverless = await this.createFunction();
 
         // create TwiML App
-        this.functionServices = await this.createTwimlApp();
+        this.twimlApp = await this.createTwimlApp();
 
         // create JWT Access Token with ChatGrant, VoiceGrant and SyncGrant
         this.jwt = await this.createJwt();
@@ -342,10 +342,10 @@ class DevPhoneServer extends TwilioClientCommand {
 
         if (this.twilioCliIsConfiguredWithApiKey()) {
             // This case is if the user has _not_ used env vars for
-            // their creds. Here we can reuse the api functionServices and secret
+            // their creds. Here we can reuse the api keys and secret
             // that the CLI created when it was installed
 
-            console.log("✅ I'm using your profile API functionServices.\n");
+            console.log("✅ I'm using your profile API key.\n");
             return {
                 sid: this.currentProfile.apiKey,
                 secret: this.currentProfile.apiSecret
@@ -357,16 +357,16 @@ class DevPhoneServer extends TwilioClientCommand {
             // their environment, using their account creds but
             // their API_KEY and SECRET are not properly set.
             // the CLI uses the ACCOUNT_SID into currentProfile.apiKey
-            // and we need to generate another functionServices
+            // and we need to generate another key
 
-            console.log("💻 I'm creating a new API functionServices...");
+            console.log("💻 I'm creating a new API Key...");
             await this.destroyApiKeys()
             try {
-                const functionServices = await this.twilioClient.newKeys.create({ friendlyName: this.devPhoneName });
-                console.log(`✅ I'm using the API Key ${functionServices.sid}\n`);
+                const key = await this.twilioClient.newKeys.create({ friendlyName: this.devPhoneName });
+                console.log(`✅ I'm using the API Key ${key.sid}\n`);
 
-                this.currentProfile.apiKey = functionServices.sid;
-                this.currentProfile.apiSecret = functionServices.secret;
+                this.currentProfile.apiKey = key.sid;
+                this.currentProfile.apiSecret = key.secret;
                 return {
                     sid: this.currentProfile.apiKey,
                     secret: this.currentProfile.apiSecret
@@ -420,14 +420,14 @@ class DevPhoneServer extends TwilioClientCommand {
     async destroyTwimlApps() {
         try {
             const applications = await this.twilioClient.applications.list()
-            const devPhoneApps = applications.filter((functionServices: ApplicationInstance) => {
-                return functionServices.friendlyName !== null && functionServices.friendlyName.startsWith('dev-phone')
+            const devPhoneApps = applications.filter((twimlApp: ApplicationInstance) => {
+                return twimlApp.friendlyName !== null && twimlApp.friendlyName.startsWith('dev-phone')
             })
 
             if(devPhoneApps.length > 0) {
                 console.log('🚮 Removing existing dev phone TwiML apps');
-                devPhoneApps.forEach(async (functionServices: ApplicationInstance) => {
-                    await this.twilioClient.applications(functionServices.sid)
+                devPhoneApps.forEach(async (twimlApp: ApplicationInstance) => {
+                    await this.twilioClient.applications(twimlApp.sid)
                         .remove();
                 })
             }
@@ -444,7 +444,7 @@ class DevPhoneServer extends TwilioClientCommand {
 
         const voiceGrant = new VoiceGrant({
             incomingAllow: true,
-            outgoingApplicationSid: this.functionServices.sid
+            outgoingApplicationSid: this.twimlApp.sid
         });
 
         const syncGrant = new SyncGrant({
