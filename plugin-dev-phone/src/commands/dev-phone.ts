@@ -1,6 +1,7 @@
 import path = require('path');
 import fs = require('fs');
 import open = require('open');
+import express = require('express');
 
 import { flags } from '@oclif/command';
 import { deployServerless, constants } from '../utils/create-serverless-util';
@@ -22,9 +23,6 @@ const AccessToken = require('twilio').jwt.AccessToken;
 const ChatGrant = AccessToken.ChatGrant;
 const VoiceGrant = AccessToken.VoiceGrant;
 const SyncGrant = AccessToken.SyncGrant;
-
-import express = require('express');
-
 const PORT = process.env.PORT || 3001;
 const CALL_LOG_MAP_NAME = 'CallLog'
 
