@@ -402,7 +402,7 @@ class DevPhoneServer extends TwilioClientCommand {
     }
 
     async createTwimlApp() {
-        console.log('💻 Creating a new TwiMl App to allow Voip calls from your browser...'); 
+        console.log('💻 Creating a new TwiMl App to allow voice calls from your browser...'); 
         await this.destroyTwimlApps()
         try {
             const app = await this.twilioClient.applications
