@@ -1,7 +1,7 @@
-import path = require('path');
-import fs = require('fs');
-import open = require('open');
-import express = require('express');
+import path from 'path';
+import fs from 'fs';
+import open from 'open';
+import express from 'express';
 
 import { flags } from '@oclif/command';
 import { deployServerless, constants } from '../utils/create-serverless-util';
@@ -369,10 +369,9 @@ class DevPhoneServer extends TwilioClientCommand {
                 .then(async (keys: KeyInstance[]) => {
                     return keys.filter(key => key.friendlyName !== null && key.friendlyName.startsWith('dev-phone'));
                 }).then((keys: KeyInstance[]) => {
-                    if (keys.length === 0) {
-                        console.log('🤷‍♂️ No existing API Keys for the dev phone found');
+                    if (keys.length > 0) {
+                        console.log('🚮 Removing existing dev phone API Keys');
                     }
-                    console.log('🚮 Removing existing dev phone API Keys');
                     keys.forEach(async (key: KeyInstance) => {
                         await this.twilioClient.keys(key.sid).remove();
                     })
@@ -399,10 +398,9 @@ class DevPhoneServer extends TwilioClientCommand {
             .then(async (twilioApps: ApplicationInstance[]) => {
                 return twilioApps.filter(twilioApp => twilioApp.friendlyName !== null && twilioApp.friendlyName.startsWith('dev-phone'));
             }).then((twilioApps: ApplicationInstance[]) => {
-                if (twilioApps.length === 0) {
-                    console.log('🤷‍♂️ No existing dev phone TwiML apps found');
+                if (twilioApps.length > 0) {
+                    console.log('🚮 Removing existing TwiML apps');
                 }
-                console.log('🚮 Removing existing TwiML apps');
                 twilioApps.forEach(async (twimlApp: ApplicationInstance) => {
                     await this.twilioClient.applications(twimlApp.sid)
                         .remove();
@@ -463,10 +461,9 @@ class DevPhoneServer extends TwilioClientCommand {
             .then(async (syncServices: SyncServiceInstance[]) => {
                 return syncServices.filter(syncService => syncService.friendlyName !== null && syncService.friendlyName.startsWith('dev-phone'));
             }).then((syncServices: SyncServiceInstance[]) => {
-                if (syncServices.length === 0) {
-                    console.log('🤷‍♂️ No existing dev phone Sync Services found');
+                if (syncServices.length > 0) {
+                    console.log('🚮 Removing existing Sync Services');
                 }
-                console.log('🚮 Removing existing Sync Services');
                 syncServices.forEach(async (syncService: SyncServiceInstance) => {
                     await this.twilioClient.sync.services(syncService.sid)
                         .remove();
@@ -498,10 +495,9 @@ class DevPhoneServer extends TwilioClientCommand {
                     convoService.friendlyName !== null && convoService.friendlyName.startsWith('dev-phone')
                 });
             }).then((convoServices: ConversationServiceInstance[]) => {
-                if (convoServices.length === 0) {
-                    console.log('🤷‍♂️ No dev phone conversation instances found');
+                if (convoServices.length > 0) {
+                    console.log('🚮 Removing existing conversations')
                 }
-                console.log('🚮 Removing existing conversations')
                 convoServices.forEach(async (convoService: ConversationServiceInstance) => {
                     await this.twilioClient.conversations.services(convoService.sid)
                         .remove();

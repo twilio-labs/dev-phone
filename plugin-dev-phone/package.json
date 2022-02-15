@@ -41,7 +41,7 @@
   "license": "MIT",
   "oclif": {
     "name": "dev-phone",
-    "commands": "./src/commands",
+    "commands": "./dist/commands",
     "bin": "twilio",
     "repositoryPrefix": "<%- repo %>/blob/<%- version %>/<%- commandPath %>",
     "devPlugins": [
@@ -58,10 +58,11 @@
     "url": "https://github.com/twilio-labs/comlink-dev-phone.git"
   },
   "scripts": {
+    "build": "tsc",
     "postpack": "rm -f oclif.manifest.json",
     "XX-posttest": "eslint --ignore-path .gitignore . && npm audit",
     "prepack": "oclif-dev manifest && oclif-dev readme",
     "test": "nyc --check-coverage --lines 90 --reporter=html --reporter=text mocha --forbid-only \"test/**/*.test.js\"",
-    "version": "oclif-dev readme && git add README.md"
+    "version": "oclif-dev readme && git add README.md" 
   }
 }

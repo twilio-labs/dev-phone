@@ -2,11 +2,20 @@
     "compilerOptions": {
         "outDir": "./dist",
         "allowJs": true,
-        "target": "ES5",
+        "target": "es2015",
+        "module": "commonjs",
+        "lib": [
+            "es2017",
+            "dom"
+          ],
         "strict": true,
         "noImplicitReturns": true,
         "noUnusedLocals": true,
-        "forceConsistentCasingInFileNames": true
+        "forceConsistentCasingInFileNames": true,
+        "esModuleInterop": true,
+        "types": [],
+        "skipLibCheck": true
     },
+    "exclude": ["node_modules", "test", "dist"],
     "include": ["./src/**/*"]
 }

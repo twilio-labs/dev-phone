@@ -1,6 +1,6 @@
 import { TwilioServerlessApiClient } from '@twilio-labs/serverless-api';
-import fs = require('fs');
-import path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 export const constants = {
     SYNC_CALL_HISTORY: 'sync-call-history',
