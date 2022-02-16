@@ -4,6 +4,7 @@ import { connect } from "react-redux";
 import { changeNumberInUse, configureNumberInUse } from "./actions";
 import PhoneNumberPicker from "./components/PhoneNumberPicker";
 import SendSmsForm from "./components/SendSmsForm";
+import TwilioVoiceManager from "./components/VoiceManager/VoiceManager";
 import Caller from "./components/Caller";
 import CallHistory from "./components/CallHistory/CallHistory.jsx"
 
@@ -114,7 +115,9 @@ function App({
       {numberInUse ? (
         <Grid gutter="space30">
           <Column span={3} offset={1}>
-            <Caller numberInUse={numberInUse} ninetiesMode={ninetiesMode} />
+            <TwilioVoiceManager>
+              <Caller ninetiesMode={ninetiesMode} />
+            </TwilioVoiceManager>
             <CallHistory ninetiesMode={ninetiesMode} />
           </Column>
           <Column span={6} offset={1}>

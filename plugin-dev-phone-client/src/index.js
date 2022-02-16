@@ -10,9 +10,10 @@ import App from "./App";
 
 import { Theme } from "@twilio-paste/core/theme";
 
+/* TODO: make devtools conditional on dev environment */
 const store = createStore(reducer, compose(
   applyMiddleware(thunk),
-  window.devToolsExtension ? window.devToolsExtension() : f => f
+  window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
 ))
 
 store.dispatch(fetchClientToken())

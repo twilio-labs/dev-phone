@@ -1,81 +1,52 @@
-import { useState, useEffect } from 'react';
-import { Device } from 'twilio-client';
+import { useState, useContext } from 'react';
+import { useSelector } from 'react-redux'
 import { Button, Input, Stack, Heading, Paragraph, Label, Grid, Column, Card, Box} from "@twilio-paste/core";
-import { connect } from 'react-redux'
+import { TwilioVoiceContext } from './VoiceManager/VoiceManager';
 
-const setupDevice = (token, setCallStatus) => {
-    // See: https://www.twilio.com/docs/voice/tutorials/browser-calls-node-express
-    const device = new Device(token, {
-        codecPreferences: ["opus", "pcmu"],
-        fakeLocalDTMF: true,
-        debug: true,
-        enableRingingState: true
-    });
+function Caller({ ninetiesMode }) {
+    const [destination, setCallDestination] = useState("");
+    const dialer = useContext(TwilioVoiceContext)
+    const currentCallInfo = useSelector((state) => state.currentCallInfo)
+    const { acceptCall, voiceDevice } = dialer
 
-    device.on("ready", () => {
-        setCallStatus({ inCall: false, message: "ready" });
-    });
+    function makeCall() {
+        dialer.makeCall(destination)
+    }
 
-    device.on("error", (error) => {
-        setCallStatus({ inCall: false, message: `Error : ${error.message}` });
-    });
+    function hangUp() {
+        dialer.hangUp()
+    }
 
-    device.on("connect", (conn) => {
-        console.log('connected', conn)
-        setCallStatus({
-            inCall: true,
-            message: `${Object.keys(conn.message).length === 0 ? 'Speaking with ' + conn.parameters.From : JSON.stringify(conn.message)}`,
-            connection: conn
-        });
-    });
+    function sendDTMF(num) {
+        dialer.sendDTMF(num)
+    }
 
-    device.on("disconnect", (conn) => {
-        setCallStatus({ inCall: false, message: "ready (disconnected)", connection: null });
-    });
-
-    device.on("incoming", (conn) => {
-        setCallStatus({
-            inCall: true,
-            message: `Incoming call from ${conn.parameters.From}`,
-            connection: conn
+    function generateDTMFColumn(col) {
+        return col.map(tone => {
+            return <Button 
+                    key={tone}
+                    fullWidth={true}
+                    disabled={!currentCallInfo}
+                    onClick={e => sendDTMF(tone)}>{tone}</Button>
         })
-    })
-
-    return device;
-}
-
-function Caller({ numberInUse, twilioAccessToken, ninetiesMode }) {
-
-    const [callStatus, setCallStatus] = useState({ inCall: false, message: "initializing" });
-    const [device, setDevice] = useState(null);
-    const [calleePn, setCalleePn] = useState("");
-
-    useEffect(() => {
-        const device = setupDevice(twilioAccessToken, setCallStatus);
-        setDevice(device);
-    }, [twilioAccessToken]);
-
-    const makeCall = () => {
-        try {
-            device.connect({
-                "to": calleePn,
-                "from": numberInUse,
-                "identity": "dev-phone"
-            });
-        } catch (error) {
-            console.error(error)
-        }
     }
 
-    const hangUp = () => {
-        device.disconnectAll();
-    }
-
-    const sendDTMF = (num) => {
-        if (callStatus.connection) {
-            console.log("Sending DTMF " + num);
-            callStatus.connection.sendDigits(num);
+    function generateStatusMessage () {
+        if (voiceDevice && !currentCallInfo) {
+            return 'ready'
         }
+        
+        if(voiceDevice && currentCallInfo) {
+            if (currentCallInfo && currentCallInfo._wasConnected) {
+                return 'connected'
+            }
+
+            return currentCallInfo._direction === 'OUTGOING' ?
+                `calling ${currentCallInfo._options.twimlParams.to}` :
+                `call from ${currentCallInfo.parameters.From}`
+        }
+            
+        return 'initializing'
     }
 
     return (
@@ -90,24 +61,24 @@ function Caller({ numberInUse, twilioAccessToken, ninetiesMode }) {
                                 <Input
                                     type="text"
                                     id="calleePn"
-                                    placeholder="E.164 format please"
-                                    defaultValue={calleePn}
-                                    onChange={e => setCalleePn(e.target.value)} />
+                                    placeholder="E.164 format, e.g., +15551234567"
+                                    defaultValue={destination}
+                                    onChange={e => setCallDestination(e.target.value)} />
                             </Box>
 
                             <Grid spacing="space30" gutter="space30" marginBottom="space40">
                                 <Column span={6}>
-                                    {callStatus.connection ?
+                                    {acceptCall && currentCallInfo && currentCallInfo._direction === "INCOMING" ?
                                         <Button
                                             fullWidth={true}
-                                            disabled={!callStatus.connection}
-                                            onClick={() => callStatus.connection.accept()}
+                                            disabled={currentCallInfo._mediaStatus === "open"}
+                                            onClick={acceptCall}
                                             variant="primary" >
                                             Accept Call
                                         </Button>
                                         : <Button
                                             fullWidth={true}
-                                            disabled={callStatus.inCall || !calleePn || calleePn.length < 6}
+                                            disabled={!!currentCallInfo || !destination || destination.length < 6}
                                             onClick={makeCall} >
                                             Call
                                         </Button>
@@ -116,7 +87,7 @@ function Caller({ numberInUse, twilioAccessToken, ninetiesMode }) {
                                 <Column span={6}>
                                     <Button
                                         fullWidth={true}
-                                        disabled={!callStatus.inCall}
+                                        disabled={!currentCallInfo}
                                         onClick={hangUp}
                                         variant="destructive" >
                                         Hang up
@@ -127,45 +98,30 @@ function Caller({ numberInUse, twilioAccessToken, ninetiesMode }) {
                             <Grid spacing="space30" gutter="space30">
                                 <Column span={4}>
                                     <Stack orientation="vertical" spacing="space40">
-                                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('1')}>1</Button>
-                                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('4')}>4</Button>
-                                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('7')}>7</Button>
-                                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('*')}>*</Button>
+                                        {generateDTMFColumn(['1', '4', '7', '*'])}
                                     </Stack>
                                 </Column>
                                 <Column span={4}>
                                     <Stack orientation="vertical" spacing="space40">
-                                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('2')}>2</Button>
-                                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('5')}>5</Button>
-                                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('8')}>8</Button>
-                                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('0')}>0</Button>
+                                        {generateDTMFColumn(['2', '5', '8', '0'])}
                                     </Stack>
                                 </Column>
                                 <Column span={4}>
                                     <Stack orientation="vertical" spacing="space40">
-                                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('3')}>3</Button>
-                                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('6')}>6</Button>
-                                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('9')}>9</Button>
-                                        <Button fullWidth={true} disabled={!callStatus.inCall} onClick={e => sendDTMF('#')}>#</Button>
+                                        {generateDTMFColumn(['3', '6', '9', '#'])}
                                     </Stack>
                                 </Column>
-
                             </Grid>
                         </Stack>
-
                     </Card>
                 </Box>
 
                 <Paragraph>
-                    Call status: <em>{callStatus.message}</em>
+                    <em>{generateStatusMessage()}</em>
                 </Paragraph>
             </Stack>
         </Box>
     );
 }
 
-const mapStateToProps = (state) => ({
-    twilioAccessToken: state.twilioAccessToken,
-});
-
-export default connect(mapStateToProps)(Caller);
+export default Caller;

@@ -25,6 +25,16 @@ export function updateCallRecord(payload) {
     }
 }
 
+// Voice Device Actions
+export const UPDATE_CALL_INFORMATION = "UPDATE_CALL_INFORMATION"
+
+export function updateCallInformation(call) {
+    return {
+        type: UPDATE_CALL_INFORMATION,
+        call
+    }
+}
+
 
 // Logic for communicating with the local backend
 export const DEV_PHONE_NUMBER_SELECTED = "DEV_PHONE_NUMBER_SELECTED"
