@@ -1,32 +1,40 @@
-const {
-    TwilioServerlessApiClient,
-} = require('@twilio-labs/serverless-api');
-const fs = require('fs');
-const path = require('path');
+import { TwilioServerlessApiClient } from '@twilio-labs/serverless-api';
+import fs from 'fs';
+import path from 'path';
 
-const constants = {
+export const constants = {
     SYNC_CALL_HISTORY: 'sync-call-history',
     INCOMING_CALL_HANDLER: 'incoming-call-handler',
     OUTBOUND_CALL_HANDLER: 'outbound-call-handler',
     INCOMING_MESSAGE_HANDLER: 'incoming-message-handler'
 }
 
-async function deployServerless(
-    username,
-    password,
-    env,
-    onUpdate
-) {
+interface deployEvent {status: string, message: string}
+
+interface devPhoneServerlessConfig {
+    username: string,
+    password: string,
+    env: {
+        SYNC_SERVICE_SID: string,
+        CONVERSATION_SID: string,
+        CONVERSATION_SERVICE_SID: string,
+        DEV_PHONE_NAME: string,
+        CALL_LOG_MAP_NAME: string
+    },
+    onUpdate?: (event: deployEvent) => void
+}
+
+export async function deployServerless(context: devPhoneServerlessConfig) {
     const config = {
-        username,
-        password,
-        env,
+        username: context.username,
+        password: context.password,
+        env: context.env,
         pkgJson: {
             "dependencies" : {
                 "twilio": "^3.71.3"
             }
         },
-        serviceName: env.DEV_PHONE_NAME,
+        serviceName: context.env.DEV_PHONE_NAME,
         overrideExistingService: true,
         functionsEnv: '',
         functions: [
@@ -60,20 +68,18 @@ async function deployServerless(
 
     try {
         const client = new TwilioServerlessApiClient(config);
-        if (onUpdate) {
-            client.on('status-update', (evt) => {
-                onUpdate(evt.message);
+        if (context.onUpdate) {
+            const onUpdate = context.onUpdate
+            //@ts-ignore
+            client.on('status-update', (evt: deployEvent) => {
+                onUpdate(evt);
             });
         }
+        //@ts-ignore
         const result = await client.deployProject(config);
         return result;
     } catch (err) {
         console.log(err);
         throw new Error('Something went wrong. Try again later');
     }
-}
-
-module.exports = {
-    deployServerless,
-    constants
 }

@@ -12,6 +12,7 @@ You will need:
   1. Install the plugin
      * `cd plugin-dev-phone`
      * `npm install`
+     * `npm run build`
      * `cd ..`
   1.  Link the plugin with your Twilio CLI installation
      * `twilio plugins:link $(pwd)/plugin-dev-phone`
@@ -41,7 +42,7 @@ From now on you can edit the plugin server code (in `plugin-dev-phone`, running 
 
 Work in `plugin-dev-phone/`. Start with `src/commands/dev-phone.js`.
 
-This does _not_ hot-reload, so whenever you make edits you will need to stop and restart `twilio dev-phone`.
+This does _not_ hot-reload, so whenever you make edits you will need to stop, rebuild with `npm run build` and restart with `twilio dev-phone`.
 
 You can make requests directly to this server without running the front end, eg http://localhost:3001/ping
 
