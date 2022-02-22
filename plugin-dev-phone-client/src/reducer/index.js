@@ -12,7 +12,7 @@ import {
 } from '../actions'
 
 const initialState = {
-    currentCallInfo: null,
+    currentCallInfo: {},
     callLog: [],
     channelData: {},
     twilioAccessToken: '',
@@ -31,15 +31,15 @@ export default function reducer(state = initialState, action) {
         case ADD_CALL_RECORD:
             return {...state, callLog: [ action.payload, ...state.callLog]}
         case UPDATE_CALL_RECORD:
-            let callLog = []
+            const newLog = []
             state.callLog.forEach((call, index) => {
                 if (call.Sid === action.payload.Sid) {
-                    callLog[index] = action.payload
+                    newLog[index] = action.payload
                 } else {
-                    callLog[index] = call
+                    newLog[index] = call
                 }
             })
-            return {...state, callLog: callLog}
+            return {...state, callLog: newLog}
         case CONFIGURE_NUMBER_IN_USE:
             return {...state, numberInUse: action.number}
         case DEV_PHONE_CONFIG_ERROR:

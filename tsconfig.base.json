@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+        "allowJs": true,
+        "target": "es2015",
+        "module": "commonjs",
+        "lib": [
+            "es2017",
+            "dom"
+          ],
+        "strict": true,
+        "noUnusedLocals": true,
+        "forceConsistentCasingInFileNames": true,
+        "esModuleInterop": true,
+        "types": [],
+        "skipLibCheck": true
+    },
+}

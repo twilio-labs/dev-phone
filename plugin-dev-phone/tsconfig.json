@@ -1,20 +1,8 @@
 {
+    "extends": "../tsconfig.base.json",
     "compilerOptions": {
-        "outDir": "./dist",
-        "allowJs": true,
-        "target": "es2015",
-        "module": "commonjs",
-        "lib": [
-            "es2017",
-            "dom"
-          ],
-        "strict": true,
-        "noUnusedLocals": true,
-        "forceConsistentCasingInFileNames": true,
-        "esModuleInterop": true,
-        "types": [],
-        "skipLibCheck": true
+        "outDir": "./dist"
     },
-    "exclude": ["node_modules", "test", "dist"],
-    "include": ["./src/**/*"]
+    "include": ["./src/**/*"],
+    "exclude": ["node_modules", "test", "dist"]
 }

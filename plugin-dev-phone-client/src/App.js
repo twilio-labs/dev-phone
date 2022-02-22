@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import Konami from "konami";
 import { connect } from "react-redux";
-import { changeNumberInUse, configureNumberInUse } from "./actions";
-import PhoneNumberPicker from "./components/PhoneNumberPicker";
+import { changeNumberInUse } from "./actions";
+import PhoneNumberPicker from "./components/PhoneNumberPicker/PhoneNumberPicker";
 import SendSmsForm from "./components/SendSmsForm";
 import TwilioVoiceManager from "./components/VoiceManager/VoiceManager";
 import Caller from "./components/Caller";
@@ -45,7 +45,6 @@ const setupKonamiCode = (setNinetiesMode) => {
 function App({
   channelData,
   changeNumberInUse,
-  configureNumberInUse,
   numberInUse,
 }) {
 
@@ -143,7 +142,6 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = (dispatch) => ({
   changeNumberInUse: (number) => dispatch(changeNumberInUse(number)),
-  configureNumberInUse: (number) => dispatch(configureNumberInUse(number)),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(App);

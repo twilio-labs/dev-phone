@@ -11,61 +11,73 @@ import {
   Text,
   Card
 } from "@twilio-paste/core";
+import { useDispatch } from "react-redux";
+import { configureNumberInUse } from "../../actions";
 
-const hasExistingSmsConfig = (pn) => {
+
+interface phoneNumber {
+  smsUrl: string,
+  voiceUrl: string,
+  phoneNumber: string,
+  friendlyName: string
+}
+
+const hasExistingSmsConfig = (pn: phoneNumber) => {
   return pn.smsUrl && pn.smsUrl !== "https://demo.twilio.com/welcome/sms/reply";
 };
 
-const hasExistingVoiceConfig = (pn) => {
+const hasExistingVoiceConfig = (pn: phoneNumber) => {
   return (
     pn.voiceUrl && pn.voiceUrl !== "https://demo.twilio.com/welcome/voice/"
   );
 };
 
-const hasExistingConfig = (pn) => {
+const hasExistingConfig = (pn: phoneNumber) => {
   return hasExistingSmsConfig(pn) || hasExistingVoiceConfig(pn);
 };
 
-const getSelectLabelForPn = (pn) => {
+const getSelectLabelForPn = (pn: phoneNumber) => {
   const warning = hasExistingConfig(pn) ? "⚠️ " : "";
   return `${warning}${pn.phoneNumber} [${pn.friendlyName}]`;
 };
 
-const getPnDetailsByNumber = (pn, allPns) => {
+const getPnDetailsByNumber = (pn: string, allPns: phoneNumber[]) => {
   return allPns.filter((thisPn) => thisPn.phoneNumber === pn)[0];
 };
 
-const sortUnconfiguredNumbersFirstThenAlphabetically = (pn1, pn2) => {
+const sortUnconfiguredNumbersFirstThenAlphabetically = (pn1: phoneNumber, pn2: phoneNumber) => {
   if (hasExistingConfig(pn1) && !hasExistingConfig(pn2)) return 1;
   if (hasExistingConfig(pn2) && !hasExistingConfig(pn1)) return -1;
   return pn1.phoneNumber.localeCompare(pn2.phoneNumber);
 };
 
-function PhoneNumberPicker({ configureNumberInUse }) {
-  const [twilioPns, setTwilioPns] = useState(null);
-  const [chosenPn, setChosenPn] = useState(null);
+function PhoneNumberPicker() {
+  const [twilioPns, setTwilioPns] = useState<null | phoneNumber[]>(null);
+  const [chosenPn, setChosenPn] = useState<null | phoneNumber>(null);
+  const dispatch = useDispatch()
 
   useEffect(() => {
     if(chosenPn) {
       return 
     }
 
-    fetch("/phone-numbers")
-      .then((res) => res.json())
-      .then((data) => {
-        data["phone-numbers"].sort(
+    async function getPhoneNumbers() {
+      const phoneNumbers = await fetch("/phone-numbers").then((res) => res.json())
+      phoneNumbers["phone-numbers"].sort(
           sortUnconfiguredNumbersFirstThenAlphabetically
+        )
+      setTwilioPns(phoneNumbers["phone-numbers"]);
+      if (phoneNumbers["phone-numbers"].length !== 0) {
+        setChosenPn(
+          getPnDetailsByNumber(
+            phoneNumbers["phone-numbers"][0].phoneNumber,
+            phoneNumbers["phone-numbers"]
+          )
         );
-        setTwilioPns(data["phone-numbers"]);
-        if (data["phone-numbers"].length !== 0) {
-          setChosenPn(
-            getPnDetailsByNumber(
-              data["phone-numbers"][0].phoneNumber,
-              data["phone-numbers"]
-            )
-          );
-        }
-      });
+      }
+    };
+
+    getPhoneNumbers()
   }, [chosenPn]);
 
   if (twilioPns === null) {
@@ -80,7 +92,7 @@ function PhoneNumberPicker({ configureNumberInUse }) {
 
           <Heading as="h2" variant="heading20">Choose a phone number for this dev-phone</Heading>
 
-          <Stack orientation="vertical">
+          <Stack orientation="vertical" spacing="space60">
             <Label htmlFor="devPhonePn" required>
               Phone number
             </Label>
@@ -90,11 +102,11 @@ function PhoneNumberPicker({ configureNumberInUse }) {
                 setChosenPn(getPnDetailsByNumber(e.target.value, twilioPns))
               }
             >
-              {twilioPns.map((pn) => (
-                <Option key={pn.phoneNumber} value={pn.phoneNumber}>
-                  {getSelectLabelForPn(pn)}
-                </Option>
-              ))}
+            {twilioPns.map((pn: phoneNumber) => (
+              <Option key={pn.phoneNumber} value={pn.phoneNumber}>
+                {getSelectLabelForPn(pn)}
+              </Option>
+            ))}
             </Select>
           </Stack>
 
@@ -106,12 +118,12 @@ function PhoneNumberPicker({ configureNumberInUse }) {
                     This phone number has existing config which will be overwritten
                   </Alert>
                   {hasExistingSmsConfig(chosenPn) ? (
-                    <Text >Configured SMS URL: <em>{chosenPn.smsUrl}</em></Text>
+                    <Text as="p" >Configured SMS URL: <em>{chosenPn.smsUrl}</em></Text>
                   ) : (
                     ""
                   )}
                   {hasExistingVoiceConfig(chosenPn) ? (
-                    <Text>Configured Voice URL: <em>{chosenPn.voiceUrl}</em></Text>
+                    <Text as="p">Configured Voice URL: <em>{chosenPn.voiceUrl}</em></Text>
                   ) : (
                     ""
                   )}
@@ -120,7 +132,7 @@ function PhoneNumberPicker({ configureNumberInUse }) {
                 ""
               )}
 
-              <Button variant="primary" onClick={(e) => configureNumberInUse(chosenPn)}>
+              <Button variant="primary" onClick={(e) => dispatch(configureNumberInUse(chosenPn))}>
                 Use this phone number
               </Button>
             </Stack>
