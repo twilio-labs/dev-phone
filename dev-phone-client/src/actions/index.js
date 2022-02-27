@@ -63,10 +63,11 @@ export function devPhoneConfigError(error) {
 }
 
 export function configureNumberInUse(number) {
+    console.log("configuring phone number in use")
     return async function (dispatch) {
         dispatch(selectDevPhoneNumberRequest())
         try {
-            const response = await fetch('/api/choose-phone-number', {
+            const response = await fetch('/choose-phone-number', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -110,7 +111,7 @@ export function fetchClientToken() {
     return async function (dispatch) {
         dispatch(clientTokenRequest)
         try {
-            const response = await fetch('/api/client-token')
+            const response = await fetch('/client-token')
             const data = await response.json()
             dispatch(clientTokenRequestSuccess(data.token))
         } catch (error) {
@@ -147,7 +148,7 @@ export function fetchChannelData() {
     return async function (dispatch) {
         dispatch(channelDataRequest)
         try {
-            const response = await fetch('/api/plugin-settings')
+            const response = await fetch('/plugin-settings')
             const data = await response.json()
             dispatch(channelDataRequestSuccess(data))
         } catch (error) {

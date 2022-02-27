@@ -1,10 +1,10 @@
 const path = require('path')
-const webpack = require('webpack')
+const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 
-
 module.exports = {
-    mode: 'development',
+    mode: 'production',
+    devtool: 'cheap-module-source-map',
     entry: {
         main: './src/index.js'
     },
@@ -12,23 +12,14 @@ module.exports = {
         path: path.resolve(__dirname, './dist'),
         filename: 'bundle.js'
     },
-    devServer: {
-        static: {
-          directory: path.join(__dirname, 'public'),
-        },
-        proxy: {
-            '**': {
-                target: 'http://localhost:3001',
-                bypass: (req) => (req.headers.accept.includes("html") ? "/" : null)
-            },
-        },
-        compress: true,
-        port: 3000,
-    },
-    devtool: 'eval',
     plugins: [
         new webpack.ProvidePlugin({
                process: 'process/browser',
+        }),
+        new webpack.DefinePlugin({
+            'process.env': {
+              'NODE_ENV': JSON.stringify('production')
+            }
         }),
         new HtmlWebpackPlugin({
             template: "./public/index.html"

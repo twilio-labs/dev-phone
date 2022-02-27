@@ -50,7 +50,7 @@ function PhoneNumberPicker({ configureNumberInUse }) {
       return 
     }
 
-    fetch("/api/phone-numbers")
+    fetch("/phone-numbers")
       .then((res) => res.json())
       .then((data) => {
         data["phone-numbers"].sort(

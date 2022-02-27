@@ -24,7 +24,7 @@ const sendSms = (from, to, body) => {
   console.table({ from, to, body });
 
   if (from && to && body) {
-    fetch("/api/send-sms", {
+    fetch("/send-sms", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ from, to, body }),
