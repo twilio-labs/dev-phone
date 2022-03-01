@@ -4,7 +4,7 @@
   "description": "A react-based UI for the Twilio CLI softphone plugin",
   "main": "index.js",
   "scripts": {
-    "build": "webpack --config prod.webpack.config.js",
+    "build": "webpack --config prod.webpack.config.js --mode production",
     "start": "webpack serve"
   },
   "author": "twilio-labs",

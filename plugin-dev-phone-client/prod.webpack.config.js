@@ -10,7 +10,7 @@ module.exports = {
     },
     output: {
         path: path.resolve(__dirname, './dist'),
-        filename: 'bundle.js'
+        filename: '[name].bundle.js'
     },
     plugins: [
         new webpack.ProvidePlugin({
@@ -43,4 +43,16 @@ module.exports = {
             "util": require.resolve("util/")
         }
     },
+    optimization: {
+        runtimeChunk: 'single',
+        splitChunks: {
+          cacheGroups: {
+            vendors: {
+              test: /[\\/]node_modules[\\/]/,
+              name: "vendor",
+              chunks: "all"
+            }
+          }
+        }
+      }
 }
