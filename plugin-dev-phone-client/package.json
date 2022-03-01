@@ -1,51 +1,39 @@
 {
-  "name": "client",
-  "version": "0.1.0",
-  "private": true,
-  "proxy": "http://localhost:3001",
-  "engines": {
-    "node": ">=14.0.0"
+  "name": "dev-phone-client",
+  "version": "1.0.0",
+  "description": "A react-based UI for the Twilio CLI softphone plugin",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack --config prod.webpack.config.js",
+    "start": "webpack serve"
+  },
+  "author": "twilio-labs",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/core": "^7.17.5",
+    "@babel/plugin-transform-react-jsx": "^7.17.3",
+    "@babel/preset-env": "^7.16.11",
+    "@babel/preset-react": "^7.16.7",
+    "babel-loader": "^8.2.3",
+    "css-loader": "^6.6.0",
+    "html-webpack-plugin": "^5.5.0",
+    "webpack": "^5.69.1",
+    "webpack-cli": "^4.9.2",
+    "webpack-dev-server": "^4.7.4"
   },
   "dependencies": {
-    "@testing-library/jest-dom": "^5.15.1",
-    "@testing-library/react": "^11.2.7",
-    "@testing-library/user-event": "^12.8.3",
     "@twilio-paste/core": "10.18.0",
     "@twilio-paste/icons": "5.9.0",
     "@twilio/conversations": "^2.0.0",
     "@twilio/voice-sdk": "^2.1.0",
     "konami": "^1.6.3",
+    "process": "^0.11.10",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-redux": "^7.2.6",
-    "react-scripts": "^4.0.3",
     "redux": "^4.1.2",
     "redux-thunk": "^2.4.1",
     "twilio-sync": "^3.0.6",
-    "web-vitals": "^1.1.2"
-  },
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+    "util": "^0.12.4"
   }
 }

@@ -63,6 +63,7 @@ export function devPhoneConfigError(error) {
 }
 
 export function configureNumberInUse(number) {
+    console.log("configuring phone number in use")
     return async function (dispatch) {
         dispatch(selectDevPhoneNumberRequest())
         try {
