@@ -7,6 +7,6 @@ cd ..
 
 echo "Copying built assets to /plugin-dev-phone/public"
 rm -rf plugin-dev-phone/public
-cp -R  plugin-dev-phone-client/build plugin-dev-phone/public
+cp -R  plugin-dev-phone-client/dist plugin-dev-phone/public
 
 echo "All done. Built assets will be served by the express server"
