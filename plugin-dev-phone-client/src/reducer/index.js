@@ -8,7 +8,9 @@ import {
     CONFIGURE_NUMBER_IN_USE,
     ADD_CALL_RECORD,
     UPDATE_CALL_RECORD,
-    UPDATE_CALL_INFORMATION
+    UPDATE_CALL_INFORMATION,
+    REQUEST_PHONE_NUMBERS_SUCCESS,
+    REQUEST_PHONE_NUMBERS_ERROR
 } from '../actions'
 
 const initialState = {
@@ -51,6 +53,10 @@ export default function reducer(state = initialState, action) {
         case REQUEST_CHANNEL_DATA_SUCCESS:
             return {...state, channelData: action.payload}
         case REQUEST_CHANNEL_DATA_ERROR:
+            return {...state, error: action.error}
+        case REQUEST_PHONE_NUMBERS_SUCCESS:
+            return 
+        case REQUEST_PHONE_NUMBERS_ERROR:
             return {...state, error: action.error}
         case UPDATE_CALL_INFORMATION:
             return {...state, currentCallInfo: action.call ? {...state.currentCallInfo, ...action.call} : null}

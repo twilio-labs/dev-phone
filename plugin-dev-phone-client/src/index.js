@@ -4,9 +4,9 @@ import { Provider } from 'react-redux'
 import { compose, createStore, applyMiddleware} from 'redux'
 import thunk from 'redux-thunk'
 import reducer from './reducer'
-import { fetchChannelData, fetchClientToken } from './actions'
+import { fetchChannelData, fetchClientToken, fetchPhoneNumbers } from './actions'
 import "./index.css";
-import App from "./App";
+import App from "./components/App/App";
 
 import { Theme } from "@twilio-paste/core/theme";
 
