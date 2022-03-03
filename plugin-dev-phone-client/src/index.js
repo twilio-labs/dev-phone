@@ -6,7 +6,7 @@ import thunk from 'redux-thunk'
 import reducer from './reducer'
 import { fetchChannelData, fetchClientToken } from './actions'
 import "./index.css";
-import App from "./App";
+import App from "./components/App/App";
 
 import { Theme } from "@twilio-paste/core/theme";
 
