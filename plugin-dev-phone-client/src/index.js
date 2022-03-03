@@ -4,7 +4,7 @@ import { Provider } from 'react-redux'
 import { compose, createStore, applyMiddleware} from 'redux'
 import thunk from 'redux-thunk'
 import reducer from './reducer'
-import { fetchChannelData, fetchClientToken, fetchPhoneNumbers } from './actions'
+import { fetchChannelData, fetchClientToken } from './actions'
 import "./index.css";
 import App from "./components/App/App";
 

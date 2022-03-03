@@ -83,43 +83,6 @@ export function configureNumberInUse(number) {
     }
 }
 
-export const REQUEST_PHONE_NUMBERS = "REQUEST_PHONE_NUMBERS"
-export const REQUEST_PHONE_NUMBERS_SUCCESS = "REQUEST_PHONE_NUMBERS_SUCCESS"
-export const REQUEST_PHONE_NUMBERS_ERROR = "REQUEST_PHONE_NUMBERS_ERROR"
-
-export function phoneNumberRequest() {
-    return {
-        type: REQUEST_PHONE_NUMBERS
-    }
-}
-
-export function phoneNumberRequestSuccess(payload) {
-    return {
-        type: REQUEST_PHONE_NUMBERS_SUCCESS,
-        payload
-    }
-}
-
-export function phoneNumberRequestFailure(error) {
-    return {
-        type: REQUEST_PHONE_NUMBERS_ERROR,
-        error
-    }
-}
-
-export function fetchPhoneNumbers() {
-    return async function (dispatch) {
-        dispatch(phoneNumberRequest)
-        try {
-            const response = fetch("/phone-numbers")
-            const data = await response.json()
-            dispatch(phoneNumberRequestSuccess(data))
-        } catch (error) {
-            dispatch(phoneNumberRequestFailure(error))
-        }
-    }
-}
-
 export const REQUEST_CLIENT_TOKEN = "REQUEST_CLIENT_TOKEN"
 export const REQUEST_CLIENT_TOKEN_SUCCESS = "REQUEST_CLIENT_TOKEN_SUCCESS"
 export const REQUEST_CLIENT_TOKEN_ERROR = "REQUEST_CLIENT_TOKEN_ERROR"
