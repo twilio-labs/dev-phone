@@ -52,7 +52,6 @@ function PhoneNumberPicker({ configureNumberInUse, phoneNumbers }) {
       try {
         const response = await fetch('/phone-numbers')
         const data = await response.json()
-        console.log(data)
         data["phone-numbers"].sort(
           sortUnconfiguredNumbersFirstThenAlphabetically
         )

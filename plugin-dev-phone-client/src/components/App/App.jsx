@@ -4,27 +4,13 @@ import { connect } from "react-redux";
 import { changeNumberInUse, configureNumberInUse } from "../../actions";
 import Header from "../Header/Header"
 import PhoneNumberPicker from "../PhoneNumberPicker/PhoneNumberPicker";
-import SendSmsForm from "../SendSmsForm";
+import SendSmsForm from "../SendSmsForm/SendSmsForm";
 import TwilioVoiceManager from "../VoiceManager/VoiceManager";
-import Caller from "../Caller";
+import Dialer from "../Dialer/Dialer";
 import CallHistory from "../CallHistory/CallHistory.jsx"
 
 import { Box, Column, Grid, Flex, Stack, Badge, Heading, Separator } from "@twilio-paste/core";
-
-const sendSms = (from, to, body) => {
-  console.log("Get it sent!");
-  console.table({ from, to, body });
-
-  if (from && to && body) {
-    fetch("/send-sms", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ from, to, body }),
-    });
-  } else {
-    console.log("Not sending as some data is missing");
-  }
-};
+import PhoneNumberInput from "../PhoneNumberInput/PhoneNumberInput";
 
 const setupKonamiCode = (setNinetiesMode) => {
   const ninetiesMode = new Konami(() => {
@@ -55,14 +41,21 @@ function App({
       <Header devPhoneName={channelData.devPhoneName} numberInUse={numberInUse}/>
       {numberInUse ? (
         <Grid gutter="space30">
-          <Column span={3} offset={1}>
-            <TwilioVoiceManager>
-              <Caller ninetiesMode={ninetiesMode} />
-            </TwilioVoiceManager>
+          <Column span={4}>
             <CallHistory ninetiesMode={ninetiesMode} />
           </Column>
-          <Column span={6} offset={1}>
-            <SendSmsForm numberInUse={numberInUse} sendSms={sendSms} ninetiesMode={ninetiesMode} />
+          <Column span={8}>
+            <PhoneNumberInput />
+            <Grid gutter="space30">
+              <Column span={4}>
+                <TwilioVoiceManager>
+                  <Dialer ninetiesMode={ninetiesMode} />
+                </TwilioVoiceManager>
+              </Column>
+              <Column span={8}>
+                <SendSmsForm numberInUse={numberInUse} ninetiesMode={ninetiesMode} />
+              </Column>
+            </Grid>
           </Column>
         </Grid>
       ) : (
