@@ -1,4 +1,4 @@
-import { Box, Card, Column, Flex, Grid, SkeletonLoader, Text} from "@twilio-paste/core"
+import { Box, Flex, SkeletonLoader, Text} from "@twilio-paste/core"
 import { useSelector } from "react-redux"
 
 function MessageList({ devPhoneName }) {

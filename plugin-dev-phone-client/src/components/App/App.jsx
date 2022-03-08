@@ -6,8 +6,7 @@ import Header from "../Header/Header"
 import PhoneNumberPicker from "../PhoneNumberPicker/PhoneNumberPicker";
 import Softphone from "../Softphone/Softphone"
 
-import { Box, Column, Grid, Flex, Stack, Badge, Heading, Separator } from "@twilio-paste/core";
-import PhoneNumberInput from "../PhoneNumberInput/PhoneNumberInput";
+import { Box, Column, Grid } from "@twilio-paste/core";
 
 const setupKonamiCode = (setNinetiesMode) => {
   const ninetiesMode = new Konami(() => {

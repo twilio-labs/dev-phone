@@ -1,4 +1,4 @@
-import { Box, Column, Grid, Flex, Stack, Badge, Heading, Separator, Card } from "@twilio-paste/core";
+import { Box, Column, Grid } from "@twilio-paste/core";
 import CallHistory from "../CallHistory/CallHistory.jsx"
 import Dialer from "../Dialer/Dialer";
 import PhoneNumberInput from "../PhoneNumberInput/PhoneNumberInput"

@@ -1,18 +1,6 @@
 import { useState, useEffect } from "react";
 
-import {
-  Box,
-  Button,
-  Heading,
-  Label,
-  Option,
-  Select,
-  Stack,
-  Alert,
-  Text,
-  Card,
-  SkeletonLoader
-} from "@twilio-paste/core";
+import { Box, Button, Heading, Label, Option, Select, Stack, Alert, Text, SkeletonLoader } from "@twilio-paste/core";
 
 const hasExistingSmsConfig = (pn) => {
   return pn.smsUrl && pn.smsUrl !== "https://demo.twilio.com/welcome/sms/reply";

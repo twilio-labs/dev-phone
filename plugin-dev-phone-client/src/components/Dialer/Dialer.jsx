@@ -1,6 +1,6 @@
 import { useContext } from 'react';
 import { useSelector } from 'react-redux'
-import { Button, Flex, Stack, Paragraph, Grid, Column, Box, Text} from "@twilio-paste/core";
+import { Button, Flex, Stack, Grid, Column, Box, Text} from "@twilio-paste/core";
 import { TwilioVoiceContext } from '../VoiceManager/VoiceManager';
 import DTMFButton from './DtmfButton';
 

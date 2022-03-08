@@ -1,4 +1,4 @@
-import { Box, Card, Column, Flex, Grid, Text } from "@twilio-paste/core"
+import { Box, Flex, Text } from "@twilio-paste/core"
 
 function returnStatusColor(status){
     if(status === 'completed') {
