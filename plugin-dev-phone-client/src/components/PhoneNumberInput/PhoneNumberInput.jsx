@@ -9,7 +9,8 @@ const inputStyles = {
    fontSize: "3rem",
    outline: "none",
    borderStyle: "hidden",
-   borderBottom: "2px groove rgba(0, 0, 0, .7)"
+   borderBottom: "2px groove rgba(0, 0, 0, .7)",
+   marginBottom: ".25rem"
 }
 
 export default function PhoneNumberInput() {
