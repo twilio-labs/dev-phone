@@ -13,7 +13,7 @@ const setupConversationClient = (token, setCallStatus) => {
 
 
 function SendSmsForm({ numberInUse }) {
-  const [messageBody, setBody] = useState('');
+  const [messageBody, setMessageBody] = useState('');
   const [conversationClient, setConversationClient] = useState(null)
   const [activeConversation, setActiveConversation] = useState(null)
 
@@ -37,12 +37,15 @@ function SendSmsForm({ numberInUse }) {
     }
   };
 
-  const sendIt = async () => {
-    sendSms(numberInUse, destinationNumber, messageBody);
-    if (activeConversation) {
-      await activeConversation.sendMessage(messageBody)
+  const sendIt = async (e) => {
+    e.preventDefault()
+    if(destinationNumber && destinationNumber.length > 6) {
+      sendSms(numberInUse, destinationNumber, messageBody);
+      if (activeConversation) {
+        await activeConversation.sendMessage(messageBody)
+      }
+      setMessageBody('')
     }
-    setBody(null)
   };
 
   useEffect(() => {
@@ -102,10 +105,12 @@ function SendSmsForm({ numberInUse }) {
         <Label htmlFor="sendSmsBody" required>Message</Label>
         <Grid gutter={"space20"}>
           <Column span={10}>
-            <Input id="sendSmsBody" type="text" value={messageBody} onChange={(e) => setBody(e.target.value)} />
+            <form onSubmit={(e) => sendIt(e)} method={"GET"}>
+              <Input id="sendSmsBody" type="text" value={messageBody} onChange={(e) => setMessageBody(e.target.value)} />
+            </form>
           </Column>
           <Column span={2}>
-            <Button variant="primary" disabled={!destinationNumber || destinationNumber.length < 6} onClick={sendIt}>
+            <Button type={"submit"} disabled={!destinationNumber || destinationNumber.length < 6} onClick={(e) => sendIt(e)}>
               Send
             </Button>
           </Column>
