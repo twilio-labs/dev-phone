@@ -31,7 +31,7 @@ export default function reducer(state = initialState, action) {
         case ADD_MESSAGES:
             return {...state, messageList: [...state.messageList, ...action.payload]}
         case ADD_CALL_RECORD:
-            return {...state, callLog: [ action.payload, ...state.callLog]}
+            return {...state, callLog: [ ...state.callLog, action.payload]}
         case UPDATE_CALL_RECORD:
             let callLog = []
             state.callLog.forEach((call, index) => {

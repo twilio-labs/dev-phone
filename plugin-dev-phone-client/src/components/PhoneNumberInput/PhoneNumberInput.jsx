@@ -4,12 +4,12 @@ import { setDestinationNumber } from "../../actions"
 
 const inputStyles = {
    backgroundColor: "#fff",
-   width: "40%",
+   width: "50%",
    textAlign: "center",
    fontSize: "3rem",
    outline: "none",
    borderStyle: "hidden",
-   borderBottom: "1px groove rgba(0, 0, 0, .7)"
+   borderBottom: "2px groove rgba(0, 0, 0, .7)"
 }
 
 export default function PhoneNumberInput() {

@@ -1,9 +1,10 @@
-import { useState, useContext } from 'react';
+import { useContext } from 'react';
 import { useSelector } from 'react-redux'
-import { Button, Input, Stack, Heading, Paragraph, Label, Grid, Column, Card, Box} from "@twilio-paste/core";
+import { Button, Flex, Stack, Paragraph, Grid, Column, Box, Text} from "@twilio-paste/core";
 import { TwilioVoiceContext } from '../VoiceManager/VoiceManager';
+import DTMFButton from './DtmfButton';
 
-function Dialer({ ninetiesMode }) {
+function Dialer() {
     const currentCallInfo = useSelector((state) => state.currentCallInfo)
     const destinationNumber = useSelector(state => state.destinationNumber)
     const dialer = useContext(TwilioVoiceContext)
@@ -23,22 +24,23 @@ function Dialer({ ninetiesMode }) {
 
     function generateDTMFColumn(col) {
         return col.map(tone => {
-            return <Button 
+            return <DTMFButton 
                     key={tone}
+                    tone={tone}
                     fullWidth={true}
                     disabled={!currentCallInfo}
-                    onClick={e => sendDTMF(tone)}>{tone}</Button>
+                    onClick={e => sendDTMF(tone)} />
         })
     }
 
     function generateStatusMessage () {
         if (voiceDevice && !currentCallInfo) {
-            return 'ready'
+            return 'ready to call'
         }
         
         if(voiceDevice && currentCallInfo) {
             if (currentCallInfo && currentCallInfo._wasConnected) {
-                return 'connected'
+                return 'call connected'
             }
 
             return currentCallInfo._direction === 'OUTGOING' ?
@@ -52,27 +54,20 @@ function Dialer({ ninetiesMode }) {
     return (
         <Box width="100%" paddingTop="space60">
             <Stack orientation="vertical" spacing="space60">
-                <Box width="size40">
-                    <Paragraph>
-                        <em>{generateStatusMessage()}</em>
-                    </Paragraph>
-                    <Grid spacing="space30" gutter="space30">
-                        <Column span={4}>
-                            <Stack orientation="vertical" spacing="space40">
-                                {generateDTMFColumn(['1', '4', '7', '*'])}
-                            </Stack>
-                        </Column>
-                        <Column span={4}>
-                            <Stack orientation="vertical" spacing="space40">
-                                {generateDTMFColumn(['2', '5', '8', '0'])}
-                            </Stack>
-                        </Column>
-                        <Column span={4}>
-                            <Stack orientation="vertical" spacing="space40">
-                                {generateDTMFColumn(['3', '6', '9', '#'])}
-                            </Stack>
-                        </Column>
-                    </Grid>
+                <Box width="100%">
+                    <Text fontStyle={"italic"} textAlign={"center"}>{generateStatusMessage()}</Text>
+                    <Flex>
+                        {generateDTMFColumn(['1', '2', '3'])}
+                    </Flex>
+                    <Flex>
+                        {generateDTMFColumn(['4', '5', '6'])}
+                    </Flex>
+                    <Flex>
+                        {generateDTMFColumn(['7', '8', '9'])}
+                    </Flex>
+                    <Flex>
+                        {generateDTMFColumn(['*', '0', '#'])}
+                    </Flex>
                     <Grid spacing="space30" gutter="space30" marginBottom="space40">
                         <Column span={6}>
                             {acceptCall && currentCallInfo && currentCallInfo._direction === "INCOMING" ?

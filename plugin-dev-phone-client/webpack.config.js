@@ -36,17 +36,32 @@ module.exports = {
         }),
     ],
     module: {
-        rules: [{
+        rules: [
+        {
             use: 'babel-loader',
             test: /\.(js|jsx)$/,
             exclude: /node_modules/
         },
         {
-            use: 'css-loader',
+            test: /\.js$/,
+            enforce: 'pre',
+            use: ['source-map-loader']
+          },
+        {
             test: /\.css$/,
-            exclude: /node_modules/
-        }]
+            use: [
+              'style-loader',
+              {
+                loader: 'css-loader',
+                options: {
+                  importLoaders: 1,
+                  modules: true
+                }
+              }
+            ]
+          }]
     },
+    ignoreWarnings: [/Failed to parse source map/],
     resolve: {
         extensions: ['*', '.js', '.jsx'],
         fallback: {

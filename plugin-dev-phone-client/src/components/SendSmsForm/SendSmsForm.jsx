@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Client, Message } from '@twilio/conversations'
-import { Button, Input, Label, Stack, TextArea, Heading, Card, Box, Grid, Column } from "@twilio-paste/core";
+import { Client } from '@twilio/conversations'
+import { Button, Input, Label, Box, Grid, Column } from "@twilio-paste/core";
 import { addMessages } from '../../actions'
 import { useSelector, useDispatch } from "react-redux";
 import MessageList from "./MessageList"
@@ -12,8 +12,8 @@ const setupConversationClient = (token, setCallStatus) => {
 }
 
 
-function SendSmsForm({ numberInUse, ninetiesMode }) {
-  const [messageBody, setBody] = useState(null);
+function SendSmsForm({ numberInUse }) {
+  const [messageBody, setBody] = useState('');
   const [conversationClient, setConversationClient] = useState(null)
   const [activeConversation, setActiveConversation] = useState(null)
 
@@ -99,18 +99,17 @@ function SendSmsForm({ numberInUse, ninetiesMode }) {
       <MessageList
         devPhoneName={channelData.devPhoneName}
       />
-      <Stack orientation={"vertical"} spacing={"space60"}>
-        <Stack orientation={"vertical"}>
-          <Label htmlFor="sendSmsBody" required>Message</Label>
-          <TextArea id="sendSmsBody" onChange={(e) => setBody(e.target.value)}>
-            {messageBody}
-          </TextArea>
-        </Stack>
-
-        <Button variant="primary" disabled={!destinationNumber || destinationNumber.length < 6} onClick={sendIt}>
-          Send it!
-        </Button>
-      </Stack>
+        <Label htmlFor="sendSmsBody" required>Message</Label>
+        <Grid gutter={"space20"}>
+          <Column span={10}>
+            <Input id="sendSmsBody" type="text" value={messageBody} onChange={(e) => setBody(e.target.value)} />
+          </Column>
+          <Column span={2}>
+            <Button variant="primary" disabled={!destinationNumber || destinationNumber.length < 6} onClick={sendIt}>
+              Send
+            </Button>
+          </Column>
+        </Grid>
     </Box>
 
   );
