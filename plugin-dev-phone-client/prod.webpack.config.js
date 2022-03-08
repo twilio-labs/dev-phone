@@ -50,6 +50,7 @@ module.exports = {
             ]
           }]
     },
+    ignoreWarnings: [/Failed to parse source map/],
     resolve: {
         extensions: ['*', '.js', '.jsx'],
         fallback: {
