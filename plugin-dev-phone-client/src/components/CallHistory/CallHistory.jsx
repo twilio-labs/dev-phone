@@ -1,18 +1,9 @@
 import { useState, useEffect } from "react";
 import { SyncClient } from 'twilio-sync';
-import { Box, Card, Heading, Text } from "@twilio-paste/core";
-import { connect } from "react-redux";
+import { Box, Flex, Text } from "@twilio-paste/core";
 import { addCallRecord, updateCallRecord } from '../../actions'
-
-function returnStatusColor(status){
-  if(status === 'completed') {
-    return 'colorBackgroundSuccess'
-  } else if (status === 'in-progress' || status === 'initiated')  {
-    return 'colorBackgroundBusy'
-  } else {
-    return 'colorBackgroundError'
-  }
-}
+import { useSelector, useDispatch } from "react-redux";
+import CallRecord from "./CallRecord";
 
 const setupSyncClient = (token) => {
   const debugLogs = {logLevel: 'debug'}
@@ -20,7 +11,10 @@ const setupSyncClient = (token) => {
   return syncClient
 }
 
-function CallHistory({ callLog, addCallRecord, twilioAccessToken, updateCallRecord, ninetiesMode }) {
+function CallHistory() {
+  const twilioAccessToken = useSelector(state => state.twilioAccessToken)
+  const callLog = useSelector(state => state.callLog)
+  const dispatch = useDispatch()
   const [syncClient, setSyncClient] = useState(null)
 
   useEffect(() => {
@@ -32,17 +26,17 @@ function CallHistory({ callLog, addCallRecord, twilioAccessToken, updateCallReco
         const existingLogs = await callLog.getItems()
 
         existingLogs.items.forEach(call => {
-            addCallRecord(call.data)
+            dispatch(addCallRecord(call.data))
         })
 
         callLog.on('itemAdded', async (syncMapItem) => {
             const item = await syncMapItem.item
-            addCallRecord(item.data)
+            dispatch(addCallRecord(item.data))
         })
 
         callLog.on('itemUpdated', async (syncMapItem) => {
             const item = await syncMapItem.item
-            updateCallRecord(item.data)
+            dispatch(updateCallRecord(item.data))
         })
     }
 
@@ -56,34 +50,23 @@ function CallHistory({ callLog, addCallRecord, twilioAccessToken, updateCallReco
 }, [addCallRecord, setSyncClient, syncClient, twilioAccessToken, updateCallRecord]);
 
   return (
-    <Box spacing="space30">
-      <Heading as="h2" variant="heading20">{ ninetiesMode ? "📞 Rolodex" : "Call History" }</Heading>
-        <Box maxHeight={'17rem'} overflowY={'scroll'} overflowX={'hidden'}>
-          {callLog.length > 0 ?
-            callLog.map(call => {
-                return (
-                    <Card key={call.Sid} >
-                        <Text marginBottom={"space10"}>{`${call.Status}, ${call.Timestamp}`}</Text>
-                        <Text marginBottom={"space10"}><strong>From:</strong> {call.From} <strong>To:</strong> {call.To}</Text>
-                        <Text marginBottom={"space30"}><strong>Call Sid:</strong> {call.Sid}</Text>
-                        <Box padding={'space10'} backgroundColor={returnStatusColor(call.Status)}></Box>
-                    </Card>
-                )
-            }) : ''
-          }
-        </Box>
+    <Box spacing="space30" backgroundColor={"colorBackground"} height={"100%"} borderRightWidth={"borderWidth10"} borderRightColor={"colorBorder"} borderRightStyle={"solid"}>
+        <Flex vertical vAlignContent={"bottom"} height={"100%"}>
+            <Box width={"100%"} padding={"space80"} overflowY={'scroll'} overflowX={'hidden'}>
+              {callLog.length > 0 ?
+                callLog.map(call => {
+                    return (
+                        <CallRecord key={call.Sid} call={call} />
+                    )
+                }) : <Text textAlign={"center"} fontStyle={"italic"}> Make a call! I'll maintain a record of them here. </Text>
+              }
+            </Box>
+            <Box backgroundColor={"colorBackgroundBrand"} width={"100%"} paddingY={"space50"}>
+              <Text as="h2" variant="heading20" fontSize={"fontSize60"} color="colorTextInverse" textAlign={"center"}>Call History</Text>
+            </Box>
+          </Flex>
     </Box>
   );
 }
 
-const mapStateToProps = (state) => ({
-  twilioAccessToken: state.twilioAccessToken,
-  callLog: state.callLog
-});
-
-const mapDispatchToProps = (dispatch) => ({
-  addCallRecord: (call) => dispatch(addCallRecord(call)),
-  updateCallRecord: (call) => dispatch(updateCallRecord(call)),
-})
-
-export default connect(mapStateToProps, mapDispatchToProps)(CallHistory);
+export default CallHistory

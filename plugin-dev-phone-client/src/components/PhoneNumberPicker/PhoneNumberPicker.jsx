@@ -1,18 +1,6 @@
 import { useState, useEffect } from "react";
 
-import {
-  Box,
-  Button,
-  Heading,
-  Label,
-  Option,
-  Select,
-  Stack,
-  Alert,
-  Text,
-  Card,
-  SkeletonLoader
-} from "@twilio-paste/core";
+import { Box, Button, Heading, Label, Option, Select, Stack, Alert, Text, SkeletonLoader } from "@twilio-paste/core";
 
 const hasExistingSmsConfig = (pn) => {
   return pn.smsUrl && pn.smsUrl !== "https://demo.twilio.com/welcome/sms/reply";
@@ -52,7 +40,6 @@ function PhoneNumberPicker({ configureNumberInUse, phoneNumbers }) {
       try {
         const response = await fetch('/phone-numbers')
         const data = await response.json()
-        console.log(data)
         data["phone-numbers"].sort(
           sortUnconfiguredNumbersFirstThenAlphabetically
         )

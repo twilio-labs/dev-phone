@@ -1,0 +1,15 @@
+.button {
+    flex-basis: 33%;
+    color: rgb(2, 99, 224);
+    border: none;
+    height: 6rem;
+    box-shadow: none;
+    font-size: 2rem;
+    background-color: rgb(255, 255, 255);
+}
+
+
+.button:disabled,
+.button[disabled]{
+  color:rgb(174, 178, 193)
+}

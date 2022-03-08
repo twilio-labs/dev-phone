@@ -1,30 +1,12 @@
 import { useEffect, useState } from "react";
 import Konami from "konami";
-import { connect } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { changeNumberInUse, configureNumberInUse } from "../../actions";
 import Header from "../Header/Header"
 import PhoneNumberPicker from "../PhoneNumberPicker/PhoneNumberPicker";
-import SendSmsForm from "../SendSmsForm";
-import TwilioVoiceManager from "../VoiceManager/VoiceManager";
-import Caller from "../Caller";
-import CallHistory from "../CallHistory/CallHistory.jsx"
+import Softphone from "../Softphone/Softphone"
 
-import { Box, Column, Grid, Flex, Stack, Badge, Heading, Separator } from "@twilio-paste/core";
-
-const sendSms = (from, to, body) => {
-  console.log("Get it sent!");
-  console.table({ from, to, body });
-
-  if (from && to && body) {
-    fetch("/send-sms", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ from, to, body }),
-    });
-  } else {
-    console.log("Not sending as some data is missing");
-  }
-};
+import { Box, Column, Grid } from "@twilio-paste/core";
 
 const setupKonamiCode = (setNinetiesMode) => {
   const ninetiesMode = new Konami(() => {
@@ -34,19 +16,17 @@ const setupKonamiCode = (setNinetiesMode) => {
   ninetiesMode.pattern = "383840403739373949575749";
 };
 
-function App({
-  channelData,
-  changeNumberInUse,
-  configureNumberInUse,
-  numberInUse,
-}) {
+function App() {
+  const channelData = useSelector(state => state.channelData)
+  const numberInUse = useSelector(state => state.numberInUse ? state.numberInUse.phoneNumber : "")
+  const dispatch = useDispatch()
 
   const [ninetiesMode, setNinetiesMode] = useState(false);
 
   useEffect(() => {
     setupKonamiCode(setNinetiesMode);
     if (channelData.phoneNumber) {
-      changeNumberInUse(channelData.phoneNumber);
+      dispatch(changeNumberInUse(channelData.phoneNumber));
     }
   }, [changeNumberInUse, channelData]);
 
@@ -54,37 +34,16 @@ function App({
     <Box width={"100vw"} height={"100vh"} backgroundColor={"colorBackground"}>
       <Header devPhoneName={channelData.devPhoneName} numberInUse={numberInUse}/>
       {numberInUse ? (
-        <Grid gutter="space30">
-          <Column span={3} offset={1}>
-            <TwilioVoiceManager>
-              <Caller ninetiesMode={ninetiesMode} />
-            </TwilioVoiceManager>
-            <CallHistory ninetiesMode={ninetiesMode} />
-          </Column>
-          <Column span={6} offset={1}>
-            <SendSmsForm numberInUse={numberInUse} sendSms={sendSms} ninetiesMode={ninetiesMode} />
-          </Column>
-        </Grid>
+        <Softphone numberInUse={numberInUse} />
       ) : (
         <Grid gutter="space30">
           <Column span={6} offset={3}>
-            <PhoneNumberPicker configureNumberInUse={configureNumberInUse} />
+            <PhoneNumberPicker configureNumberInUse={(number) => dispatch(configureNumberInUse(number))} />
           </Column>
         </Grid>
       )}
     </Box>
-
-  );
+  )
 }
 
-const mapStateToProps = (state) => ({
-  channelData: state.channelData,
-  numberInUse: state.numberInUse ? state.numberInUse.phoneNumber : "",
-});
-
-const mapDispatchToProps = (dispatch) => ({
-  changeNumberInUse: (number) => dispatch(changeNumberInUse(number)),
-  configureNumberInUse: (number) => dispatch(configureNumberInUse(number)),
-});
-
-export default connect(mapStateToProps, mapDispatchToProps)(App);
+export default App

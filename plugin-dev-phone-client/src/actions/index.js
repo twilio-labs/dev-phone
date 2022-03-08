@@ -1,3 +1,12 @@
+export const SET_DESTINATION_NUMBER = "SET_DESTINATION_NUMBER"
+
+export function setDestinationNumber(number) {
+    return {
+        type: SET_DESTINATION_NUMBER,
+        number
+    }
+}
+
 // Actions for handling history logic in the UI
 export const ADD_MESSAGES = "ADD_MESSAGES"
 export const ADD_CALL_RECORD = "ADD_CALL_RECORD"
