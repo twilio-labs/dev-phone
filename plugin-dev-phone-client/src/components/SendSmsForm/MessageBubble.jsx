@@ -3,7 +3,6 @@ import { UserIcon } from '@twilio-paste/icons/esm/UserIcon';
 import { formatDistanceToNow } from 'date-fns';
 
 function MessageBubble({ devPhoneName, message }) {
-  console.dir(message);
   const isFromDevPhone = message.author === devPhoneName;
 
   return <Box display="flex" justifyContent={isFromDevPhone ? "flex-end" : 'flex-start'} marginBottom="space30">
