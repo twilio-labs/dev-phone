@@ -1,11 +1,23 @@
-import { Box, Column, Grid } from "@twilio-paste/core";
+import { Box, Button, Column, Grid } from "@twilio-paste/core";
+import { ChevronLeftIcon } from '@twilio-paste/icons/esm/ChevronLeftIcon';
+import { ChevronRightIcon } from '@twilio-paste/icons/esm/ChevronRightIcon';
+import { useState } from 'react';
+
 import CallHistory from "../CallHistory/CallHistory.jsx"
 import Dialer from "../Dialer/Dialer";
 import PhoneNumberInput from "../PhoneNumberInput/PhoneNumberInput"
 import SendSmsForm from "../SendSmsForm/SendSmsForm";
 import TwilioVoiceManager from "../VoiceManager/VoiceManager";
 
-function Softphone ({ numberInUse }) {
+function Softphone({ numberInUse }) {
+    const [showCallHistory, setCallHistory] = useState(true);
+
+    function toggleCallHistory() {
+        setCallHistory((current) => {
+            return !current;
+        });
+    }
+
     return (
         <Box
             maxWidth={"75%"}
@@ -15,22 +27,28 @@ function Softphone ({ numberInUse }) {
             boxShadow={"shadow"}
             borderRadius={"borderRadius20"}
         >
-            <Grid gutter={"space40"}>
-                <Column span={4}>
-                    <CallHistory />
+            <Grid gutter={"space0"}>
+                <Column span={showCallHistory ? 4 : 0}>
+                    {showCallHistory && <CallHistory />}
                 </Column>
-                <Column span={8}>
-                    <PhoneNumberInput />
-                    <Grid gutter={"space40"}>
-                        <Column span={4}>
-                            <TwilioVoiceManager>
-                            <Dialer />
-                            </TwilioVoiceManager>
-                        </Column>
-                        <Column span={8}>
-                            <SendSmsForm numberInUse={numberInUse} />
-                        </Column>
-                    </Grid>
+                <Column span={showCallHistory ? 8 : 12}>
+                    <Box padding="space40">
+                        <Button onClick={toggleCallHistory} variant="link">
+                            {showCallHistory ? <ChevronLeftIcon decorative /> : <ChevronRightIcon decorative />}
+                            {showCallHistory ? 'Hide' : 'Show'} Call History
+                        </Button>
+                        <PhoneNumberInput />
+                        <Grid gutter={"space40"}>
+                            <Column span={4}>
+                                <TwilioVoiceManager>
+                                    <Dialer />
+                                </TwilioVoiceManager>
+                            </Column>
+                            <Column span={8}>
+                                <SendSmsForm numberInUse={numberInUse} />
+                            </Column>
+                        </Grid>
+                    </Box>
                 </Column>
             </Grid>
         </Box>
