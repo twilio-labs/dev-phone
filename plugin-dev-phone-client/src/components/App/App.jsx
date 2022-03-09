@@ -6,7 +6,8 @@ import Header from "../Header/Header"
 import PhoneNumberPicker from "../PhoneNumberPicker/PhoneNumberPicker";
 import Softphone from "../Softphone/Softphone"
 
-import { Box, Column, Grid } from "@twilio-paste/core";
+import { Box, Column, Grid, Flex } from "@twilio-paste/core";
+import Footer from "../Footer/Footer";
 
 const setupKonamiCode = (setNinetiesMode) => {
   const ninetiesMode = new Konami(() => {
@@ -32,7 +33,7 @@ function App() {
 
   return (
     <Box width={"100vw"} height={"100vh"} backgroundColor={"colorBackground"}>
-      <Header devPhoneName={channelData.devPhoneName} numberInUse={numberInUse}/>
+      <Header devPhoneName={channelData.devPhoneName} numberInUse={numberInUse} />
       {numberInUse ? (
         <Softphone numberInUse={numberInUse} />
       ) : (
@@ -42,6 +43,7 @@ function App() {
           </Column>
         </Grid>
       )}
+      <Footer />
     </Box>
   )
 }
