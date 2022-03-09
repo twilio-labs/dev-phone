@@ -100,7 +100,7 @@ class DevPhoneServer extends TwilioClientCommand {
 
         // serve assets from the "public" directory
         // __dirname is the path to _this_ file, so ../../public to find index.html
-        app.use(express.static(path.join(__dirname, '..', '..', 'public')));
+        app.use(express.static(path.join(__dirname, '..', 'public')));
 
         app.use(express.json()); // response body writer
 
@@ -193,7 +193,7 @@ class DevPhoneServer extends TwilioClientCommand {
         app.listen(PORT, () => {
             console.log(`🚀 Your local webserver is listening on port ${PORT}`);
 
-            if (fs.existsSync(path.join(__dirname, '..', '..', 'public', 'index.html'))) {
+            if (fs.existsSync(path.join(__dirname, '..', 'public', 'index.html'))) {
 
                 const uiUrl = `http://localhost:${PORT}/`
 
