@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { changeNumberInUse, configureNumberInUse } from "../../actions";
 import Header from "../Header/Header"
 import PhoneNumberPicker from "../PhoneNumberPicker/PhoneNumberPicker";
+import DevDisclaimer from "../DevDisclaimer/DevDisclaimer";
 import Softphone from "../Softphone/Softphone"
 
 import { Box, Column, Grid, Flex } from "@twilio-paste/core";
@@ -34,6 +35,7 @@ function App() {
   return (
     <Box width={"100vw"} height={"100vh"} backgroundColor={"colorBackground"}>
       <Header devPhoneName={channelData.devPhoneName} numberInUse={numberInUse} />
+      <DevDisclaimer />
       {numberInUse ? (
         <Softphone numberInUse={numberInUse} />
       ) : (
