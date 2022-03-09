@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 
-import { Box, Button, Heading, Label, Option, Select, Stack, Alert, Text, SkeletonLoader } from "@twilio-paste/core";
+import { Anchor, Box, Button, Heading, Label, Option, Select, Stack, Alert, Text, SkeletonLoader, Paragraph, Card } from "@twilio-paste/core";
+import WelcomeDialog from "./WelcomeDialog";
 
 const hasExistingSmsConfig = (pn) => {
   return pn.smsUrl && pn.smsUrl !== "https://demo.twilio.com/welcome/sms/reply";
@@ -31,12 +32,26 @@ const sortUnconfiguredNumbersFirstThenAlphabetically = (pn1, pn2) => {
   return pn1.phoneNumber.localeCompare(pn2.phoneNumber);
 };
 
+function PhoneNumberPickerContainer({ children }) {
+  return <Box
+    maxWidth={"75%"}
+    margin={"auto"}
+    marginY={"space120"}
+    padding={"space120"}
+    backgroundColor={"colorBackgroundBody"}
+    boxShadow={"shadow"}
+    borderRadius={"borderRadius20"}
+  >
+    {children}
+  </Box>
+}
+
 function PhoneNumberPicker({ configureNumberInUse, phoneNumbers }) {
   const [twilioPns, setTwilioPns] = useState(null);
   const [selectedPn, setSelectedPn] = useState(null);
 
-  useEffect(async() => {
-    if(!selectedPn) {
+  useEffect(async () => {
+    if (!selectedPn) {
       try {
         const response = await fetch('/phone-numbers')
         const data = await response.json()
@@ -56,26 +71,37 @@ function PhoneNumberPicker({ configureNumberInUse, phoneNumbers }) {
         console.error(error)
       }
     }
-        
+
   }, [selectedPn]);
-  
+
   if (twilioPns === null) {
-    return (<SkeletonLoader height={"size50"}/>)
+    return (<SkeletonLoader height={"size50"} />)
   } else if (twilioPns.length === 0) {
     return (
-      <Box backgroundColor={"colorBackgroundBody"}>
-        <Text as="p">I couldn't find any phone numbers on your account!</Text>
-        <Anchor
-          href="https://support.twilio.com/hc/en-us/articles/223135247-How-to-Search-for-and-Buy-a-Twilio-Phone-Number-from-Console"
-          target="_blank"
-        >Please purchase a phone number to get started. :)</Anchor>
-      </Box>
-      )
+      <PhoneNumberPickerContainer>
+        <WelcomeDialog />
+        <Stack orientation={"vertical"}>
+          <Box width="200px" as="img" src="https://paste.twilio.design/images/patterns/empty-no-results-found.png" alt="" />
+          <Heading as="h2" variant="heading20">Could not find any phone numbers.</Heading>
+          <Paragraph>In order to use the Dev Phone you'll need to have a Twilio Phone Number. Once you purchased a phone number you can refresh this page to get started.</Paragraph>
+          <Button
+            as="a"
+            href="https://support.twilio.com/hc/en-us/articles/223135247-How-to-Search-for-and-Buy-a-Twilio-Phone-Number-from-Console"
+            target="_blank"
+          >Purchase a phone number to get started.</Button>
+        </Stack>
+      </PhoneNumberPickerContainer>
+    )
   } else {
     return (
-      <Box backgroundColor={"colorBackgroundBody"} padding={"space120"}>
-        <Heading as="h2" variant="heading20">Choose a phone number for this dev-phone</Heading>
+      <PhoneNumberPickerContainer>
+        <WelcomeDialog />
         <Stack orientation="vertical">
+          <Heading as="h2" variant="heading20">Select a phone number</Heading>
+          <Paragraph>
+            Pick one of the phone numbers from your Twilio account to configure your Dev Phone. This phone number will be the one to send messages and make calls.
+            Any calls and text messages sent to this number will show up in the Dev Phone.
+          </Paragraph>
           <Label htmlFor="devPhonePn" required>
             Phone number
           </Label>
@@ -122,7 +148,7 @@ function PhoneNumberPicker({ configureNumberInUse, phoneNumbers }) {
         ) : (
           ""
         )}
-      </Box>
+      </PhoneNumberPickerContainer>
     );
   }
 }
