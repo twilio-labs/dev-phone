@@ -58,12 +58,6 @@ function Dialer() {
         }
 
         if (voiceDevice && currentCallInfo) {
-            if (currentCallInfo && currentCallInfo._wasConnected) {
-                message = 'call connected';
-                variant = 'success';
-                icon = <SuccessIcon decorative />;
-            }
-
             if (currentCallInfo._direction === 'OUTGOING') {
                 message = `calling ${currentCallInfo._options.twimlParams.to}`;
                 variant = 'info';
@@ -72,6 +66,12 @@ function Dialer() {
                 message = `incoming call from ${currentCallInfo.parameters.From}`;
                 variant = 'new';
                 icon = <LoadingIcon decorative />
+            }
+
+            if (currentCallInfo && currentCallInfo._wasConnected) {
+                message = 'call connected';
+                variant = 'success';
+                icon = <SuccessIcon decorative />;
             }
         }
         return <Badge as="span" variant={variant}>{icon}{message}</Badge>;
