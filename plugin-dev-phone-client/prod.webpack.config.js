@@ -4,13 +4,13 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 
 module.exports = {
     mode: 'production',
-    devtool: 'cheap-module-source-map',
+    devtool: 'source-map',
     entry: {
         main: './src/index.js'
     },
     output: {
         path: path.resolve(__dirname, './dist'),
-        filename: '[name].bundle.js'
+        filename: '[name].bundle.[contenthash].js'
     },
     plugins: [
         new webpack.ProvidePlugin({
