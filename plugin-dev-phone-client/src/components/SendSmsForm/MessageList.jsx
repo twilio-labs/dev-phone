@@ -1,9 +1,11 @@
 import { Box, Flex, SkeletonLoader, Text } from "@twilio-paste/core"
 import { useSelector } from "react-redux"
+import EmptyMessageList from "./EmptyMessageList";
 import MessageBubble from "./MessageBubble"
 
 function MessageList({ devPhoneName }) {
     const messageList = useSelector(state => state.messageList)
+    const numberInUse = useSelector(state => state.numberInUse ? state.numberInUse.phoneNumber : "");
 
     return (
         messageList ?
@@ -16,7 +18,7 @@ function MessageList({ devPhoneName }) {
                                     <MessageBubble message={message} key={message.sid} devPhoneName={devPhoneName} />
                                 )
                             })
-                            : 'Go ahead and send your first message!'
+                            : <EmptyMessageList devPhoneNumber={numberInUse} />
                         }
                     </Box>
                 </Flex>
