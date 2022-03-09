@@ -1,4 +1,4 @@
-import { Box, Button, Column, Grid } from "@twilio-paste/core";
+import { Box, Button, Card, Column, Grid } from "@twilio-paste/core";
 import { ChevronLeftIcon } from '@twilio-paste/icons/esm/ChevronLeftIcon';
 import { ChevronRightIcon } from '@twilio-paste/icons/esm/ChevronRightIcon';
 import { useState, useMemo } from 'react';
@@ -28,6 +28,7 @@ function Softphone({ numberInUse }) {
     return (
         <Box
             maxWidth={"75%"}
+            maxHeight={"800px"}
             margin={"auto"}
             marginY={"space120"}
             backgroundColor={"colorBackgroundBody"}
@@ -47,12 +48,16 @@ function Softphone({ numberInUse }) {
                         <PhoneNumberInput />
                         <Grid gutter={"space40"}>
                             <Column span={4}>
-                                <TwilioVoiceManager>
-                                    <Dialer />
-                                </TwilioVoiceManager>
+                                <Card>
+                                    <TwilioVoiceManager>
+                                        <Dialer />
+                                    </TwilioVoiceManager>
+                                </Card>
                             </Column>
                             <Column span={8}>
-                                <SendSmsForm numberInUse={numberInUse} />
+                                <Card>
+                                    <SendSmsForm numberInUse={numberInUse} />
+                                </Card>
                             </Column>
                         </Grid>
                     </Box>
