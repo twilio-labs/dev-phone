@@ -3,6 +3,7 @@ import ReactDOM from "react-dom";
 import { Provider } from 'react-redux'
 import { compose, createStore, applyMiddleware} from 'redux'
 import thunk from 'redux-thunk'
+import { composeWithDevTools } from 'redux-devtools-extension';
 import reducer from './reducer'
 import { fetchChannelData, fetchClientToken } from './actions'
 import "./index.css";
@@ -11,9 +12,8 @@ import App from "./components/App/App";
 import { Theme } from "@twilio-paste/core/theme";
 
 /* TODO: make devtools conditional on dev environment */
-const store = createStore(reducer, compose(
-  applyMiddleware(thunk),
-  window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+const store = createStore(reducer, composeWithDevTools(
+  applyMiddleware(thunk)
 ))
 
 store.dispatch(fetchClientToken())
