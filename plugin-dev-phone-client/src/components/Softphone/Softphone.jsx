@@ -1,16 +1,23 @@
 import { Box, Button, Column, Grid } from "@twilio-paste/core";
 import { ChevronLeftIcon } from '@twilio-paste/icons/esm/ChevronLeftIcon';
 import { ChevronRightIcon } from '@twilio-paste/icons/esm/ChevronRightIcon';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useSelector } from "react-redux";
 
 import CallHistory from "../CallHistory/CallHistory.jsx"
 import Dialer from "../Dialer/Dialer";
 import PhoneNumberInput from "../PhoneNumberInput/PhoneNumberInput"
 import SendSmsForm from "../SendSmsForm/SendSmsForm";
 import TwilioVoiceManager from "../VoiceManager/VoiceManager";
+import MissingDestinationNumber from "./MissingDestinationNumber.jsx";
 
 function Softphone({ numberInUse }) {
     const [showCallHistory, setCallHistory] = useState(true);
+    const destinationNumber = useSelector(state => state.destinationNumber)
+
+    const isValidDestinationNumber = useMemo(() => {
+        return destinationNumber && destinationNumber.length > 6;
+    }, [destinationNumber]);
 
     function toggleCallHistory() {
         setCallHistory((current) => {
@@ -49,6 +56,7 @@ function Softphone({ numberInUse }) {
                             </Column>
                         </Grid>
                     </Box>
+                    {!isValidDestinationNumber && <MissingDestinationNumber />}
                 </Column>
             </Grid>
         </Box>
