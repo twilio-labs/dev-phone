@@ -78,10 +78,10 @@ export function configureNumberInUse(number) {
             const response = await fetch('/choose-phone-number', {
                 method: 'POST',
                 headers: {
-                  'Content-Type': 'application/json',
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(number),
-              })
+            })
 
             // A success response suggests that the backend was able to configure serverless correctly
             const data = await response.json()
@@ -163,5 +163,14 @@ export function fetchChannelData() {
         } catch (error) {
             dispatch(channelDataRequestFailure(error))
         }
+    }
+}
+
+export const ADD_DIGIT_TO_DESTINATION_NUMBER = 'ADD_DIGIT_TO_DESTINATION_NUMBER';
+
+export function addDigitToDestinationNumber(digit) {
+    return {
+        type: ADD_DIGIT_TO_DESTINATION_NUMBER,
+        digit
     }
 }
