@@ -26,7 +26,7 @@ module.exports = {
         hot: true,
         port: 3000,
     },
-    devtool: 'eval',
+    devtool: 'inline-source-map',
     plugins: [
         new webpack.ProvidePlugin({
                process: 'process/browser',
