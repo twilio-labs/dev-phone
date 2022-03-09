@@ -31,6 +31,7 @@
     "@twilio-paste/icons": "5.9.0",
     "@twilio/conversations": "^2.0.0",
     "@twilio/voice-sdk": "^2.1.0",
+    "date-fns": "^2.28.0",
     "konami": "^1.6.3",
     "process": "^0.11.10",
     "react": "^17.0.2",

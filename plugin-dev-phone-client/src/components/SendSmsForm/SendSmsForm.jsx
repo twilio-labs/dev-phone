@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Client } from '@twilio/conversations'
-import { Button, Input, Label, Box, Grid, Column } from "@twilio-paste/core";
+import { Button, Input, Label, Box, Grid, Column, HelpText } from "@twilio-paste/core";
 import { addMessages } from '../../actions'
 import { useSelector, useDispatch } from "react-redux";
 import MessageList from "./MessageList"
@@ -22,10 +22,14 @@ function SendSmsForm({ numberInUse }) {
   const twilioAccessToken = useSelector(state => state.twilioAccessToken)
   const dispatch = useDispatch()
 
+  const canSendMessages = useMemo(() => {
+    return destinationNumber && destinationNumber.length > 6;
+  }, [destinationNumber]);
+
   const sendSms = (from, to, body) => {
     console.log("Get it sent!");
     console.table({ from, to, body });
-  
+
     if (from && to && body) {
       fetch("/send-sms", {
         method: "POST",
@@ -39,12 +43,14 @@ function SendSmsForm({ numberInUse }) {
 
   const sendIt = async (e) => {
     e.preventDefault()
-    if(destinationNumber && destinationNumber.length > 6) {
+    if (canSendMessages) {
       sendSms(numberInUse, destinationNumber, messageBody);
       if (activeConversation) {
         await activeConversation.sendMessage(messageBody)
       }
       setMessageBody('')
+    } else {
+      setShowWarning(true)
     }
   };
 
@@ -95,26 +101,27 @@ function SendSmsForm({ numberInUse }) {
     }
 
 
-}, [addMessages, activeConversation, twilioAccessToken, channelData.conversation.sid, conversationClient]);
+  }, [addMessages, activeConversation, twilioAccessToken, channelData.conversation.sid, conversationClient]);
 
   return (
     <Box width="100%" backgroundColor={"colorBackgroundBody"}>
       <MessageList
         devPhoneName={channelData.devPhoneName}
       />
+      <form onSubmit={(e) => sendIt(e)} method={"GET"}>
         <Label htmlFor="sendSmsBody" required>Message</Label>
-        <Grid gutter={"space20"}>
+        <Grid gutter={"space20"} marginBottom="space40">
           <Column span={10}>
-            <form onSubmit={(e) => sendIt(e)} method={"GET"}>
-              <Input id="sendSmsBody" type="text" value={messageBody} onChange={(e) => setMessageBody(e.target.value)} />
-            </form>
+            <Input id="sendSmsBody" type="text" value={messageBody} placeholder="Enter your message here" onChange={(e) => setMessageBody(e.target.value)} />
+            {!canSendMessages && <HelpText id="email_error_help_text" variant="error">Please enter a valid destination phone number above.</HelpText>}
           </Column>
           <Column span={2}>
-            <Button type={"submit"} disabled={!destinationNumber || destinationNumber.length < 6} onClick={(e) => sendIt(e)}>
+            <Button type={"submit"} disabled={!canSendMessages}>
               Send
             </Button>
           </Column>
         </Grid>
+      </form>
     </Box>
 
   );
