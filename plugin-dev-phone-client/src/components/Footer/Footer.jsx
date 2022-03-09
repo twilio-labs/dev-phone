@@ -2,7 +2,7 @@ import { Anchor, Box, Flex, Paragraph, Text } from '@twilio-paste/core';
 import { LogoTwilioIcon } from '@twilio-paste/icons/esm/LogoTwilioIcon';
 
 function Footer() {
-  return <Box>
+  return <Box marginTop={"space60"}>
     <Flex vertical hAlignContent={"center"}>
       <Box marginBottom={"space40"}>
         <LogoTwilioIcon decorative color="colorTextWeak" />

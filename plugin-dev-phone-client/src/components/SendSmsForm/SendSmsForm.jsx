@@ -49,6 +49,8 @@ function SendSmsForm({ numberInUse }) {
         await activeConversation.sendMessage(messageBody)
       }
       setMessageBody('')
+    } else {
+      setShowWarning(true)
     }
   };
 
@@ -110,7 +112,7 @@ function SendSmsForm({ numberInUse }) {
         <Label htmlFor="sendSmsBody" required>Message</Label>
         <Grid gutter={"space20"} marginBottom="space40">
           <Column span={10}>
-            <Input id="sendSmsBody" type="text" value={messageBody} onChange={(e) => setMessageBody(e.target.value)} />
+            <Input id="sendSmsBody" type="text" value={messageBody} placeholder="Enter your message here" onChange={(e) => setMessageBody(e.target.value)} />
             {!canSendMessages && <HelpText id="email_error_help_text" variant="error">Please enter a valid destination phone number above.</HelpText>}
           </Column>
           <Column span={2}>
