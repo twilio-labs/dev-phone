@@ -33,7 +33,7 @@ function App() {
   }, [changeNumberInUse, channelData]);
 
   return (
-    <Box width={"100vw"} height={"100vh"} backgroundColor={"colorBackground"}>
+    <Box width={"100vw"} minHeight={"100vh"} backgroundColor={"colorBackground"}>
       <Header devPhoneName={channelData.devPhoneName} numberInUse={numberInUse} />
       <DevDisclaimer />
       {numberInUse ? (
