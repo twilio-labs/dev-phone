@@ -50,6 +50,8 @@ function SendSmsForm({ numberInUse }) {
         await activeConversation.sendMessage(messageBody)
       }
       setMessageBody('')
+    } else {
+      setShowWarning(true)
     }
   };
 
