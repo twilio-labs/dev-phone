@@ -1,6 +1,6 @@
 {
-  "name": "dev-phone-client",
-  "version": "1.0.0",
+  "name": "@twilio-labs/dev-phone-client",
+  "version": "0.0.1",
   "description": "A react-based UI for the Twilio CLI softphone plugin",
   "main": "index.js",
   "scripts": {
@@ -9,6 +9,7 @@
   },
   "author": "twilio-labs",
   "license": "ISC",
+  "files": ["dist"],
   "devDependencies": {
     "@babel/core": "^7.17.5",
     "@babel/plugin-transform-react-jsx": "^7.17.3",
