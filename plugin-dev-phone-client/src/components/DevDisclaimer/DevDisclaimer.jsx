@@ -16,7 +16,7 @@ function DevDisclaimer() {
   }
 
   return showDisclaimer ? <Alert onDismiss={hide} variant="warning" role="warning">
-    <Flex>
+    <Flex vAlignContent={"baseline"}>
       <Text as="span" paddingRight={"space20"}>
         The Dev Phone is only designed <Text as="span" textDecoration={"underline"}>for developing Twilio apps</Text>. It is not intended for other purposes.
       </Text>
