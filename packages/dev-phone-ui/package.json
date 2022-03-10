@@ -1,10 +1,10 @@
 {
-  "name": "@twilio-labs/dev-phone-client",
-  "version": "0.0.1",
+  "name": "@twilio-labs/dev-phone-ui",
+  "version": "1.0.0-alpha.1",
   "description": "A react-based UI for the Twilio CLI softphone plugin",
   "main": "index.js",
   "scripts": {
-    "build": "webpack --config prod.webpack.config.js --mode production",
+    "build": "webpack --config webpack.prod.config.js --mode production",
     "start": "webpack serve"
   },
   "author": "twilio-labs",
