@@ -16,9 +16,12 @@ function DevDisclaimer() {
   }
 
   return showDisclaimer ? <Alert onDismiss={hide} variant="warning" role="warning">
+    <Flex>
     <Text as="span">
-      The Dev Phone is strictly designed to be used <Text as="span" textDecoration={"underline"}>only for developing Twilio apps</Text>. It is not intended to be used for other purposes. <Button onClick={hidePermanently} variant="link">Don't show again.</Button>
+      The Dev Phone is strictly designed to be used <Text as="span" textDecoration={"underline"}>only for developing Twilio apps</Text>. It is not intended to be used for other purposes.
     </Text>
+    <Button onClick={hidePermanently} variant="link">Don't show again.</Button>
+    </Flex>
   </Alert> : null;
 }
 

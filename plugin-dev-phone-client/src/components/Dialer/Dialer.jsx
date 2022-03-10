@@ -1,13 +1,10 @@
 import { useContext, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux'
-import { Button, Flex, Stack, Grid, Column, Box, Text, HelpText, Badge } from "@twilio-paste/core";
+import { Button, Flex, Stack, Grid, Column, Box } from "@twilio-paste/core";
 import { TwilioVoiceContext } from '../VoiceManager/VoiceManager';
 import DTMFButton from './DtmfButton';
 import { addDigitToDestinationNumber } from '../../actions';
-import { VoiceCapableIcon } from '@twilio-paste/icons/esm/VoiceCapableIcon';
-import { CloseIcon } from '@twilio-paste/icons/esm/CloseIcon';
-import { SuccessIcon } from '@twilio-paste/icons/esm/SuccessIcon';
-import { LoadingIcon } from '@twilio-paste/icons/esm/LoadingIcon';
+import CallStatusMessage from './StatusMessage';
 
 function Dialer() {
     const currentCallInfo = useSelector((state) => state.currentCallInfo)
@@ -47,36 +44,6 @@ function Dialer() {
         })
     }
 
-    function generateStatusMessage() {
-        let message = 'initializing';
-        let variant = 'default';
-        let icon = <></>;
-        if (voiceDevice && !currentCallInfo) {
-            message = 'ready for calls';
-            variant = 'info';
-            icon = <></>;
-        }
-
-        if (voiceDevice && currentCallInfo) {
-            if (currentCallInfo._direction === 'OUTGOING') {
-                message = `calling ${currentCallInfo._options.twimlParams.to}`;
-                variant = 'info';
-                icon = <></>;
-            } else {
-                message = `incoming call from ${currentCallInfo.parameters.From}`;
-                variant = 'new';
-                icon = <LoadingIcon decorative />
-            }
-
-            if (currentCallInfo && currentCallInfo._wasConnected) {
-                message = 'call connected';
-                variant = 'success';
-                icon = <SuccessIcon decorative />;
-            }
-        }
-        return <Badge as="span" variant={variant}>{icon}{message}</Badge>;
-    }
-
     const isCallInProgress = !!currentCallInfo;
     const isIncomingCall = acceptCall && currentCallInfo && currentCallInfo._direction === 'INCOMING';
 
@@ -84,7 +51,7 @@ function Dialer() {
         <Box width="100%" paddingTop="space60">
             <Stack orientation="vertical" spacing="space60">
                 <Box width="100%">
-                    <Flex hAlignContent={"center"}>{generateStatusMessage()}</Flex>
+                    <CallStatusMessage voiceDevice={voiceDevice} currentCallInfo={currentCallInfo} />
                     <Flex>
                         {generateDTMFColumn(['1', '2', '3'])}
                     </Flex>
@@ -105,14 +72,12 @@ function Dialer() {
                                     disabled={currentCallInfo._mediaStatus === "open"}
                                     onClick={acceptCall}
                                     variant="primary" >
-                                    <VoiceCapableIcon decorative />
                                     Accept call
                                 </Button>
                                 : isCallInProgress ? null : <Button
                                     fullWidth={true}
                                     disabled={!!currentCallInfo || !hasValidDestinationNumber}
                                     onClick={makeCall} >
-                                    <VoiceCapableIcon decorative />
                                     Call
                                 </Button>
                             }
@@ -123,7 +88,6 @@ function Dialer() {
                                 disabled={!currentCallInfo}
                                 onClick={hangUp}
                                 variant="destructive" >
-                                <CloseIcon decorative />
                                 Hang up
                             </Button>}
                         </Column>

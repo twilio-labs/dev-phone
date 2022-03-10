@@ -1,4 +1,4 @@
-import { Box, Button, Card, Column, Grid } from "@twilio-paste/core";
+import { Box, Button, Column, Grid } from "@twilio-paste/core";
 import { ChevronLeftIcon } from '@twilio-paste/icons/esm/ChevronLeftIcon';
 import { ChevronRightIcon } from '@twilio-paste/icons/esm/ChevronRightIcon';
 import { useState, useMemo } from 'react';
@@ -28,19 +28,19 @@ function Softphone({ numberInUse }) {
     return (
         <Box
             maxWidth={"75%"}
-            maxHeight={"800px"}
+            maxHeight={"size80"}
             margin={"auto"}
             marginY={"space120"}
             backgroundColor={"colorBackgroundBody"}
             boxShadow={"shadow"}
             borderRadius={"borderRadius20"}
         >
-            <Grid gutter={"space0"}>
+            <Grid>
                 <Column span={showCallHistory ? 4 : 0}>
                     {showCallHistory && <CallHistory />}
                 </Column>
                 <Column span={showCallHistory ? 8 : 12}>
-                    <Box padding="space40">
+                    <Box padding="space40" paddingBottom={"space0"}>
                         <Button onClick={toggleCallHistory} variant="link">
                             {showCallHistory ? <ChevronLeftIcon decorative /> : <ChevronRightIcon decorative />}
                             {showCallHistory ? 'Hide' : 'Show'} Call History
@@ -48,16 +48,12 @@ function Softphone({ numberInUse }) {
                         <PhoneNumberInput />
                         <Grid gutter={"space40"}>
                             <Column span={4}>
-                                <Card>
-                                    <TwilioVoiceManager>
-                                        <Dialer />
-                                    </TwilioVoiceManager>
-                                </Card>
+                                <TwilioVoiceManager>
+                                    <Dialer />
+                                </TwilioVoiceManager>
                             </Column>
                             <Column span={8}>
-                                <Card>
-                                    <SendSmsForm numberInUse={numberInUse} />
-                                </Card>
+                                <SendSmsForm numberInUse={numberInUse} />
                             </Column>
                         </Grid>
                     </Box>

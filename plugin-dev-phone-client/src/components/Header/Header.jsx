@@ -1,6 +1,5 @@
-import { Anchor, Box, Column, Grid, Flex, Text, MediaFigure, MediaBody, MediaObject, Badge, Tooltip } from "@twilio-paste/core";
+import { Anchor, Box, Column, Grid, Flex, Text, MediaFigure, MediaBody, MediaObject, Tooltip } from "@twilio-paste/core";
 import { LogoTwilioIcon } from '@twilio-paste/icons/esm/LogoTwilioIcon';
-import { VoiceCapableIcon } from "@twilio-paste/icons/esm/VoiceCapableIcon";
 import { InformationIcon } from "@twilio-paste/icons/esm/InformationIcon";
 
 function Header({ devPhoneName, numberInUse }) {
@@ -31,31 +30,28 @@ function Header({ devPhoneName, numberInUse }) {
                 </Column>
                 <Column offset={5} span={2}>
                     <Flex hAlignContent={"center"} vertical grow height="100%" vAlignContent={"center"} >
-                        <Flex>
+                        <Text as="p" color={"colorTextInverse"}>{devPhoneName ? devPhoneName : "loading"}</Text>
+                        <Flex width={"100%"} hAlignContent={"center"}>
                             <Text as="p" marginRight={"space20"} color="colorTextInverse" fontWeight={"fontWeightSemibold"} variant="default">Dev Phone ID</Text>
-                            <Tooltip text="This is the ID we use to generate related Twilio services during the use of the Dev Phone.">
+                            <Tooltip text="This is the ID I made to create and use Twilio services for your Dev Phone.">
                                 <Anchor href="javascript:void" variant="inverse">
                                     <InformationIcon decorative={false} title="Show details about Dev Phone ID" display="block" />
                                 </Anchor>
                             </Tooltip>
                         </Flex>
-                        <Badge as="span" variant={numberInUse ? "new" : "default"}>{devPhoneName ? devPhoneName : "loading"}</Badge>
                     </Flex>
                 </Column>
                 <Column span={2}>
                     <Flex hAlignContent={"center"} vertical grow height="100%" vAlignContent={"center"} >
-                        <Flex>
+                        <Text as="p" color={"colorTextInverse"}> {numberInUse ? numberInUse : "N/A"}</Text>
+                        <Flex width={"100%"} hAlignContent={"center"}>
                             <Text as="p" marginRight={"space20"} color="colorTextInverse" fontWeight={"fontWeightSemibold"} variant="default">Twilio Number</Text>
-                            <Tooltip text="Text or call this Twilio phone number to have the messages and calls show up in your Dev Phone.">
+                            <Tooltip text="Text or call this Twilio phone number to connect to your Dev Phone.">
                                 <Anchor href="javascript:void" variant="inverse">
                                     <InformationIcon decorative={false} title="Show details about Twilio Phone Number" display="block" />
                                 </Anchor>
                             </Tooltip>
                         </Flex>
-                        <Badge as="span" variant={numberInUse ? "new" : "default"}>
-                            <VoiceCapableIcon decorative />
-                            {numberInUse ? numberInUse : "N/A"}
-                        </Badge>
                     </Flex>
                 </Column>
             </Grid>

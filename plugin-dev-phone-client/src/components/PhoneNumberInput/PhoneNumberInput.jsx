@@ -19,7 +19,7 @@ export default function PhoneNumberInput() {
 
     return (
         <Box backgroundColor={"colorBackgroundBody"}>
-            <Flex height={"size20"} vertical hAlignContent={"center"} vAlignContent={"bottom"} padding={"space70"}>
+            <Flex height={"size20"} vertical hAlignContent={"center"} vAlignContent={"bottom"} padding={"space60"}>
                 <input
                     type="text"
                     id="sendSmsToPn"
