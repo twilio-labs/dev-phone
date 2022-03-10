@@ -2,7 +2,7 @@
 
 A Twilio CLI plugin for testing SMS and Voice applications.
 
-![A simple architecture of the Softphone](https://user-images.githubusercontent.com/8594375/144852695-eb45253b-9ef2-4d68-a73f-40364b18c978.jpg)
+![Actors](https://user-images.githubusercontent.com/8594375/157669463-bb930042-2413-43dd-a16c-a76f64e529d3.png)
 
 
 ## Key Personas
