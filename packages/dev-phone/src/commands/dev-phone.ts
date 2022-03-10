@@ -8,6 +8,7 @@ import { deployServerless, constants } from '../utils/create-serverless-util';
 import { isSmsUrlSet, isVoiceUrlSet } from '../phone-number-utils';
 const { TwilioClientCommand } = require('@twilio/cli-core').baseCommands;
 const { TwilioCliError } = require('@twilio/cli-core').services.error;
+const WebClientPath = path.resolve(require.resolve('@twilio-labs/dev-phone-ui'), '..')
 const { version } = require('../../package.json');
 
 // Types
@@ -108,7 +109,7 @@ class DevPhoneServer extends TwilioClientCommand {
 
         // serve assets from the "public" directory
         // __dirname is the path to _this_ file, so ../../public to find index.html
-        app.use(express.static(path.join(__dirname, '..', 'public')));
+        app.use(express.static(WebClientPath));
 
         app.use(express.json()); // response body writer
 
@@ -201,7 +202,7 @@ class DevPhoneServer extends TwilioClientCommand {
         app.listen(PORT, () => {
             console.log(`🚀 Your local webserver is listening on port ${PORT}`);
 
-            if (fs.existsSync(path.join(__dirname, '..', 'public', 'index.html'))) {
+            if (fs.existsSync(path.join(WebClientPath, 'index.html'))) {
 
                 const uiUrl = `http://localhost:${PORT}/`
 

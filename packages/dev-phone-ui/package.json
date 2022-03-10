@@ -2,13 +2,13 @@
   "name": "@twilio-labs/dev-phone-ui",
   "version": "1.0.0-alpha.1",
   "description": "A react-based UI for the Twilio CLI softphone plugin",
-  "main": "index.js",
+  "main": "dist/index.html",
   "scripts": {
-    "build": "webpack --config webpack.prod.config.js --mode production",
+    "build": "rm -rf dist && webpack --config webpack.prod.config.js --mode production",
     "start": "webpack serve"
   },
   "author": "twilio-labs",
-  "license": "ISC",
+  "license": "MIT",
   "files": [
     "dist"
   ],
@@ -41,5 +41,25 @@
     "redux-thunk": "^2.4.1",
     "twilio-sync": "^3.0.6",
     "util": "^0.12.4"
-  }
+  },
+  "peerDependencies": {
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/twilio-labs/comlink-dev-phone.git"
+  },
+  "keywords": [
+    "soft",
+    "phone",
+    "react",
+    "dev",
+    "phone",
+    "twilio"
+  ],
+  "bugs": {
+    "url": "https://github.com/twilio-labs/comlink-dev-phone/issues"
+  },
+  "homepage": "https://github.com/twilio-labs/comlink-dev-phone#readme"
 }

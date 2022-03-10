@@ -52,21 +52,26 @@ module.exports = {
     },
     ignoreWarnings: [/Failed to parse source map/],
     resolve: {
-        extensions: ['*', '.js', '.jsx'],
-        fallback: {
-            "util": require.resolve("util/")
-        }
+      modules: [
+          path.resolve(__dirname, 'node_modules'),
+          path.resolve(__dirname, '../../node_modules'),
+          'node_modules',
+      ],
+      extensions: ['*', '.js', '.jsx'],
+      fallback: {
+          "util": require.resolve("util/")
+      }
     },
     optimization: {
-        runtimeChunk: 'single',
-        splitChunks: {
-          cacheGroups: {
-            vendors: {
-              test: /[\\/]node_modules[\\/]/,
-              name: "vendor",
-              chunks: "all"
-            }
+      runtimeChunk: 'single',
+      splitChunks: {
+        cacheGroups: {
+          vendors: {
+            test: /[\\/]node_modules[\\/]/,
+            name: "vendor",
+            chunks: "all"
           }
         }
       }
+    }
 }
