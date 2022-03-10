@@ -27,8 +27,8 @@
     "webpack-dev-server": "^4.7.4"
   },
   "dependencies": {
-    "@twilio-paste/core": "10.18.0",
-    "@twilio-paste/icons": "5.9.0",
+    "@twilio-paste/core": "^11.1.2",
+    "@twilio-paste/icons": "^6.2.1",
     "@twilio/conversations": "^2.0.0",
     "@twilio/voice-sdk": "^2.1.0",
     "date-fns": "^2.28.0",

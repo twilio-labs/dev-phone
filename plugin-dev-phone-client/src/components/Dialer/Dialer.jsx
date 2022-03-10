@@ -1,14 +1,22 @@
-import { useContext } from 'react';
-import { useSelector } from 'react-redux'
-import { Button, Flex, Stack, Grid, Column, Box, Text} from "@twilio-paste/core";
+import { useContext, useMemo } from 'react';
+import { useDispatch, useSelector } from 'react-redux'
+import { Button, Flex, Stack, Grid, Column, Box } from "@twilio-paste/core";
 import { TwilioVoiceContext } from '../VoiceManager/VoiceManager';
 import DTMFButton from './DtmfButton';
+import { addDigitToDestinationNumber } from '../../actions';
+import CallStatusMessage from './StatusMessage';
 
 function Dialer() {
     const currentCallInfo = useSelector((state) => state.currentCallInfo)
     const destinationNumber = useSelector(state => state.destinationNumber)
+    const dispatch = useDispatch();
+
     const dialer = useContext(TwilioVoiceContext)
     const { acceptCall, voiceDevice } = dialer
+
+    const hasValidDestinationNumber = useMemo(() => {
+        return destinationNumber && destinationNumber.length > 6
+    }, [destinationNumber])
 
     function makeCall() {
         dialer.makeCall(destinationNumber)
@@ -19,43 +27,31 @@ function Dialer() {
     }
 
     function sendDTMF(num) {
-        dialer.sendDTMF(num)
+        if (!currentCallInfo) {
+            dispatch(addDigitToDestinationNumber(num))
+        } else {
+            dialer.sendDTMF(num)
+        }
     }
 
     function generateDTMFColumn(col) {
         return col.map(tone => {
-            return <DTMFButton 
-                    key={tone}
-                    tone={tone}
-                    fullWidth={true}
-                    disabled={!currentCallInfo}
-                    onClick={e => sendDTMF(tone)} />
+            return <DTMFButton
+                key={tone}
+                tone={tone}
+                fullWidth={true}
+                onClick={e => sendDTMF(tone)} />
         })
     }
 
-    function generateStatusMessage () {
-        if (voiceDevice && !currentCallInfo) {
-            return 'ready to call'
-        }
-        
-        if(voiceDevice && currentCallInfo) {
-            if (currentCallInfo && currentCallInfo._wasConnected) {
-                return 'call connected'
-            }
-
-            return currentCallInfo._direction === 'OUTGOING' ?
-                `calling ${currentCallInfo._options.twimlParams.to}` :
-                `call from ${currentCallInfo.parameters.From}`
-        }
-            
-        return 'initializing'
-    }
+    const isCallInProgress = !!currentCallInfo;
+    const isIncomingCall = acceptCall && currentCallInfo && currentCallInfo._direction === 'INCOMING';
 
     return (
         <Box width="100%" paddingTop="space60">
             <Stack orientation="vertical" spacing="space60">
                 <Box width="100%">
-                    <Text fontStyle={"italic"} textAlign={"center"}>{generateStatusMessage()}</Text>
+                    <CallStatusMessage voiceDevice={voiceDevice} currentCallInfo={currentCallInfo} />
                     <Flex>
                         {generateDTMFColumn(['1', '2', '3'])}
                     </Flex>
@@ -69,33 +65,32 @@ function Dialer() {
                         {generateDTMFColumn(['*', '0', '#'])}
                     </Flex>
                     <Grid spacing="space30" gutter="space30" marginBottom="space40">
-                        <Column span={6}>
-                            {acceptCall && currentCallInfo && currentCallInfo._direction === "INCOMING" ?
+                        <Column span={isIncomingCall ? 6 : !isCallInProgress ? 12 : 0}>
+                            {isIncomingCall ?
                                 <Button
                                     fullWidth={true}
                                     disabled={currentCallInfo._mediaStatus === "open"}
                                     onClick={acceptCall}
                                     variant="primary" >
-                                    Accept Call
+                                    Accept call
                                 </Button>
-                                : <Button
+                                : isCallInProgress ? null : <Button
                                     fullWidth={true}
-                                    disabled={!!currentCallInfo || !destinationNumber || destinationNumber.length < 6}
+                                    disabled={!!currentCallInfo || !hasValidDestinationNumber}
                                     onClick={makeCall} >
                                     Call
                                 </Button>
                             }
                         </Column>
-                        <Column span={6}>
-                            <Button
+                        <Column span={isCallInProgress && isIncomingCall ? 6 : isCallInProgress ? 12 : 0}>
+                            {(isCallInProgress || isIncomingCall) && <Button
                                 fullWidth={true}
                                 disabled={!currentCallInfo}
                                 onClick={hangUp}
                                 variant="destructive" >
                                 Hang up
-                            </Button>
+                            </Button>}
                         </Column>
-
                     </Grid>
                 </Box>
             </Stack>

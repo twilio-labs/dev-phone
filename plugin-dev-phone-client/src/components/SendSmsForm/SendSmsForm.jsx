@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Client } from '@twilio/conversations'
 import { Button, Input, Label, Box, Grid, Column, HelpText } from "@twilio-paste/core";
+import { SendIcon } from '@twilio-paste/icons/esm/SendIcon';
 import { addMessages } from '../../actions'
 import { useSelector, useDispatch } from "react-redux";
 import MessageList from "./MessageList"
@@ -112,11 +113,11 @@ function SendSmsForm({ numberInUse }) {
         <Label htmlFor="sendSmsBody" required>Message</Label>
         <Grid gutter={"space20"} marginBottom="space40">
           <Column span={10}>
-            <Input id="sendSmsBody" type="text" value={messageBody} placeholder="Enter your message here" onChange={(e) => setMessageBody(e.target.value)} />
-            {!canSendMessages && <HelpText id="email_error_help_text" variant="error">Please enter a valid destination phone number above.</HelpText>}
+            <Input id="sendSmsBody" type="text" value={messageBody} onChange={(e) => setMessageBody(e.target.value)} />
           </Column>
           <Column span={2}>
             <Button type={"submit"} disabled={!canSendMessages}>
+              <SendIcon decorative />
               Send
             </Button>
           </Column>
