@@ -3,12 +3,15 @@
   "description": "Twilio Dev Phone",
   "version": "1.0.0-alpha.2.5",
   "author": "Twilio @twilio",
-  "bugs": "https://github.com/twilio-labs/comlink-dev-phone/issues",
+  "bugs": {
+    "url": "https://github.com/twilio-labs/comlink-dev-phone/issues"
+  },
   "dependencies": {
     "@oclif/command": "^1.5.20",
     "@oclif/config": "^1.15.1",
     "@twilio-labs/serverless-api": "^5.4.0",
     "@twilio/cli-core": "^6.0.0",
+    "@twilio-labs/dev-phone-ui": "^1.0.0-alpha.1",
     "express": "^4.17.1",
     "open": "^8.4.0"
   },
@@ -35,7 +38,7 @@
     "/oclif.manifest.json",
     "/dist"
   ],
-  "homepage": "https://github.com/twilio-labs/comlink-dev-phone",
+  "homepage": "https://github.com/twilio-labs/comlink-dev-phone/packages/dev-phone",
   "keywords": [
     "oclif-plugin"
   ],
@@ -56,7 +59,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/twilio-labs/comlink-dev-phone.git"
+    "url": "git+https://github.com/twilio-labs/comlink-dev-phone.git"
   },
   "scripts": {
     "build": "tsc",
@@ -65,5 +68,8 @@
     "prepack": "oclif-dev manifest && oclif-dev readme",
     "test": "nyc --check-coverage --lines 90 --reporter=html --reporter=text mocha --forbid-only \"test/**/*.test.js\"",
     "version": "oclif-dev readme && git add README.md"
+  },
+  "directories": {
+    "test": "test"
   }
 }

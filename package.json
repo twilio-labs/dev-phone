@@ -1,0 +1,29 @@
+{
+  "name": "@twilio-labs/dev-phone-services",
+  "version": "1.0.0-alpha",
+  "description": "A monorepo for the various components of the Twilio Dev Phone",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/twilio-labs/comlink-dev-phone.git"
+  },
+  "keywords": [
+    "softphone",
+    "dev",
+    "phone",
+    "twilio"
+  ],
+  "author": "Twilio @twilio",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/twilio-labs/comlink-dev-phone/issues"
+  },
+  "homepage": "https://github.com/twilio-labs/comlink-dev-phone#readme",
+  "workspaces": [
+    "packages/dev-phone",
+    "packages/dev-phone-ui"
+  ]
+}

@@ -26,7 +26,7 @@ module.exports = {
         hot: true,
         port: 3000,
     },
-    devtool: 'inline-source-map',
+    devtool: 'eval-cheap-source-map',
     plugins: [
         new webpack.ProvidePlugin({
                process: 'process/browser',
@@ -63,6 +63,11 @@ module.exports = {
     },
     ignoreWarnings: [/Failed to parse source map/],
     resolve: {
+        modules: [
+            path.resolve(__dirname, 'node_modules'),
+            path.resolve(__dirname, '../../node_modules'),
+            'node_modules',
+        ],
         extensions: ['*', '.js', '.jsx'],
         fallback: {
             "util": require.resolve("util/")
