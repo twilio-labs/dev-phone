@@ -19,7 +19,8 @@ interface devPhoneServerlessConfig {
         CONVERSATION_SID: string,
         CONVERSATION_SERVICE_SID: string,
         DEV_PHONE_NAME: string,
-        CALL_LOG_MAP_NAME: string
+        CALL_LOG_MAP_NAME: string,
+        DEV_PHONE_VERSION: string
     },
     onUpdate?: (event: deployEvent) => void
 }
@@ -80,6 +81,6 @@ export async function deployServerless(context: devPhoneServerlessConfig) {
         return result;
     } catch (err) {
         console.log(err);
-        throw new Error('Something went wrong. Try again later');
+        throw new Error('Issue deploying functions. Try again later');
     }
 }
