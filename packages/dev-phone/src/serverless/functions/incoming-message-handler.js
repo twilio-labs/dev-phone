@@ -3,7 +3,12 @@
 exports.handler = async function(context, event, callback) {
     // receive an SMS and put into a conversation
 
-    const client = context.getTwilioClient();
+    const client = context.getTwilioClient({
+        userAgentExtension: [
+            `@twilio-labs/plugin-dev-phone/${context.DEV_PHONE_VERSION}`, 
+            'serverless-functions'
+        ]
+    });
     await client.conversations
         .services(context.CONVERSATION_SERVICE_SID)
         .conversations(context.CONVERSATION_SID)

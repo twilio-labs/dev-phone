@@ -1,5 +1,10 @@
 async function updateCallStatusFromEvent(context, callSid, data) {
-    const client = context.getTwilioClient();
+    const client = context.getTwilioClient({
+        userAgentExtension: [
+            `@twilio-labs/plugin-dev-phone/${context.DEV_PHONE_VERSION}`, 
+            'serverless-functions'
+        ]
+    });
     try {
         return await client.sync
             .services(context.SYNC_SERVICE_SID)

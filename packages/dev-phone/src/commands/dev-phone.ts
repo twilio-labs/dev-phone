@@ -8,6 +8,9 @@ import { deployServerless, constants } from '../utils/create-serverless-util';
 import { isSmsUrlSet, isVoiceUrlSet } from '../phone-number-utils';
 const { TwilioClientCommand } = require('@twilio/cli-core').baseCommands;
 const { TwilioCliError } = require('@twilio/cli-core').services.error;
+const { version } = require('../../package.json');
+
+console.log('package version is', version)
 
 // Types
 import { ServiceInstance as ServerlessServiceInstance } from 'twilio/lib/rest/serverless/v1/service'
@@ -224,6 +227,7 @@ class DevPhoneServer extends TwilioClientCommand {
                 CONVERSATION_SID: this.conversation.sid,
                 CONVERSATION_SERVICE_SID: this.conversation.serviceSid,
                 DEV_PHONE_NAME: this.devPhoneName,
+                DEV_PHONE_VERSION: version,
                 CALL_LOG_MAP_NAME
             }
         });
