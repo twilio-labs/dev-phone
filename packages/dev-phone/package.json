@@ -1,7 +1,7 @@
 {
   "name": "@twilio-labs/dev-phone",
   "description": "Twilio Dev Phone",
-  "version": "1.0.0-alpha.1",
+  "version": "1.0.0-alpha.2.5",
   "author": "Twilio @twilio",
   "bugs": "https://github.com/twilio-labs/comlink-dev-phone/issues",
   "dependencies": {
