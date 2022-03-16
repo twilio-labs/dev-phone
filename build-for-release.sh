@@ -4,7 +4,7 @@ echo "Building minified assets from dev phone ui"
 rm -rf packages/dev-phone-ui/dist
 cd packages/dev-phone-ui
 npm run build
-cd ..
+cd ../..
 
 echo "Copying built assets to dev phone plugin"
 rm -rf packages/dev-phone/dist/public
