@@ -5,7 +5,8 @@ exports.handler = async function(context, event, callback) {
 
     const client = context.getTwilioClient({
         userAgentExtension: [
-            `@twilio-labs/plugin-dev-phone/${context.DEV_PHONE_VERSION}`, 
+            `@twilio-labs/dev-phone/${context.DEV_PHONE_VERSION}`,
+            `@twilio-labs/dev-phone/serverless`,
             'serverless-functions'
         ]
     });
