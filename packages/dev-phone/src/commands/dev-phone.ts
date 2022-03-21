@@ -56,9 +56,16 @@ class DevPhoneServer extends TwilioClientCommand {
         await super.run();
 
         const props = this.parseProperties() || {};
-        await this.validatePropsAndFlags(props, this.flags);
+        await this.validatePropsAndFlags(props, this.flags)
 
-        console.log(`Hello 👋 I'm your dev-phone and my name is ${this.devPhoneName}\n`);
+        console.log(`Hello 👋 I'm your dev-phone and my name is ${this.devPhoneName}\n`)
+
+        // set user agent header on twilio client
+        this.twilioClient.userAgentExtensions = [
+            `@twilio-labs/dev-phone/${version}`,
+            `@twilio-labs/dev-phone/helper-library`,  
+            'serverless-functions'
+        ]
 
         // create API KEY and API SECRET to be generate JWT AccessToken for ChatGrant, VoiceGrant and SyncGrant
         this.apikey = await this.reuseOrCreateApiKey();
