@@ -1,6 +1,7 @@
 const path = require('path')
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin')
+const LicensePlugin = require('webpack-license-plugin')
 
 module.exports = {
     mode: 'production',
@@ -24,6 +25,12 @@ module.exports = {
         new HtmlWebpackPlugin({
             template: "./public/index.html"
         }),
+        new LicensePlugin({
+          replenishDefaultLicenseTexts: true,
+          licenseOverrides: {
+            'precond@0.2.3': "MIT"
+          }
+        })
     ],
     module: {
         rules: [{
