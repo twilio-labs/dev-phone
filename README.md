@@ -2,7 +2,7 @@
 
 A Twilio CLI plugin for testing SMS and Voice applications.
 
-[A mock-up of the dev phone UI](https://user-images.githubusercontent.com/8594375/159701116-6e2b0ed3-6519-4460-ab44-46497cc4384f.png)
+![A mock-up of the dev phone UI](https://user-images.githubusercontent.com/8594375/159701116-6e2b0ed3-6519-4460-ab44-46497cc4384f.png)
 
 ## Key Personas!
 
