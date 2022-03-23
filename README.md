@@ -2,10 +2,10 @@
 
 A Twilio CLI plugin for testing SMS and Voice applications.
 
-![Actors](https://user-images.githubusercontent.com/8594375/157669463-bb930042-2413-43dd-a16c-a76f64e529d3.png)
+[A mock-up of the dev phone UI](https://user-images.githubusercontent.com/8594375/159701116-6e2b0ed3-6519-4460-ab44-46497cc4384f.png)
 
+## Key Personas!
 
-## Key Personas
 
 **The International Struggle**
 A developer in France is at a Superclass event playing Twilioquest. They need a phone number to accomplish some of the missions, but they forgot to get a French phone number prior to the event and can't send/receive calls or messages. They run the soft phone on their command line instead, and are able to use it to complete the Voice and SMS missions.
