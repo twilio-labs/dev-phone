@@ -32,17 +32,23 @@ export default function reducer(state = initialState, action) {
         case ADD_MESSAGES:
             return { ...state, messageList: [...state.messageList, ...action.payload] }
         case ADD_CALL_RECORD:
-            return { ...state, callLog: [...state.callLog, action.payload] }
-        case UPDATE_CALL_RECORD:
-            let callLog = []
-            state.callLog.forEach((call, index) => {
+            state.callLog.forEach(call => {
                 if (call.Sid === action.payload.Sid) {
-                    callLog[index] = action.payload
+                    return state
                 } else {
-                    callLog[index] = call
+                    return { ...state, callLog: [...state.callLog, action.payload] }
                 }
             })
-            return { ...state, callLog: callLog }
+        case UPDATE_CALL_RECORD:
+            let newCallLog = []
+            state.callLog.forEach((call, index) => {
+                if (call.Sid === action.payload.Sid) {
+                    newCallLog[index] = action.payload
+                } else {
+                    newCallLog[index] = call
+                }
+            })
+            return { ...state, callLog: newCallLog }
         case CONFIGURE_NUMBER_IN_USE:
             return { ...state, numberInUse: action.number }
         case DEV_PHONE_CONFIG_ERROR:
