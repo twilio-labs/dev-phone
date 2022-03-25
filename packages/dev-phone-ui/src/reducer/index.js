@@ -39,7 +39,6 @@ export default function reducer(state = initialState, action) {
             return {
                 ...state,
                 callLog: state.callLog.map(call => { 
-                    console.log(call.Sid === action.payload.Sid)
                     return call.Sid === action.payload.Sid ? action.payload : call
                 })
             }
