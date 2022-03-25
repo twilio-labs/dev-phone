@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Client } from '@twilio/conversations'
 import { Button, Input, Label, Box, Grid, Column, HelpText } from "@twilio-paste/core";
 import { SendIcon } from '@twilio-paste/icons/esm/SendIcon';
-import { addMessages } from '../../actions'
+import { addMessage } from '../../actions'
 import { useSelector, useDispatch } from "react-redux";
 import MessageList from "./MessageList"
 
@@ -62,10 +62,12 @@ function SendSmsForm({ numberInUse }) {
         const conversation = await conversationClient.getConversationBySid(sid)
         setActiveConversation(conversation)
         const messages = await conversation.getMessages()
-        dispatch(addMessages(messages.items))
+        messages.items.forEach(message => {
+          dispatch(addMessage(message))
+        })
         conversation.on('messageAdded', (message) => {
           console.log('Message added!')
-          dispatch(addMessages(message))
+          dispatch(addMessage(message))
         })
       } catch (error) {
         console.error(error)
@@ -102,7 +104,7 @@ function SendSmsForm({ numberInUse }) {
     }
 
 
-  }, [addMessages, activeConversation, twilioAccessToken, channelData.conversation.sid, conversationClient]);
+  }, [addMessage, activeConversation, twilioAccessToken, channelData.conversation.sid, conversationClient]);
 
   return (
     <Box width="100%" backgroundColor={"colorBackgroundBody"}>

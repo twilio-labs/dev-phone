@@ -238,7 +238,12 @@ class DevPhoneServer extends TwilioClientCommand {
             },
             onUpdate: (event) => {
                 const isBuildStatusPing = event.message.indexOf('Current status: building') > -1
-                console.log(`${event.status === 'building' ? isBuildStatusPing ? '' : '🛠 ' : '🧑‍💻'} ${isBuildStatusPing ? '.' : event.message}`)
+                const settingEnvVars = event.message.indexOf('environment variables') > -1
+                if(isBuildStatusPing || event.status === 'building') {
+                    isBuildStatusPing ? process.stdout.write('.') : process.stdout.write(`🛠 ${event.message}`)
+                } else {
+                    console.log(`${settingEnvVars ? '\n' : ''}🧑‍💻 ${event.message}`)
+                }
             }
         });
 
