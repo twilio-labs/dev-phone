@@ -3,7 +3,7 @@ import {
     REQUEST_CLIENT_TOKEN_ERROR,
     REQUEST_CHANNEL_DATA_SUCCESS,
     REQUEST_CHANNEL_DATA_ERROR,
-    ADD_MESSAGES,
+    ADD_MESSAGE,
     DEV_PHONE_CONFIG_ERROR,
     CONFIGURE_NUMBER_IN_USE,
     ADD_CALL_RECORD,
@@ -29,26 +29,20 @@ const initialState = {
 
 export default function reducer(state = initialState, action) {
     switch (action.type) {
-        case ADD_MESSAGES:
-            return { ...state, messageList: [...state.messageList, ...action.payload] }
+        case ADD_MESSAGE:
+            const duplicateMessage = state.messageList.findIndex(message => message.sid === action.payload.sid)
+            return duplicateMessage > -1 ? state : { ...state, messageList: [...state.messageList, action.payload] }
         case ADD_CALL_RECORD:
-            state.callLog.forEach(call => {
-                if (call.Sid === action.payload.Sid) {
-                    return state
-                } else {
-                    return { ...state, callLog: [...state.callLog, action.payload] }
-                }
-            })
+            const duplicateCall = state.callLog.findIndex(call => call.Sid === action.payload.Sid)
+            return duplicateCall > -1 ? state : { ...state, callLog: [...state.callLog, action.payload] }
         case UPDATE_CALL_RECORD:
-            let newCallLog = []
-            state.callLog.forEach((call, index) => {
-                if (call.Sid === action.payload.Sid) {
-                    newCallLog[index] = action.payload
-                } else {
-                    newCallLog[index] = call
-                }
-            })
-            return { ...state, callLog: newCallLog }
+            return {
+                ...state,
+                callLog: state.callLog.map(call => { 
+                    console.log(call.Sid === action.payload.Sid)
+                    return call.Sid === action.payload.Sid ? action.payload : call
+                })
+            }
         case CONFIGURE_NUMBER_IN_USE:
             return { ...state, numberInUse: action.number }
         case DEV_PHONE_CONFIG_ERROR:

@@ -8,15 +8,14 @@ export function setDestinationNumber(number) {
 }
 
 // Actions for handling history logic in the UI
-export const ADD_MESSAGES = "ADD_MESSAGES"
+export const ADD_MESSAGE = "ADD_MESSAGE"
 export const ADD_CALL_RECORD = "ADD_CALL_RECORD"
 export const UPDATE_CALL_RECORD = "UPDATE_CALL_RECORD"
 
-export function addMessages(payload) {
-    const payloadArray = Array.isArray(payload) ? payload : [payload]
+export function addMessage(payload) {
     return {
-        type: ADD_MESSAGES,
-        payload: payloadArray.length > 0 && payloadArray[0].conversation ? payloadArray : []
+        type: ADD_MESSAGE,
+        payload
     }
 }
 
