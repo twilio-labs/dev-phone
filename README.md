@@ -23,7 +23,7 @@ A developer is building with Twilio and wants to write some automated testing to
 
 ## Values
 
-- **Locally Grown** The soft phone deploys as locally as possible, but makes smart choices to deploy resources.. It avoids exposing publicly accessible resources that could be exploited or otherwise forgotten.
+- **Locally Grown** The soft phone deploys as locally as possible, but makes smart choices to deploy resources. It avoids exposing publicly accessible resources that could be exploited or otherwise forgotten.
 - **Self-Contained** the dev phone should:
     -   Tread lightly: avoid overwriting any pre-existing config in the user's Twilio account
     -   Clean up after itself. The dev phone will avoid leaving Assets/Functions which it has deployed, (as far as possible).
