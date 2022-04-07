@@ -12,13 +12,13 @@ This is a monorepo that contains two dev-phone packages:
 ## Key Personas!
 
 
-##### The International Developer
+#### The International Developer
 A developer in France is at a Superclass event playing Twilioquest. They need a phone number to accomplish some of the missions, but they forgot to get a French phone number prior to the event and can't send/receive calls or messages. They run the soft phone on their command line instead, and are able to use it to complete the Voice and SMS missions.
 
-##### The Brutalist Bunker
+#### The Brutalist Bunker
 A developer is in a beautiful building constructed with thick, concrete walls. They send a text message to their Twilio app, only to glance back at their phone a moment later: "Message Failed to Send. Please retry." They don't have service in this building! They boot up the soft phone and use it to finish testing their application, thankful that they don't have to run outside every 5 minutes while debugging.
 
-##### The Automaton (Future Work)
+#### The Automaton (Future Work)
 A developer is building with Twilio and wants to write some automated testing to ensure that their application is behaving as expected. They run the soft phone "Snapshot Mode" on and track the app behavior. They then configure their CI/CD to use a terminal-based version of the softphone and compare the CI/CD snapshot to the previously created Snapshot. The snapshot is a mismatch, and their PR fails before pushing the faulty integration to prod.
 
 ## Values
