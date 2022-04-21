@@ -3,6 +3,7 @@
   "version": "1.0.0-alpha",
   "description": "A monorepo for the various components of the Twilio Dev Phone",
   "main": "index.js",
+  "private": "true",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
