@@ -15,11 +15,11 @@ To use the dev phone, you'll need to first have [an up-to-date installation of t
 
 Once you've installed the Twilio CLI, you're ready to add the Dev Phone plugin with the following command:
 
-twilio plugins:install @twilio-labs/dev-phone
+`twilio plugins:install @twilio-labs/dev-phone`
 
 Once it's installed, you can run the dev phone with the following command:
 
-twilio dev-phone
+`twilio dev-phone`
 
 Check out the [dev phone documentation](https://www.twilio.com/docs/labs/dev-phone) to learn more about installing and using the dev phone.
 
