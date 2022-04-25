@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/twilio-labs/comlink-dev-phone.git"
+    "url": "git+https://github.com/twilio-labs/dev-phone"
   },
   "keywords": [
     "softphone",
@@ -20,9 +20,9 @@
   "author": "Twilio @twilio",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/twilio-labs/comlink-dev-phone/issues"
+    "url": "https://github.com/twilio-labs/dev-phone/issues"
   },
-  "homepage": "https://github.com/twilio-labs/comlink-dev-phone#readme",
+  "homepage": "https://github.com/twilio-labs/dev-phone#readme",
   "workspaces": [
     "packages/dev-phone",
     "packages/dev-phone-ui"
