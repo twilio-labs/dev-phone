@@ -1,5 +1,5 @@
 {
-  "name": "@twilio-labs/dev-phone",
+  "name": "@twilio-labs/plugin-dev-phone",
   "description": "Twilio Dev Phone",
   "version": "1.0.0-alpha.2.5",
   "author": "Twilio @twilio",
