@@ -24,7 +24,7 @@
   },
   "homepage": "https://github.com/twilio-labs/dev-phone#readme",
   "workspaces": [
-    "packages/dev-phone",
+    "packages/plugin-dev-phone",
     "packages/dev-phone-ui"
   ]
 }
