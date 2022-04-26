@@ -7,7 +7,7 @@ npm run build
 cd ../..
 
 echo "Copying built assets to dev phone plugin"
-rm -rf packages/dev-phone/dist/public
-cp -R  packages/dev-phone-ui/dist packages/dev-phone/dist/public
+rm -rf packages/plugin-dev-phone/dist/public
+cp -R  packages/dev-phone-ui/dist packages/plugin-dev-phone/dist/public
 
 echo "All done. Built assets will be served by the express server"
