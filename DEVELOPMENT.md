@@ -54,4 +54,6 @@ Run tests with `npm test`. There are no tests at the moment but the place to add
 ### Build and Release
 The Dev Phone CLI plugin uses the Dev Phone UI as a dependency. This means that new versions of the UI need to be released with a version bump AND the latest version needs to be installed and released in the Dev Phone plugin in order to be consumed by end users.
 
+If you're including new packages in the repository, please include the relevant licenses for said licenses. This may require legal approval to ensure that the Dev Phone open source license stays valid.
+
 More details on the full release process to come, but note that tests and linting are on the roadmap as a part of the release process.
