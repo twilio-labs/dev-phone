@@ -1,6 +1,6 @@
 {
   "name": "@twilio-labs/dev-phone-services",
-  "version": "1.0.0-alpha",
+  "version": "1.0.0-beta",
   "description": "A monorepo for the various components of the Twilio Dev Phone",
   "main": "index.js",
   "private": "true",
