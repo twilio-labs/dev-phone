@@ -2,7 +2,8 @@
 
 A developer tool for testing SMS and Voice applications.
 
-![A mock-up of the Dev Phone UI](https://user-images.githubusercontent.com/8594375/162187067-33f8e50e-64f9-4bd0-8cdb-ac10b2ff9b63.png)
+![A mock up of the dev phone UI](https://user-images.githubusercontent.com/8594375/167843260-ea78e367-8533-48e8-a90e-b287eb0ad588.gif)
+
 
 This is a monorepo that contains two Dev Phone packages:
 
