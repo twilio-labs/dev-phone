@@ -14,7 +14,7 @@ function Footer() {
       </Paragraph>
       <Paragraph>
         <Text fontSize={"fontSize20"}>
-          For issues and contributions <Anchor href="https://github.com/twilio-labs/dev-phone" showExternal>check out our GitHub project</Anchor>.
+          For issues and contributions <Anchor href="https://github.com/twilio-labs/dev-phone" showExternal>check out our GitHub project</Anchor>. You can also <Anchor href="https://airtable.com/shrn1gZFT0uayIjgJ" showExternal>submit feedback via Airtable</Anchor>.
         </Text>
       </Paragraph>
     </Flex>
