@@ -26,7 +26,7 @@ module.exports = {
         hot: true,
         port: 3000,
     },
-    devtool: 'eval-cheap-source-map',
+    devtool: 'eval-source-map',
     plugins: [
         new webpack.ProvidePlugin({
                process: 'process/browser',

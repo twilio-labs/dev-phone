@@ -1,7 +1,7 @@
 import { useContext, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux'
 import { Button, Flex, Stack, Grid, Column, Box } from "@twilio-paste/core";
-import { TwilioVoiceContext } from '../VoiceManager/VoiceManager';
+import { TwilioVoiceContext } from '../WebsocketManagers/VoiceManager';
 import DTMFButton from './DtmfButton';
 import { addDigitToDestinationNumber } from '../../actions';
 import CallStatusMessage from './StatusMessage';
