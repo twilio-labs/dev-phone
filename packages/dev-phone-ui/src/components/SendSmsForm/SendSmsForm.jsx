@@ -1,110 +1,34 @@
-import { useState, useEffect, useMemo } from "react";
-import { Client } from '@twilio/conversations'
-import { Button, Input, Label, Box, Grid, Column, HelpText } from "@twilio-paste/core";
+import { useContext, useState, useMemo } from "react";
+import { Button, Input, Label, Box, Grid, Column } from "@twilio-paste/core";
 import { SendIcon } from '@twilio-paste/icons/esm/SendIcon';
-import { addMessage } from '../../actions'
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
+import { TwilioConversationsContext } from '../WebsocketManagers/ConversationsManager';
 import MessageList from "./MessageList"
-
-const setupConversationClient = (token, setCallStatus) => {
-  // const debugLogs = {logLevel: 'debug'}
-  const conversationClient = new Client(token);
-  return conversationClient;
-}
-
 
 function SendSmsForm({ numberInUse }) {
   const [messageBody, setMessageBody] = useState('');
-  const [conversationClient, setConversationClient] = useState(null)
-  const [activeConversation, setActiveConversation] = useState(null)
 
   const channelData = useSelector(state => state.channelData)
   const destinationNumber = useSelector(state => state.destinationNumber)
-  const twilioAccessToken = useSelector(state => state.twilioAccessToken)
-  const dispatch = useDispatch()
+
+  const conversationsClient = useContext(TwilioConversationsContext)
+  const {sendMessage, sendSms} = conversationsClient
 
   const canSendMessages = useMemo(() => {
     return destinationNumber && destinationNumber.length > 6;
   }, [destinationNumber]);
 
-  const sendSms = (from, to, body) => {
-    console.log("Get it sent!");
-    console.table({ from, to, body });
-
-    if (from && to && body) {
-      fetch("/send-sms", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ from, to, body }),
-      });
-    } else {
-      console.log("Not sending as some data is missing");
-    }
-  };
-
+  // Handles the UI state for sending messages
   const sendIt = async (e) => {
     e.preventDefault()
     if (canSendMessages) {
       sendSms(numberInUse, destinationNumber, messageBody);
-      if (activeConversation) {
-        await activeConversation.sendMessage(messageBody)
-      }
+      await sendMessage(messageBody)
       setMessageBody('')
     } else {
       setShowWarning(true)
     }
   };
-
-  useEffect(() => {
-    // Gets conversations and adds a listener to dispatch messages to store
-    async function getConversationBySid(conversationClient, sid) {
-      try {
-        const conversation = await conversationClient.getConversationBySid(sid)
-        setActiveConversation(conversation)
-        const messages = await conversation.getMessages()
-        messages.items.forEach(message => {
-          dispatch(addMessage(message))
-        })
-        conversation.on('messageAdded', (message) => {
-          console.log('Message added!')
-          dispatch(addMessage(message))
-        })
-      } catch (error) {
-        console.error(error)
-      }
-    }
-
-    if (!conversationClient) {
-      const client = setupConversationClient(twilioAccessToken);
-      setConversationClient(client);
-
-      client.on('connectionStateChanged', (connectionState) => {
-        if (connectionState === 'connecting') {
-          console.log('connecting conversations')
-        }
-
-        if (connectionState === "connected") {
-          console.log('conversations connected')
-          getConversationBySid(client, channelData.conversation.sid)
-        }
-        if (connectionState === "disconnecting") {
-          console.log('conversations disconnecting')
-        }
-        if (connectionState === "disconnected") {
-          console.log('conversations disconnected')
-        }
-        if (connectionState === "denied") {
-          console.log('conversations denied')
-        }
-      })
-
-      client.on('connectionError', (data) => {
-        console.error(data)
-      })
-    }
-
-
-  }, [addMessage, activeConversation, twilioAccessToken, channelData.conversation.sid, conversationClient]);
 
   return (
     <Box width="100%" backgroundColor={"colorBackgroundBody"}>

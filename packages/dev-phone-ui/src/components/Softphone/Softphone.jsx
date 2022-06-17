@@ -8,7 +8,8 @@ import CallHistory from "../CallHistory/CallHistory.jsx"
 import Dialer from "../Dialer/Dialer";
 import PhoneNumberInput from "../PhoneNumberInput/PhoneNumberInput"
 import SendSmsForm from "../SendSmsForm/SendSmsForm";
-import TwilioVoiceManager from "../VoiceManager/VoiceManager";
+import TwilioVoiceManager from "../WebsocketManagers/VoiceManager";
+import TwilioConversationsManager from "../WebsocketManagers/ConversationsManager";
 import MissingDestinationNumber from "./MissingDestinationNumber.jsx";
 
 function Softphone({ numberInUse }) {
@@ -53,7 +54,9 @@ function Softphone({ numberInUse }) {
                                 </TwilioVoiceManager>
                             </Column>
                             <Column span={8}>
-                                <SendSmsForm numberInUse={numberInUse} />
+                                <TwilioConversationsManager>
+                                    <SendSmsForm numberInUse={numberInUse} />
+                                </TwilioConversationsManager>
                             </Column>
                         </Grid>
                     </Box>
