@@ -15,7 +15,7 @@ const TwilioConversationsManager = ({ children }) => {
     const twilioAccessToken = useSelector(state => state.twilioAccessToken)
     const dispatch = useDispatch()
 
-    // responsible for making calls with Twilio Voice SDK
+    // responsible for sending an SMS via Serverless Functions/SMS API
     const sendSms = (from, to, body) => {
         // console.table({ from, to, body });
     
@@ -30,29 +30,40 @@ const TwilioConversationsManager = ({ children }) => {
         }
     };
 
-    // responsible for sending messages once an active conversation has been se
+    // responsible for sending messages once an active conversation has been set
     const sendMessage = (message) => {
         if(activeConversation.current) {
             activeConversation.current.sendMessage(message)
         }
     }
 
-    // Creates the Twilio Conversations Client for this context
+    // Creates and sets up the Twilio Conversations Client for this context
     if (!conversationsClient.current) {
         const client = new Client(twilioAccessToken)
 
+        // Populates the redux state with existing messages
+        async function populateMessageList(conversation) {
+            const messages = await conversation.getMessages()
+            messages.items.forEach(message => {
+                dispatch(addMessage(message))
+            })
+        }
+
+        // configures listeners for the active conversation
+        function configureConversationListeners(conversation) {
+            conversation.on('messageAdded', (message) => {
+                console.log('Message added!')
+                dispatch(addMessage(message))
+            })
+        }
+
+        // Retrieve the conversation resource created by the CLI and pass it to UI
         async function getConversationBySid() {
             try {
                 const sid = channelData.conversation.sid
                 activeConversation.current = await client.getConversationBySid(sid)
-                const messages = await activeConversation.current.getMessages()
-                messages.items.forEach(message => {
-                    dispatch(addMessage(message))
-                })
-                activeConversation.current.on('messageAdded', (message) => {
-                    console.log('Message added!')
-                    dispatch(addMessage(message))
-                })
+                await populateMessageList(activeConversation.current)
+                configureConversationListeners(activeConversation.current)
             } catch (error) {
               console.error(error)
             }
