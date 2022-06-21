@@ -18,6 +18,14 @@ Once it's installed, you can run the Dev Phone with the following command:
 
 Check out the [Dev Phone documentation](https://www.twilio.com/docs/labs/dev-phone) to learn more about installing and using the Dev Phone.
 
+### Flags
+
+| Flag Name | Description |
+| --phone-number | Optional. Associates the Dev Phone with a phone number. Takes a number from the active profile on the Twilio CLI as the parameter.|
+| --force | Optional. Forces an overwrite of the phone number configuration. |
+| --headless | Optional. Prevents the UI from automatically opening in the browser. |
+| --port | Optional. Configures the port of the Dev Phone UI. Takes a valid port as a parameter. |
+ 
 ## Working on this plugin
 
 Notes for folks working on this plugin are in [DEVELOPMENT.md](DEVELOPMENT.md).
