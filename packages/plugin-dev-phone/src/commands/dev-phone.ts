@@ -349,13 +349,17 @@ class DevPhoneServer extends TwilioClientCommand {
         }
 
         if(flags['port']) {
+            try {
                 if(isValidPort(flags['port'])){
                     this.port = parseInt(flags['port'])
                 } else {
                     throw new TwilioCliError(
-                        `${flags['port']} is not a valid port. Attempting to use 1337.`
+                        `❗️ '${flags['port']}' is not a valid port. 😳 I'll try to get set up with ${this.port} instead.`,
                         )
                 }
+            } catch (err:any) {
+                console.error(err.message)
+            }
         }
     }
 
