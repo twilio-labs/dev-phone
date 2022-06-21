@@ -5,7 +5,8 @@ import express from 'express';
 
 import { flags } from '@oclif/command';
 import { deployServerless, constants } from '../utils/create-serverless-util';
-import { isSmsUrlSet, isVoiceUrlSet } from '../phone-number-utils';
+import { isValidPort } from '../utils/helpers'
+import { isSmsUrlSet, isVoiceUrlSet } from '../utils/phone-number-utils';
 const { TwilioClientCommand } = require('@twilio/cli-core').baseCommands;
 const { TwilioCliError } = require('@twilio/cli-core').services.error;
 const WebClientPath = path.resolve(require.resolve('@twilio-labs/dev-phone-ui'), '..')
@@ -23,7 +24,6 @@ const AccessToken = require('twilio').jwt.AccessToken;
 const ChatGrant = AccessToken.ChatGrant;
 const VoiceGrant = AccessToken.VoiceGrant;
 const SyncGrant = AccessToken.SyncGrant;
-const PORT = process.env.PORT || 3001;
 const CALL_LOG_MAP_NAME = 'CallLog'
 
 const reformatTwilioPns = (twilioResponse: IncomingPhoneNumberInstance[]) => {
@@ -35,7 +35,7 @@ const reformatTwilioPns = (twilioResponse: IncomingPhoneNumberInstance[]) => {
 }
 
 const generateRandomPhoneName = () => {
-    let rand = Math.random().toString().substr(2, 6)
+    let rand = Math.random().toString().substring(2, 6)
     return `dev-phone-${rand}`;
 }
 
@@ -44,6 +44,7 @@ class DevPhoneServer extends TwilioClientCommand {
         super(argv, config, secureStorage);
         this.cliSettings = {};
         this.pns = [];
+        this.port = process.env.TWILIO_DEV_PHONE_PORT || 1337;
         this.jwt = null;
         this.apikey = {};
         this.twimlApp = {};
@@ -199,12 +200,12 @@ class DevPhoneServer extends TwilioClientCommand {
 
         const isHeadless = () => !!this.flags.headless;
 
-        app.listen(PORT, () => {
-            console.log(`🚀 Your local webserver is listening on port ${PORT}`);
+        app.listen(this.port, () => {
+            console.log(`🚀 Your local webserver is listening on port ${this.port}`);
 
             if (fs.existsSync(path.join(WebClientPath, 'index.html'))) {
 
-                const uiUrl = `http://localhost:${PORT}/`
+                const uiUrl = `http://localhost:${this.port}/`
 
                 if (isHeadless()) {
                     console.log(`🌐 UI is available at ${uiUrl}`)
@@ -345,6 +346,16 @@ class DevPhoneServer extends TwilioClientCommand {
 
             this.cliSettings.phoneNumber = reformatTwilioPns(this.pns)["phone-numbers"][0];
 
+        }
+
+        if(flags['port']) {
+                if(isValidPort(flags['port'])){
+                    this.port = parseInt(flags['port'])
+                } else {
+                    throw new TwilioCliError(
+                        `${flags['port']} is not a valid port. Attempting to use 1337.`
+                        )
+                }
         }
     }
 
@@ -570,16 +581,19 @@ DevPhoneServer.description = `Dev Phone local express server`
 // https://github.com/twilio/plugin-debugger/blob/main/src/commands/debugger/logs/list.js#L99-L126
 DevPhoneServer.PropertyFlags = {
     "phone-number": flags.string({
-        description: 'Phone number from your account to associate this dev-phone with'
+        description: 'Optional. Associates the Dev Phone with a phone number. Takes a number from the active profile on the Twilio CLI as the parameter.'
     }),
     force: flags.boolean({
         char: 'f',
-        description: 'Force the phone number configuration to be overwritten',
+        description: 'Optional. Forces an overwrite of the phone number configuration.',
         dependsOn: ['phone-number']
     }),
     headless: flags.boolean({
-        description: 'Headless mode. Prevents automatic opening of UI in the browser',
+        description: 'Optional. Prevents the UI from automatically opening in the browser.',
         default: false,
+    }),
+    port: flags.string({
+        description: 'Optional. Configures the port of the Dev Phone UI. Takes a valid port as a parameter.',
     })
 };
 
