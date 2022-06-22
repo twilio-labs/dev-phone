@@ -5,7 +5,7 @@ import express from 'express';
 
 import { flags } from '@oclif/command';
 import { deployServerless, constants } from '../utils/create-serverless-util';
-import { isValidPort } from '../utils/helpers'
+import { getAvailablePort, isValidPort } from '../utils/helpers'
 import { isSmsUrlSet, isVoiceUrlSet } from '../utils/phone-number-utils';
 const { TwilioClientCommand } = require('@twilio/cli-core').baseCommands;
 const { TwilioCliError } = require('@twilio/cli-core').services.error;
@@ -44,7 +44,7 @@ class DevPhoneServer extends TwilioClientCommand {
         super(argv, config, secureStorage);
         this.cliSettings = {};
         this.pns = [];
-        this.port = process.env.TWILIO_DEV_PHONE_PORT || 1337;
+        this.port = process.env.TWILIO_DEV_PHONE_PORT || getAvailablePort();
         this.jwt = null;
         this.apikey = {};
         this.twimlApp = {};
