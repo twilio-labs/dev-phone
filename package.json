@@ -26,5 +26,8 @@
   "workspaces": [
     "packages/plugin-dev-phone",
     "packages/dev-phone-ui"
-  ]
+  ],
+  "devDependencies": {
+    "@changesets/cli": "^2.23.0"
+  }
 }
