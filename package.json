@@ -3,9 +3,9 @@
   "version": "1.0.0-beta",
   "description": "A monorepo for the various components of the Twilio Dev Phone",
   "main": "index.js",
-  "private": "true",
+  "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "turbo run build"
   },
   "repository": {
     "type": "git",
@@ -28,6 +28,7 @@
     "packages/dev-phone-ui"
   ],
   "devDependencies": {
-    "@changesets/cli": "^2.23.0"
+    "@changesets/cli": "^2.23.0",
+    "turbo": "^1.2.16"
   }
 }
