@@ -9,7 +9,8 @@ The Dev Phone has the following priorities:
 
 1. Use a user-defined port passed in as a flag.
 2. Use a user-defined port passed in via the `TWILIO_DEV_PHONE_PORT` environment variable
-3. Use the default port `1337`
+3. Cycle through a series of default ports, with a preference for `1337` (for the memes).
+4. If all of the default ports are occupied, then the Dev Phone will use a randomly available port.
 
 ## Also considered
 
