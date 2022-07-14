@@ -1,9 +1,9 @@
-const { expect, test, constants, getFakeSid } = require('@twilio/cli-test');
+export {}
+const { expect, constants, getFakeSid, test } = require('@twilio/cli-test');
 const { Config, ConfigData } = require('@twilio/cli-core').services.config;
 const DevPhoneServer = require('../../src/commands/dev-phone');
 
-const testConfig = test
-  .stdout()
+const testConfig = test.stdout()
   .stderr()
   .twilioFakeProfile(ConfigData)
   .twilioCliEnv(Config);

@@ -1,4 +1,5 @@
-require: test/helpers/init.js
+extension: ["ts"]
+require: ["ts-node/register", "tests/helpers/init.ts"]
 recursive: true
 reporter: spec
 timeout: false
