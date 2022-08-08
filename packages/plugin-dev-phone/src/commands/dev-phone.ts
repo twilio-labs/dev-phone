@@ -3,7 +3,7 @@ import fs from 'fs';
 import open from 'open';
 import express from 'express';
 
-import { flags } from '@oclif/command';
+import { Flags } from '@oclif/core';
 import { deployServerless, constants } from '../utils/create-serverless-util';
 import { getAvailablePort, isValidPort } from '../utils/helpers'
 import { isSmsUrlSet, isVoiceUrlSet } from '../utils/phone-number-utils';
@@ -585,19 +585,19 @@ DevPhoneServer.description = `Dev Phone local express server`
 // Example of how to define flags and properties:
 // https://github.com/twilio/plugin-debugger/blob/main/src/commands/debugger/logs/list.js#L99-L126
 DevPhoneServer.PropertyFlags = {
-    "phone-number": flags.string({
+    "phone-number": Flags.string({
         description: 'Optional. Associates the Dev Phone with a phone number. Takes a number from the active profile on the Twilio CLI as the parameter.'
     }),
-    force: flags.boolean({
+    force: Flags.boolean({
         char: 'f',
         description: 'Optional. Forces an overwrite of the phone number configuration.',
         dependsOn: ['phone-number']
     }),
-    headless: flags.boolean({
+    headless: Flags.boolean({
         description: 'Optional. Prevents the UI from automatically opening in the browser.',
         default: false,
     }),
-    port: flags.string({
+    port: Flags.string({
         description: 'Optional. Configures the port of the Dev Phone UI. Takes a valid port as a parameter.',
     })
 };
