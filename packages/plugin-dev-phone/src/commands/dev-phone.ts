@@ -325,12 +325,13 @@ class DevPhoneServer extends TwilioClientCommand {
         this.cliSettings.forceMode = flags['force'];
         this.port = process.env.TWILIO_DEV_PHONE_PORT || await getAvailablePort();
         if (flags['phone-number']) {
+            const phoneNumber = await flags['phone-number']
             this.pns = await this.twilioClient.incomingPhoneNumbers
-                .list({ phoneNumber: flags['phone-number'] });
+                .list({ phoneNumber: phoneNumber });
 
             if (this.pns.length < 1) {
                 throw new TwilioCliError(
-                    `The phone number ${flags['phone-number']} is not associated with your Twilio account`
+                    `The phone number ${phoneNumber} is not associated with your Twilio account`
                 );
             }
 
@@ -341,7 +342,7 @@ class DevPhoneServer extends TwilioClientCommand {
 
             if (pnConfigAlreadySet.length > 0 && !this.cliSettings.forceMode) {
                 throw new TwilioCliError(
-                    `Cannot use ${flags['phone-number']} because the following config for that phone number would be overwritten: ` + pnConfigAlreadySet.join(", ")
+                    `Cannot use ${phoneNumber} because the following config for that phone number would be overwritten: ` + pnConfigAlreadySet.join(", ")
                 );
             }
 
@@ -350,12 +351,13 @@ class DevPhoneServer extends TwilioClientCommand {
         }
 
         if(flags['port']) {
+            const port = await flags['port']
             try {
-                if(isValidPort(flags['port'])){
-                    this.port = parseInt(flags['port'])
+                if(isValidPort(port)){
+                    this.port = parseInt(port)
                 } else {
                     throw new TwilioCliError(
-                        `❗️ '${flags['port']}' is not a valid port. 😳 I'll try to get set up with ${this.port} instead.`,
+                        `❗️ '${port}' is not a valid port. 😳 I'll try to get set up with ${this.port} instead.`,
                         )
                 }
             } catch (err:any) {
