@@ -17,6 +17,9 @@
     "phone",
     "twilio"
   ],
+  "engines": {
+    "twilio": ">=4.0.0"
+  },
   "author": "Twilio @twilio",
   "license": "MIT",
   "bugs": {

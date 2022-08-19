@@ -5,12 +5,12 @@ import express from 'express';
 
 import { flags } from '@oclif/command';
 import { deployServerless, constants } from '../utils/create-serverless-util';
-import { getAvailablePort, isValidPort } from '../utils/helpers'
+import { getAvailablePort, isValidPort, meetsRequiredVersion } from '../utils/helpers'
 import { isSmsUrlSet, isVoiceUrlSet } from '../utils/phone-number-utils';
 const { TwilioClientCommand } = require('@twilio/cli-core').baseCommands;
 const { TwilioCliError } = require('@twilio/cli-core').services.error;
 const WebClientPath = path.resolve(require.resolve('@twilio-labs/dev-phone-ui'), '..')
-const { version } = require('../../package.json');
+const { engines, version } = require('../../package.json');
 
 // Types
 import { ServiceInstance as ServerlessServiceInstance } from 'twilio/lib/rest/serverless/v1/service'
@@ -56,6 +56,10 @@ class DevPhoneServer extends TwilioClientCommand {
 
     async run() {
         await super.run();
+
+        if(!meetsRequiredVersion(this.config.version, engines.twilio)) {
+            throw new TwilioCliError(`You're using Twilio CLI version ${this.config.version}. Please update your Twilio CLI to a version ${engines.twilio}. You can find instructions here: https://www.twilio.com/docs/twilio-cli/getting-started/install`)
+        }
 
         const props = this.parseProperties() || {};
         await this.validatePropsAndFlags(props, this.flags)
