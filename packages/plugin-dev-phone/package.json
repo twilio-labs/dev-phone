@@ -1,7 +1,7 @@
 {
   "name": "@twilio-labs/plugin-dev-phone",
   "description": "Twilio Dev Phone",
-  "version": "1.0.0-beta",
+  "version": "1.1.0-beta",
   "author": "Twilio @twilio",
   "bugs": {
     "url": "https://github.com/twilio-labs/dev-phone/issues"
@@ -9,7 +9,7 @@
   "dependencies": {
     "@oclif/command": "^1.5.20",
     "@oclif/config": "^1.15.1",
-    "@twilio-labs/dev-phone-ui": "^1.0.0-alpha.1",
+    "@twilio-labs/dev-phone-ui": "^1.0.0",
     "@twilio-labs/serverless-api": "^5.4.0",
     "@twilio/cli-core": "^6.0.0",
     "express": "^4.17.1",
