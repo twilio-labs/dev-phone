@@ -44,7 +44,7 @@ class DevPhoneServer extends TwilioClientCommand {
         super(argv, config, secureStorage);
         this.cliSettings = {};
         this.pns = [];
-        this.port = process.env.TWILIO_DEV_PHONE_PORT || getAvailablePort();
+        this.port = 1337
         this.jwt = null;
         this.apikey = {};
         this.twimlApp = {};
@@ -322,6 +322,7 @@ class DevPhoneServer extends TwilioClientCommand {
         // Flags defined below can be validated and used here. Example:
         // https://github.com/twilio/plugin-debugger/blob/main/src/commands/debugger/logs/list.js#L46-L56
 
+        this.port = process.env.TWILIO_DEV_PHONE_PORT || await getAvailablePort();
         this.cliSettings.forceMode = flags['force'];
         if (flags['phone-number']) {
             this.pns = await this.twilioClient.incomingPhoneNumbers
