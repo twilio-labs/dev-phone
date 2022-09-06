@@ -1,0 +1,9 @@
+{
+  "mode": "pre",
+  "tag": "beta",
+  "initialVersions": {
+    "@twilio-labs/dev-phone-ui": "1.0.0-beta.1",
+    "@twilio-labs/plugin-dev-phone": "1.0.0-beta.1"
+  },
+  "changesets": []
+}
