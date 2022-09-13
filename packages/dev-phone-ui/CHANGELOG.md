@@ -1,6 +1,6 @@
 # @twilio-labs/dev-phone-ui
 
-## 1.1.0-beta
+## 1.0.0-beta.1
 
 ### Minor Changes
 
