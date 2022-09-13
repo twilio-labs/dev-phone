@@ -1,6 +1,12 @@
 # @twilio-labs/plugin-dev-phone
 
-## 1.1.0-beta
+## 1.0.0-beta.2
+
+### Patch Changes
+
+- de1222b: Include the `answerOnBridge` parameter in `<Dial>` TwiML. This fixes an issue where incoming calls play `<Say>` and `<Play>` verbs prematurely.
+
+## 1.0.0-beta.1
 
 ### Minor Changes
 

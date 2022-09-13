@@ -1,7 +1,7 @@
 {
   "name": "@twilio-labs/plugin-dev-phone",
   "description": "Twilio Dev Phone",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.2",
   "author": "Twilio @twilio",
   "bugs": {
     "url": "https://github.com/twilio-labs/dev-phone/issues"
