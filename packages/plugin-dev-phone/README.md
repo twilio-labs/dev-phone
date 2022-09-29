@@ -18,13 +18,36 @@ Once it's installed, you can run the Dev Phone with the following command:
 
 Check out the [Dev Phone documentation](https://www.twilio.com/docs/labs/dev-phone) to learn more about installing and using the Dev Phone.
 
-### Flags
+## Commands
+<!-- commands -->
+* [`twilio dev-phone`](#twilio-dev-phone)
 
-| Flag Name | Description |
-| --phone-number | Optional. Associates the Dev Phone with a phone number. Takes a number from the active profile on the Twilio CLI as the parameter.|
-| --force | Optional. Forces an overwrite of the phone number configuration. |
-| --headless | Optional. Prevents the UI from automatically opening in the browser. |
-| --port | Optional. Configures the port of the Dev Phone UI. Takes a valid port as a parameter. |
+## `twilio dev-phone`
+
+Dev Phone local express server
+
+```
+USAGE
+  $ twilio dev-phone [-l debug|info|warn|error|none] [-o columns|json|tsv|none] [--silent] [-p <value>] [-f
+    --phone-number <value>] [--headless] [--port <value>]
+
+FLAGS
+  -f, --force                      Optional. Forces an overwrite of the phone number configuration.
+  -l=(debug|info|warn|error|none)  [default: info] Level of logging messages.
+  -o=(columns|json|tsv|none)       [default: columns] Format of command output.
+  -p, --profile=<value>            Shorthand identifier for your profile.
+  --headless                       Optional. Prevents the UI from automatically opening in the browser.
+  --phone-number=<value>           Optional. Associates the Dev Phone with a phone number. Takes a number from the
+                                   active profile on the Twilio CLI as the parameter.
+  --port=<value>                   Optional. Configures the port of the Dev Phone UI. Takes a valid port as a parameter.
+  --silent                         Suppress  output and logs. This is a shorthand for "-l none -o none".
+
+DESCRIPTION
+  Dev Phone local express server
+```
+
+_See code: [dist/commands/dev-phone.ts](https://github.com/twilio-labs/dev-phone/blob/1.0.0-beta.2/dist/commands/dev-phone.ts)_
+<!-- commandsstop -->
  
 ## Working on this plugin
 
