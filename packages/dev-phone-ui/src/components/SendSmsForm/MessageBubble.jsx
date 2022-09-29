@@ -18,6 +18,7 @@ function MessageBubble({ devPhoneName, message }) {
           borderRadius="borderRadius20"
           borderTopRightRadius="borderRadius0"
           fontSize="fontSize30"
+          whiteSpace="pre-wrap"
           lineHeight="lineHeight20"
           padding="space30"
           maxWidth="size30"
