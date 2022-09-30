@@ -51,9 +51,33 @@ This does hot-reload, so changes will be reflected in your browser as soon as yo
 
 Run tests with `npm test`. There are no tests at the moment but the place to add them is `
 
-### Build and Release
+### Documenting Changes
+After you've made changes, run:
+
+`npx changesets`
+
+to clearly document what changes you've made. This will be included in the future CHANGELOG.md for the appropriate package update.
+
+## Build
 The Dev Phone CLI plugin uses the Dev Phone UI as a dependency. This means that new versions of the UI need to be released with a version bump AND the latest version needs to be installed and released in the Dev Phone plugin in order to be consumed by end users.
 
 If you're including new packages in the repository, please include the relevant licenses for said licenses. This may require legal approval to ensure that the Dev Phone open source license stays valid.
 
-More details on the full release process to come, but note that tests and linting are on the roadmap as a part of the release process.
+When you're ready for a new deploy, do a fresh build of the `dist` folders with:
+
+`npx turbo run build`
+
+Once there's a new build, you can manage a version bump on a new version branch with:
+
+```
+npx changesets version
+```
+
+As of 30 Sep 2022, the Dev Phone is still in a prerelease, and so all version bumps are beta version bumps (no major, minor, or patch). This should create some changes in the Changelogs and package.json that need to be committed and pushed to GitHub. Be sure to commit both the version branch and the tag.
+
+## Release
+To release, run:
+
+`npx changesets publish`
+
+Note that tests and linting are on the roadmap as a part of the release process.
