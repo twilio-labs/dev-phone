@@ -46,7 +46,7 @@ DESCRIPTION
   Dev Phone local express server
 ```
 
-_See code: [dist/commands/dev-phone.ts](https://github.com/twilio-labs/dev-phone/blob/1.0.0-beta.2/dist/commands/dev-phone.ts)_
+_See code: [dist/commands/dev-phone.ts](https://github.com/twilio-labs/dev-phone/blob/1.0.0-beta.3/dist/commands/dev-phone.ts)_
 <!-- commandsstop -->
  
 ## Working on this plugin
