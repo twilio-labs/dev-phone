@@ -6,6 +6,9 @@
 
 - f2f19db: The dev phone plugin is now compatible with Twilio CLI v5. Backwards compatibility is no longer guaranteed, unfortunately, so we recommend bumping to a recent node version and updating the plugin CLI as soon as possible.
 
+### Patch Changes
+- 3838d2f: fix white spaces issue in message bubbles
+
 ## 1.0.0-beta.2
 
 ### Patch Changes
