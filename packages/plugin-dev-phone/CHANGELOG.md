@@ -1,5 +1,11 @@
 # @twilio-labs/plugin-dev-phone
 
+## 1.0.0-beta.3
+
+### Major Changes
+
+- f2f19db: The dev phone plugin is now compatible with Twilio CLI v5. Backwards compatibility is no longer guaranteed, unfortunately, so we recommend bumping to a recent node version and updating the plugin CLI as soon as possible.
+
 ## 1.0.0-beta.2
 
 ### Patch Changes
