@@ -50,7 +50,7 @@ function CallHistory() {
 }, [addCallRecord, setSyncClient, syncClient, twilioAccessToken, updateCallRecord]);
 
   return (
-    <Box spacing="space30" backgroundColor={"colorBackground"} height={"100%"} borderRightWidth={"borderWidth10"} borderRightColor={"colorBorder"} borderRightStyle={"solid"}>
+    <Box spacing="space30" backgroundColor={"colorBackground"} maxHeight={"size80"} height={"100%"} borderRightWidth={"borderWidth10"} borderRightColor={"colorBorder"} borderRightStyle={"solid"}>
         <Flex vertical vAlignContent={"bottom"} height={"100%"}>
             <Box width={"100%"} padding={"space80"} overflowY={'scroll'} overflowX={'hidden'}>
               {callLog.length > 0 ?
