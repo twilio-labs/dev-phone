@@ -65,9 +65,7 @@ function SendSmsForm({ numberInUse }) {
         <Label htmlFor="sendSmsBody" required>Message</Label>
         <Grid gutter={"space20"} marginBottom="space40">
           <Column span={10}>
-            {/* <div style={inputContainer}> */}
-              <TextareaAutosize style={textAreaStyle} id="sendSmsBody" type="text" value={messageBody} onChange={(e) => setMessageBody(e.target.value)} />
-            {/* </div> */}
+              <TextareaAutosize minRows={1} style={textAreaStyle} id="sendSmsBody" type="text" value={messageBody} onChange={(e) => setMessageBody(e.target.value)} />
           </Column>
           <Column span={2}>
             <Button type={"submit"} disabled={!canSendMessages}>
