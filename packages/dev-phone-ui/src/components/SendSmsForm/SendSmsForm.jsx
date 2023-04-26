@@ -3,6 +3,7 @@ import { Button, Input, Label, Box, Grid, Column } from "@twilio-paste/core";
 import { SendIcon } from '@twilio-paste/icons/esm/SendIcon';
 import { useSelector } from "react-redux";
 import { TwilioConversationsContext } from '../WebsocketManagers/ConversationsManager';
+import TextareaAutosize from 'react-textarea-autosize';
 import MessageList from "./MessageList"
 
 function SendSmsForm({ numberInUse }) {
@@ -18,24 +19,15 @@ function SendSmsForm({ numberInUse }) {
     return destinationNumber && destinationNumber.length > 6;
   }, [destinationNumber]);
 
-  const inputContainer = {
-    boxSizing: "border-box",
-    display: "flex",
-    width: "100%",
-    backgroundColor: "rgb(255, 255, 255)",
-    boxShadow: "0 0 0 1px #8891aa",
-    borderRadius: "5px",
-    transition: "box-shadow 100ms ease-in",
-    cursor: "text",
-    height: "36px"
-  }
+
   const textAreaStyle = {
     boxSizing: "border-box",
     appearance: "none",
-    backgroundColor: "transparent",
     border: "none",
     borderRadius: "5px",
-    boxShadow: "none",
+    backgroundColor: "rgb(255, 255, 255)",
+    transition: "box-shadow 100ms ease-in",
+    boxShadow: "0 0 0 1px #8891aa",
     color: "inherit",
     cursor: "auto",
     display: "block",
@@ -73,9 +65,9 @@ function SendSmsForm({ numberInUse }) {
         <Label htmlFor="sendSmsBody" required>Message</Label>
         <Grid gutter={"space20"} marginBottom="space40">
           <Column span={10}>
-            <div style={inputContainer}>
-              <textarea style={textAreaStyle} id="sendSmsBody" type="text" value={messageBody} onChange={(e) => setMessageBody(e.target.value)} />
-            </div>
+            {/* <div style={inputContainer}> */}
+              <TextareaAutosize style={textAreaStyle} id="sendSmsBody" type="text" value={messageBody} onChange={(e) => setMessageBody(e.target.value)} />
+            {/* </div> */}
           </Column>
           <Column span={2}>
             <Button type={"submit"} disabled={!canSendMessages}>
