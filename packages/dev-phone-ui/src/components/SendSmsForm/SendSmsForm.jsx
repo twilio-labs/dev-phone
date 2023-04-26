@@ -54,7 +54,6 @@ function SendSmsForm({ numberInUse }) {
 
   // Handles the UI state for sending messages
   const sendIt = async (e) => {
-    formatMessage(messageBody)
     e.preventDefault()
     if (canSendMessages) {
       sendSms(numberInUse, destinationNumber, messageBody);
