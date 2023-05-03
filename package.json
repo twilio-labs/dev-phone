@@ -32,7 +32,6 @@
     "turbo": "^1.2.16"
   },
   "dependencies": {
-    "react-textarea-autosize": "^8.4.1",
     "redux": "^4.2.1",
     "twilio-cli": "^5.5.0"
   }
