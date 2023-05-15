@@ -1,7 +1,7 @@
 import React, {useCallback, useState, useEffect, useRef} from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { Device } from '@twilio/voice-sdk'
-import { updateCallInformation } from '../../actions'
+import { updateCallInformation, updateMuteStatus } from '../../actions'
 
 // Establish context with relevant websocket resources for child components
 const TwilioVoiceContext = React.createContext(null)
@@ -17,6 +17,10 @@ const TwilioVoiceManager = ({ children }) => {
 
     const updateCallInfo = useCallback((call) => {
         dispatch(updateCallInformation(call))
+    }, [dispatch])
+
+    const updateIsMutedStatus = useCallback((isMuted) => {
+        dispatch(updateMuteStatus(isMuted))
     }, [dispatch])
 
     // responsible for making calls with Twilio Voice SDK
@@ -53,6 +57,15 @@ const TwilioVoiceManager = ({ children }) => {
                 activeCall.sendDigits(num);
             }
 
+            deviceDetails.current.toggleMute = () => {
+                 console.log('activeCall', activeCall);
+                if (!activeCall) {
+                    return;
+                }
+                console.log('isMuted', activeCall.isMuted());
+                activeCall.mute(!activeCall.isMuted());
+            }
+
             activeCall.on('accept', call => {
                 updateCallInfo(call)
             })
@@ -64,6 +77,10 @@ const TwilioVoiceManager = ({ children }) => {
             activeCall.on('disconnect', call => {
                 call.removeAllListeners()
                 updateCallInfo(null)
+            })
+
+            activeCall.on('mute', isMuted => {
+                updateIsMutedStatus(isMuted);
             })
         }
     }, [activeCall, updateCallInfo])
@@ -96,7 +113,8 @@ const TwilioVoiceManager = ({ children }) => {
             hangUp: () => {},
             sendDTMF: () => {},
             updateCallInfo,
-            makeCall
+            makeCall,
+            toggleMute: () => {}
         }
     }
 

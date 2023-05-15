@@ -43,6 +43,14 @@ export function updateCallInformation(call) {
     }
 }
 
+export const UPDATE_MUTE_STATUS = "UPDATE_MUTE_STATUS";
+
+export function updateMuteStatus(isMuted) {
+    return {
+        type: UPDATE_MUTE_STATUS,
+        isMuted
+    }
+}
 
 // Logic for communicating with the local backend
 export const DEV_PHONE_NUMBER_SELECTED = "DEV_PHONE_NUMBER_SELECTED"
