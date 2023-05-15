@@ -9,6 +9,7 @@ import {
     ADD_CALL_RECORD,
     UPDATE_CALL_RECORD,
     UPDATE_CALL_INFORMATION,
+    UPDATE_MUTE_STATUS,
     SET_DESTINATION_NUMBER,
     ADD_DIGIT_TO_DESTINATION_NUMBER
 } from '../actions'
@@ -58,6 +59,11 @@ export default function reducer(state = initialState, action) {
             return { ...state, destinationNumber: action.number }
         case UPDATE_CALL_INFORMATION:
             return { ...state, currentCallInfo: action.call ? { ...state.currentCallInfo, ...action.call } : null }
+        case UPDATE_MUTE_STATUS:
+            return {
+                ...state,
+                isMuted: action.isMuted
+            }
         case ADD_DIGIT_TO_DESTINATION_NUMBER:
             return { ...state, destinationNumber: state.destinationNumber + action.digit }
         default:

@@ -1,6 +1,8 @@
 import { useContext, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux'
-import { Button, Flex, Stack, Grid, Column, Box } from "@twilio-paste/core";
+import { Button, Flex, Stack, Grid, Column, Box, ScreenReaderOnly } from "@twilio-paste/core";
+import { MicrophoneOnIcon } from "@twilio-paste/icons/cjs/MicrophoneOnIcon";
+import { MicrophoneOffIcon } from "@twilio-paste/icons/cjs/MicrophoneOffIcon";
 import { TwilioVoiceContext } from '../WebsocketManagers/VoiceManager';
 import DTMFButton from './DtmfButton';
 import { addDigitToDestinationNumber } from '../../actions';
@@ -9,6 +11,7 @@ import CallStatusMessage from './StatusMessage';
 function Dialer() {
     const currentCallInfo = useSelector((state) => state.currentCallInfo)
     const destinationNumber = useSelector(state => state.destinationNumber)
+    const isMuted = useSelector(state => state.isMuted)
     const dispatch = useDispatch();
 
     const dialer = useContext(TwilioVoiceContext)
@@ -24,6 +27,10 @@ function Dialer() {
 
     function hangUp() {
         dialer.hangUp()
+    }
+
+    function toggleMute() {
+        dialer.toggleMute();
     }
 
     function sendDTMF(num) {
@@ -51,7 +58,16 @@ function Dialer() {
         <Box width="100%" paddingTop="space60">
             <Stack orientation="vertical" spacing="space60">
                 <Box width="100%">
-                    <CallStatusMessage voiceDevice={voiceDevice} currentCallInfo={currentCallInfo} />
+                    <Flex>
+                        <Flex grow hAlignContent={"center"}>
+                            <CallStatusMessage voiceDevice={voiceDevice} currentCallInfo={currentCallInfo} />
+                        </Flex>
+                        <Flex>
+                            { isCallInProgress && <Button variant="secondary_icon" size="reset" onClick={toggleMute}>
+                                {!isMuted ? <MicrophoneOnIcon size="sizeIcon20" title="Mute" decorative={false}/> : <MicrophoneOffIcon size="sizeIcon20" title="Mute" decorative={false} />}
+                            </Button> }
+                        </Flex>
+                    </Flex>
                     <Flex>
                         {generateDTMFColumn(['1', '2', '3'])}
                     </Flex>
