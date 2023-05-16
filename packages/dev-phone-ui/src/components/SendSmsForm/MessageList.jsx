@@ -1,4 +1,4 @@
-import { Box, Flex, SkeletonLoader, Text } from "@twilio-paste/core"
+import { Box, Flex, SkeletonLoader, Text, ChatMessage, ChatBubble, ChatMessageMeta, ChatMessageMetaItem } from "@twilio-paste/core"
 import { useSelector } from "react-redux"
 import EmptyMessageList from "./EmptyMessageList";
 import MessageBubble from "./MessageBubble"
@@ -14,8 +14,15 @@ function MessageList({ devPhoneName }) {
                     <Box width={"100%"} paddingRight={"space100"} paddingBottom={"space40"} paddingLeft={"space40"} overflowY={'scroll'} overflowX={'hidden'}>
                         {messageList.length > 0 ?
                             messageList.map((message, i) => {
+                                const isFromDevPhone = message.author === devPhoneName;
                                 return (
-                                    <MessageBubble message={message} key={message.sid} devPhoneName={devPhoneName} />
+                                    <ChatMessage variant={!isFromDevPhone ? "outbound" : "inbound"}>
+                                        <ChatBubble
+                                        >
+                                            {message.body}
+                                        </ChatBubble>
+                                    </ChatMessage>
+                                    // <MessageBubble message={message} key={message.sid} devPhoneName={devPhoneName} />
                                 )
                             })
                             : <EmptyMessageList devPhoneNumber={numberInUse} />
