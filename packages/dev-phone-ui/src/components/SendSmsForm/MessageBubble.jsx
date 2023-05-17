@@ -14,7 +14,7 @@ function MessageBubble({ devPhoneName, message }) {
         <Box
           as="div"
           color={isFromDevPhone ? "colorTextInverse" : "colorText"}
-          backgroundColor={isFromDevPhone ? "colorBackgroundPrimary" : "colorBackgroundPrimary"}
+          backgroundColor={isFromDevPhone ? "colorBackgroundPrimary" : "colorBackground"}
           borderRadius="borderRadius20"
           borderTopRightRadius="borderRadius0"
           fontSize="fontSize30"

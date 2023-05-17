@@ -28,7 +28,7 @@
     "webpack-license-plugin": "^4.2.2"
   },
   "dependencies": {
-    "@twilio-paste/core": "^11.1.2",
+    "@twilio-paste/core": "^19.0.0",
     "@twilio-paste/icons": "^6.2.1",
     "@twilio/conversations": "^2.0.0",
     "@twilio/voice-sdk": "^2.1.0",
