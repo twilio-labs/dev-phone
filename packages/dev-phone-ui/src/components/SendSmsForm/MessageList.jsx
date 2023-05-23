@@ -1,9 +1,4 @@
-import {
-    Box, Flex, SkeletonLoader, 
-    Text, ChatLog, ChatMessage,
-    ChatBubble, ChatMessageMeta, ChatMessageMetaItem, 
-    Avatar
-} from "@twilio-paste/core"
+import { Box, Flex, SkeletonLoader, Text, ChatLog, ChatMessage, ChatBubble, ChatMessageMeta, ChatMessageMetaItem, Avatar } from "@twilio-paste/core"
 import { UserIcon } from '@twilio-paste/icons/esm/UserIcon';
 import { useSelector } from "react-redux"
 import EmptyMessageList from "./EmptyMessageList";
