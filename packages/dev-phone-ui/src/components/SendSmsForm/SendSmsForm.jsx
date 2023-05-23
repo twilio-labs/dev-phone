@@ -1,5 +1,6 @@
 import { useContext, useState, useEffect, useMemo } from "react";
 import { Button, Input, Label, Box, Grid, TextArea, HelpText, Column } from "@twilio-paste/core";
+import { ChatComposer } from "@twilio-paste/core/chat-composer";
 import { SendIcon } from '@twilio-paste/icons/esm/SendIcon';
 import { useSelector } from "react-redux";
 import { TwilioConversationsContext } from '../WebsocketManagers/ConversationsManager';
@@ -31,6 +32,11 @@ function SendSmsForm({ numberInUse }) {
     }
   };
 
+
+  const handleChange = (e) => {
+    setMessageBody(e.target.value)
+  }
+
   return (
     <Box width="100%" backgroundColor={"colorBackgroundBody"}>
       <MessageList
@@ -41,7 +47,8 @@ function SendSmsForm({ numberInUse }) {
 
         <Grid gutter={"space20"} marginBottom="space40">
           <Column span={10}>
-            <TextArea resize="vertical" maxLength={1600} id="sendSmsBody" type="text" messageBody={messageBody} onChange={(e) => setMessageBody(e.target.value)} aria-describedby="send_sms_help_text" required />
+          <ChatComposer config={{namespace: ''}} onChange={handleChange} placeholder="Chat text" ariaLabel="A basic chat composer" />
+            <TextArea resize="vertical" maxLength={1600} id="sendSmsBody" type="text" onChange={(e) => setMessageBody(e.target.value)} aria-describedby="send_sms_help_text" required />
             <HelpText id="send_sms_help_text">Enter at most 1600 characters</HelpText>
           </Column>
           <Column span={2}>
