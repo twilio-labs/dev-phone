@@ -4,9 +4,7 @@ import { Button, Input, Label, Box, Grid, TextArea, HelpText, Column, AutoScroll
 import { ChatComposer } from "@twilio-paste/core/chat-composer";
 import { SendIcon } from '@twilio-paste/icons/esm/SendIcon';
 import {
-  $getRoot,
-  $createParagraphNode,
-  $createTextNode
+  $getRoot
 } from "@twilio-paste/lexical-library";
 import { TwilioConversationsContext } from '../WebsocketManagers/ConversationsManager';
 import MessageList from "./MessageList"
