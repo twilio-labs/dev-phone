@@ -32,6 +32,7 @@
     "turbo": "^1.2.16"
   },
   "dependencies": {
+    "@twilio-paste/lexical-library": "^2.0.0",
     "redux": "^4.2.1",
     "twilio-cli": "^5.5.0"
   }

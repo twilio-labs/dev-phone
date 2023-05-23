@@ -1,4 +1,9 @@
-import { Box, Flex, SkeletonLoader, Text, ChatLog, ChatMessage, ChatBubble, ChatMessageMeta, ChatMessageMetaItem, Avatar } from "@twilio-paste/core"
+import {
+    Box, Flex, SkeletonLoader, 
+    Text, ChatLog, ChatMessage,
+    ChatBubble, ChatMessageMeta, ChatMessageMetaItem, 
+    Avatar
+} from "@twilio-paste/core"
 import { UserIcon } from '@twilio-paste/icons/esm/UserIcon';
 import { useSelector } from "react-redux"
 import EmptyMessageList from "./EmptyMessageList";
@@ -17,17 +22,17 @@ function MessageList({ devPhoneName }) {
                         messageList.map((message, i) => {
                             const isFromDevPhone = message.author === devPhoneName;
                             return (
-                                <ChatMessage variant={!isFromDevPhone ? "outbound" : "inbound"}> 
-                                        <ChatBubble>
-                                            {message.body}
-                                        </ChatBubble>
-                                        <ChatMessageMeta aria-label="said by Gibby Radki at 3:35 PM">
-                                            <ChatMessageMetaItem>
-                                                 <Avatar size="sizeIcon30" name={message.author} icon={UserIcon} />
-                                                {message.author}
-                                            </ChatMessageMetaItem>
-                                        </ChatMessageMeta>
-                            
+                                <ChatMessage variant={!isFromDevPhone ? "outbound" : "inbound"}>
+                                    <ChatBubble>
+                                        {message.body}
+                                    </ChatBubble>
+                                    <ChatMessageMeta aria-label="said by Gibby Radki at 3:35 PM">
+                                        <ChatMessageMetaItem>
+                                            <Avatar size="sizeIcon30" name={message.author} icon={UserIcon} />
+                                            {message.author}
+                                        </ChatMessageMetaItem>
+                                    </ChatMessageMeta>
+
                                 </ChatMessage>
                                 // <MessageBubble message={message} key={message.sid} devPhoneName={devPhoneName} />
                             )

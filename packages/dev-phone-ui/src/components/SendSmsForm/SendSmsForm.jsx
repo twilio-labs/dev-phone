@@ -1,8 +1,13 @@
-import { useContext, useState, useEffect, useMemo } from "react";
-import { Button, Input, Label, Box, Grid, TextArea, HelpText, Column } from "@twilio-paste/core";
+import { useContext, useState, useEffect, useRef, useMemo } from "react";
+import { useSelector } from "react-redux";
+import { Button, Input, Label, Box, Grid, TextArea, HelpText, Column, AutoScrollPlugin } from "@twilio-paste/core";
 import { ChatComposer } from "@twilio-paste/core/chat-composer";
 import { SendIcon } from '@twilio-paste/icons/esm/SendIcon';
-import { useSelector } from "react-redux";
+import {
+  $getRoot,
+  $createParagraphNode,
+  $createTextNode
+} from "@twilio-paste/lexical-library";
 import { TwilioConversationsContext } from '../WebsocketManagers/ConversationsManager';
 import MessageList from "./MessageList"
 
@@ -33,34 +38,44 @@ function SendSmsForm({ numberInUse }) {
   };
 
 
-  const handleChange = (e) => {
-    setMessageBody(e.target.value)
-  }
+  const myOnChange = (editorState) => {
+    editorState.read(() => {
+      const root = $getRoot();
+      setMessageBody(root.getTextContent());
+    });
+  };
+
 
   return (
-    <Box width="100%" backgroundColor={"colorBackgroundBody"}>
+    <Box width="100%" backgroundColor={"default"}>
       <MessageList
         devPhoneName={channelData.devPhoneName}
       />
-      <form onSubmit={(e) => sendIt(e)} method={"GET"}>
-        <Label htmlFor="sendSmsBody" required>Message</Label>
+      <Label htmlFor="sendSmsBody" required>Message</Label>
 
-        <Grid gutter={"space20"} marginBottom="space40">
-          <Column span={10}>
-          <ChatComposer config={{namespace: ''}} onChange={handleChange} placeholder="Chat text" ariaLabel="A basic chat composer" />
-            <TextArea resize="vertical" maxLength={1600} id="sendSmsBody" type="text" onChange={(e) => setMessageBody(e.target.value)} aria-describedby="send_sms_help_text" required />
-            <HelpText id="send_sms_help_text">Enter at most 1600 characters</HelpText>
-          </Column>
-          <Column span={2}>
-            <Button type={"submit"} disabled={!canSendMessages}>
-              <SendIcon decorative />
-              Send
-            </Button>
-          </Column>
-        </Grid>
-
-
-      </form>
+      <Grid gutter={"space20"} marginBottom="space40">
+        <Column span={10}>
+          <ChatComposer
+            config={{
+              namespace: "send_sms",
+              onError: (e) => {
+                throw e;
+              }
+            }}
+            placeholder="Chat text"
+            ariaLabel="A basic chat composer"
+            onChange={myOnChange}
+          >
+          </ChatComposer>
+          <HelpText id="send_sms_help_text">Enter at most 1600 characters</HelpText>
+        </Column>
+        <Column span={2}>
+          <Button onClick={sendIt} type={"submit"} disabled={!canSendMessages}>
+            <SendIcon decorative />
+            Send
+          </Button>
+        </Column>
+      </Grid>
     </Box>
 
   );
