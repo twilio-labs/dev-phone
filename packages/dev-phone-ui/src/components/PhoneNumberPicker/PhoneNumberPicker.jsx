@@ -50,7 +50,8 @@ function PhoneNumberPicker({ configureNumberInUse, phoneNumbers }) {
   const [twilioPns, setTwilioPns] = useState(null);
   const [selectedPn, setSelectedPn] = useState(null);
 
-  useEffect(async () => {
+  useEffect( () => {
+    const asyncFn = async() => {
     if (!selectedPn) {
       try {
         const response = await fetch('/phone-numbers')
@@ -71,7 +72,8 @@ function PhoneNumberPicker({ configureNumberInUse, phoneNumbers }) {
         console.error(error)
       }
     }
-
+  }
+asyncFn()
   }, [selectedPn]);
 
   if (twilioPns === null) {
