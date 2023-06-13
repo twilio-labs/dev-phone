@@ -7,7 +7,7 @@ import {
 import { UserIcon } from '@twilio-paste/icons/esm/UserIcon';
 import { useSelector } from "react-redux"
 import EmptyMessageList from "./EmptyMessageList";
-import MessageBubble from "./MessageBubble"
+
 
 function MessageList({ devPhoneName }) {
     const messageList = useSelector(state => state.messageList)
@@ -26,7 +26,7 @@ function MessageList({ devPhoneName }) {
                                     <ChatBubble>
                                         {message.body}
                                     </ChatBubble>
-                                    <ChatMessageMeta aria-label="said by Gibby Radki at 3:35 PM">
+                                    <ChatMessageMeta aria-label="">
                                         <ChatMessageMetaItem>
                                             <Avatar size="sizeIcon30" name={message.author} icon={UserIcon} />
                                             {message.author}
