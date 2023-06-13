@@ -25,10 +25,6 @@ function SendSmsForm({ numberInUse }) {
 
   const editorStateRef = useRef();
 
-  // const messageSent = useMemo(() =>{
-  //   return 
-  // })
-
   const disabledInitialText = () => {
     const root = $getRoot();
 
@@ -40,20 +36,8 @@ function SendSmsForm({ numberInUse }) {
     }
   };
 
-  // Hansdles the UI state for sending messages
-  const sendIt = async (editorState) => {
-    console.log("ROOT", editorState);
-    editorState.read(() =>{
-      const root = $getRoot();
-      setMessageBody(root.getTextContent())
-    })
-    // editorState.dispatchCommand(CLEAR_HISTORY_COMMAND, undefined);
-    // editorState.read(() => {
-    //   const root = $getRoot();
-    //   setMessageBody(root.getTextContent());
-    // });
-    // console.log("Current editor state", editorStateRef)
-    // e.preventDefault()
+  const sendIt = async (e) => {
+    e.preventDefault()
     if (canSendMessages) {
       sendSms(numberInUse, destinationNumber, messageBody);
       await sendMessage(messageBody)
@@ -61,9 +45,7 @@ function SendSmsForm({ numberInUse }) {
     } else {
       setShowWarning(true)
     }
-
   };
-
 
   const myOnChange = (editorState) => {
     editorState.read(() => {
@@ -85,9 +67,8 @@ function SendSmsForm({ numberInUse }) {
 
       <Grid gutter={"space20"} marginBottom="space40">
         <Column span={10}>
-          <ChatComposer
+        <ChatComposer
             config={{
-              editorState: disabledInitialText,
               namespace: "send_sms",
               onError: (e) => {
                 throw e;
@@ -95,17 +76,21 @@ function SendSmsForm({ numberInUse }) {
             }}
             placeholder="Chat text"
             ariaLabel="A basic chat composer"
-            onChange={editorState => editorStateRef.current = editorState}
+            onChange={myOnChange}
           >
           </ChatComposer>
           <HelpText id="send_sms_help_text">Enter at most 1600 characters</HelpText>
         </Column>
         <Column span={2}>
-          <Button onClick={() => {
+          {/* <Button onClick={() => {
             if(editorStateRef.current) {
               sendIt(editorStateRef.current)
             }
-          }} type={"submit"} disabled={!canSendMessages}>
+          }} type={"submit"} disabled={!canSendMessages}> 
+            <SendIcon decorative />
+            Send
+          </Button>*/}
+          <Button onClick={sendIt} type={"submit"} disabled={!canSendMessages}>
             <SendIcon decorative />
             Send
           </Button>
