@@ -54,7 +54,7 @@ Run tests with `npm test`. There are no tests at the moment but the place to add
 ### Documenting Changes
 After you've made changes, run:
 
-`npx changesets`
+`npx changeset`
 
 to clearly document what changes you've made. This will be included in the future CHANGELOG.md for the appropriate package update.
 
