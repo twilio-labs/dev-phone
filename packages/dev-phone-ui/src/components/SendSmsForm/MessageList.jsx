@@ -15,7 +15,6 @@ function MessageList({ devPhoneName }) {
 
     return (
         messageList ?
-            // Replace Box with Chat Log
             <Box overflowY="scroll" height="size40" tabIndex={0}>
                 <ChatLog>
                     {messageList.length > 0 ?
@@ -32,9 +31,7 @@ function MessageList({ devPhoneName }) {
                                             {message.author}
                                         </ChatMessageMetaItem>
                                     </ChatMessageMeta>
-
                                 </ChatMessage>
-                                // <MessageBubble message={message} key={message.sid} devPhoneName={devPhoneName} />
                             )
                         })
                         : <EmptyMessageList devPhoneNumber={numberInUse} />
@@ -43,7 +40,6 @@ function MessageList({ devPhoneName }) {
             </Box>
             : <SkeletonLoader height={"size20"} />
     )
-
 }
 
 export default MessageList
