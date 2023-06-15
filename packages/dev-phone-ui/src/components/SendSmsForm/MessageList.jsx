@@ -1,13 +1,13 @@
 import {
-    Box, Flex, SkeletonLoader,
+    Box, Flex, SkeletonLoader, 
     Text, ChatLog, ChatMessage,
-    ChatBubble, ChatMessageMeta, ChatMessageMetaItem,
+    ChatBubble, ChatMessageMeta, ChatMessageMetaItem, 
     Avatar
 } from "@twilio-paste/core"
 import { UserIcon } from '@twilio-paste/icons/esm/UserIcon';
 import { useSelector } from "react-redux"
 import EmptyMessageList from "./EmptyMessageList";
-import MessageBubble from "./MessageBubble"
+
 
 function MessageList({ devPhoneName }) {
     const messageList = useSelector(state => state.messageList)
@@ -26,7 +26,7 @@ function MessageList({ devPhoneName }) {
                                     <ChatBubble>
                                         {message.body}
                                     </ChatBubble>
-                                    <ChatMessageMeta aria-label="">
+                                    <ChatMessageMeta aria-label={!isFromDevPhone ? "said by outbound user" : "said by dev phone"}>
                                         <ChatMessageMetaItem>
                                             <Avatar size="sizeIcon30" name={message.author} icon={UserIcon} />
                                             {message.author}
