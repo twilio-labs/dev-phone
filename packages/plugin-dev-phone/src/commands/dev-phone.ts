@@ -6,7 +6,7 @@ import express from 'express';
 import { Flags } from '@oclif/core';
 import { deployServerless, constants } from '../utils/create-serverless-util';
 import { getAvailablePort, isValidPort } from '../utils/helpers'
-import { isSmsUrlSet, isVoiceUrlSet } from '../utils/phone-number-utils';
+import { isSmsUrlSet, isVoiceUrlSet, updatePhoneWebhooks, removePhoneWebhooks } from '../utils/phone-number-utils';
 const { TwilioClientCommand } = require('@twilio/cli-core').baseCommands;
 const { TwilioCliError } = require('@twilio/cli-core').services.error;
 const WebClientPath = path.resolve(require.resolve('@twilio-labs/dev-phone-ui'), '..')
@@ -88,7 +88,9 @@ class DevPhoneServer extends TwilioClientCommand {
         this.jwt = await this.createJwt();
 
         // add webhook config to the phone number, if there is one passed by CLI flag
-        await this.updatePhoneWebhooks();
+        // TO-DO return updated phone number and set this.phoneNumber 
+        await updatePhoneWebhooks(this.phoneNumber,this.twilioClient.incomingPhoneNumbers, {voiceUrl: this.voiceUrl, smsUrl: this.smsUrl, statusCallback: this.statusCallback} );
+ 
 
         const onShutdown = async () => {
             await this.destroyConversations();
@@ -96,7 +98,7 @@ class DevPhoneServer extends TwilioClientCommand {
             await this.destroyApiKeys();
             await this.destroySyncs();
             await this.destroyFunction();
-            await this.removePhoneWebhooks();
+            await removePhoneWebhooks(this.phoneNumber, this.twilioClient.incomingPhoneNumbers);
         }
 
         process.on('SIGINT', async function () {
@@ -277,47 +279,7 @@ class DevPhoneServer extends TwilioClientCommand {
         }
     }
 
-    async updatePhoneWebhooks() {
-        if (!this.cliSettings.phoneNumber) return;
-
-        console.log(`💻 Updating Voice and SMS webhooks for ${this.cliSettings.phoneNumber.phoneNumber}...`);
-
-        this.cliSettings.phoneNumber.voiceUrl = this.voiceUrl;
-        this.cliSettings.phoneNumber.smsUrl = this.smsUrl;
-        this.cliSettings.phoneNumber.statusCallback = this.statusCallback;
-
-        try {
-            const updated = await this.twilioClient.incomingPhoneNumbers(this.cliSettings.phoneNumber.sid)
-                .update({
-                    voiceUrl: this.voiceUrl,
-                    smsUrl: this.smsUrl,
-                    statusCallback: this.statusCallback,
-                })
-            console.log('✅ Webhooks updated\n');
-            return updated;
-        } catch(err) {
-            console.error(err)
-        }
-    }
-
-    async removePhoneWebhooks() {
-        if (!this.cliSettings.phoneNumber) return;
-
-        console.log(`🚮 Removing incoming Voice and SMS webhooks for ${this.cliSettings.phoneNumber.phoneNumber}`);
-        try {
-            const updated = await this.twilioClient
-                .incomingPhoneNumbers(this.cliSettings.phoneNumber.sid)
-                .update({
-                    voiceUrl: "",
-                    smsUrl: "",
-                    statusCallback: "",
-                })
-            return updated
-        }catch(err) {
-            console.error(err)
-        }
-    }
-
+   
     async validatePropsAndFlags(props: any, flags: any) {
         // Flags defined below can be validated and used here. Example:
         // https://github.com/twilio/plugin-debugger/blob/main/src/commands/debugger/logs/list.js#L46-L56
