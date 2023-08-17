@@ -26,6 +26,7 @@ const VoiceGrant = AccessToken.VoiceGrant;
 const SyncGrant = AccessToken.SyncGrant;
 const CALL_LOG_MAP_NAME = 'CallLog'
 
+// removes unecessary properties to standardize the twilio phone number
 const reformatTwilioPns = (twilioResponse: IncomingPhoneNumberInstance[]) => {
     return {
         "phone-numbers": twilioResponse.map(
@@ -88,8 +89,9 @@ class DevPhoneServer extends TwilioClientCommand {
         this.jwt = await this.createJwt();
 
         // add webhook config to the phone number, if there is one passed by CLI flag
-        // TO-DO return updated phone number and set this.phoneNumber 
-        await updatePhoneWebhooks(this.phoneNumber,this.twilioClient.incomingPhoneNumbers, {voiceUrl: this.voiceUrl, smsUrl: this.smsUrl, statusCallback: this.statusCallback} );
+        // TO-DO return updated phone number and set this.phoneNumber  
+        const phoneNumberProps =  {voiceUrl: this.voiceUrl, smsUrl: this.smsUrl, statusCallback: this.statusCallback}
+        this.cliSettings.phoneNumber =  await updatePhoneWebhooks(this.cliSettings.phoneNumber,this.twilioClient.incomingPhoneNumbers, phoneNumberProps );
  
 
         const onShutdown = async () => {
@@ -98,7 +100,7 @@ class DevPhoneServer extends TwilioClientCommand {
             await this.destroyApiKeys();
             await this.destroySyncs();
             await this.destroyFunction();
-            await removePhoneWebhooks(this.phoneNumber, this.twilioClient.incomingPhoneNumbers);
+            await removePhoneWebhooks(this.cliSettings.phoneNumber, this.twilioClient.incomingPhoneNumbers);
         }
 
         process.on('SIGINT', async function () {
@@ -169,9 +171,9 @@ class DevPhoneServer extends TwilioClientCommand {
 
                 // Should only have a single number
                 if (selectedNumber.length === 1) {
-                    await this.removePhoneWebhooks();
+                    await removePhoneWebhooks(this.cliSettings.phoneNumber, this.twilioClient.incomingPhoneNumbers);                    
                     this.cliSettings.phoneNumber = selectedNumber[0];
-                    await this.updatePhoneWebhooks();
+                    this.cliSettings.phoneNumber = await updatePhoneWebhooks(this.cliSettings.phoneNumber,this.twilioClient.incomingPhoneNumbers, {voiceUrl: this.voiceUrl, smsUrl: this.smsUrl, statusCallback: this.statusCallback} );
                     res.json({
                         phoneNumber: this.cliSettings.phoneNumber,
                         message: 'Phone number updated!'
@@ -307,7 +309,7 @@ class DevPhoneServer extends TwilioClientCommand {
                     `Cannot use ${phoneNumber} because the following config for that phone number would be overwritten: ` + pnConfigAlreadySet.join(", ")
                 );
             }
-
+         
             this.cliSettings.phoneNumber = reformatTwilioPns(this.pns)["phone-numbers"][0];
 
         }
