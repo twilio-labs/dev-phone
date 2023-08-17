@@ -8,17 +8,17 @@ export function isVoiceUrlSet(voiceUrl: string) {
     return voiceUrl && voiceUrl !== "" && voiceUrl !== 'https://demo.twilio.com/welcome/voice/';
 }
 
-export async function updatePhoneWebhooks(phoneNumber: TwilioPhoneNumber, incomingPhoneNumbersApi: Function, properties: PhoneNumberProps) {
-    if (!phoneNumber) return;
+export async function updatePhoneWebhooks(selectedNumber: TwilioPhoneNumber, incomingPhoneNumbersApi: Function, properties: PhoneNumberProps) {
+    if (!selectedNumber) return;
 
-    console.log(`💻 Updating Voice and SMS webhooks for ${phoneNumber.phoneNumber}...`);
+    console.log(`💻 Updating Voice and SMS webhooks for ${selectedNumber.phoneNumber}...`);
 
-    phoneNumber.voiceUrl = properties.voiceUrl;
-    phoneNumber.smsUrl = properties.smsUrl;
-    phoneNumber.statusCallback = properties.statusCallback;
+    selectedNumber.voiceUrl = properties.voiceUrl;
+    selectedNumber.smsUrl = properties.smsUrl;
+    selectedNumber.statusCallback = properties.statusCallback;
 
     try {
-        const updated = await incomingPhoneNumbersApi(phoneNumber.sid)
+        const updated = await incomingPhoneNumbersApi(selectedNumber.sid)
             .update({
                 voiceUrl: properties.voiceUrl,
                 smsUrl: properties.smsUrl,
@@ -31,12 +31,12 @@ export async function updatePhoneWebhooks(phoneNumber: TwilioPhoneNumber, incomi
     }
 }
 
-export async function removePhoneWebhooks(phoneNumber: TwilioPhoneNumber, incomingPhoneNumbersApi: Function) {
-    if (!phoneNumber) return;
+export async function removePhoneWebhooks(activeNumber: TwilioPhoneNumber, incomingPhoneNumbersApi: Function) {
+    if (!activeNumber) return;
 
-    console.log(`🚮 Removing incoming Voice and SMS webhooks for ${phoneNumber.phoneNumber}`);
+    console.log(`🚮 Removing incoming Voice and SMS webhooks for ${activeNumber.phoneNumber}`);
     try {
-        const updated = await incomingPhoneNumbersApi(phoneNumber.sid)
+        const updated = await incomingPhoneNumbersApi(activeNumber.sid)
             .update({
                 voiceUrl: "",
                 smsUrl: "",
