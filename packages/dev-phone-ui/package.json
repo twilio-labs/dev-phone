@@ -28,8 +28,8 @@
     "webpack-license-plugin": "^4.2.2"
   },
   "dependencies": {
-    "@twilio-paste/core": "^19.0.0",
-    "@twilio-paste/icons": "^11.1.0",
+    "@twilio-paste/core": "^20.2.0",
+    "@twilio-paste/icons": "^12.1.0",
     "@twilio/conversations": "^2.0.0",
     "@twilio/voice-sdk": "^2.1.0",
     "date-fns": "^2.28.0",
