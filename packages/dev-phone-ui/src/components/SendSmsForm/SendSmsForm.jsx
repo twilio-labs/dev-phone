@@ -6,8 +6,8 @@ import { SendIcon } from '@twilio-paste/icons/esm/SendIcon';
 import { $getRoot, $createParagraphNode, $createTextNode } from '@twilio-paste/lexical-library';
 import { TwilioConversationsContext } from '../WebsocketManagers/ConversationsManager';
 import MessageList from "./MessageList"
-import { ClearEditorPlugin } from "@tw2";
-import { CLEAR_HISTORY_COMMAND } from "lexical";
+// import { ClearEditorPlugin } from "@tw2";
+import { ClearEditorPlugin } from "@twilio-paste/lexical-library";
 
 function SendSmsForm({ numberInUse }) {
   const myRef = React.createRef()
