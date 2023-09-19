@@ -18,7 +18,7 @@ module.exports = {
         },
         proxy: {
             '**': {
-                target: 'http://localhost:3001',
+                target: 'http://localhost:1337',
                 bypass: (req) => (req.headers.accept.includes("html") ? "/" : null)
             },
         },
