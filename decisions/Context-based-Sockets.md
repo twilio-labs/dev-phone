@@ -18,7 +18,7 @@ A general pattern to follow with Twilio web sockets is:
 - Redux's ONLY job is to know what the current state is as it relates to how the UI needs to render to the user.
 
 ### The UI Component
-- Renders based on information in the Redux Store. For example, if there is an active call in the Voice SDK, it can change how various buttons are rendered in order to 
+- Renders based on information in the Redux Store. For example, if there is an active call in the Voice SDK, it can change how various buttons are rendered in the UI.
 - It also uses the React context in order to expose key methods to the user - for example, the VoiceManager defines general usage of the sendDTMF SDK method, but the Caller Component actually calls that logic in the UI and allows a user to press '2' and send DTMF.
 
 ## Also considered
@@ -26,3 +26,9 @@ All of the websocket state could be pushed into Redux, but this would require ei
 
 ## Consequences
 This requires more in-depth knowledge of React. We're leaning heavily on what I would consider intermediate/advanced features, like multiple hooks (useRef, useState, useCallback, useEffect and their counterparts in Redux like useSelector). But working with the voice SDK is complex 🤷‍♂️ This architecture gives some structure to the complexity and creates some walls between different problems - once I know what I want to do, I know exactly where I should go to do it.
+
+## Relevant References/Documentation
+- [React Context API Docs](https://react.dev/learn/passing-data-deeply-with-context)
+- [Medium - Using React Context with Socket.io](https://alexboots.medium.com/using-react-context-with-socket-io-3b7205c86a6d)
+- [Aravind Balla - Custom hook to listen to web sockets](https://aravindballa.com/writings/custom-hook-to-listen-websockets/)
+- [How to use React Context effectively](https://kentcdodds.com/blog/how-to-use-react-context-effectively)
