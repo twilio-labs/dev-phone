@@ -1,13 +1,30 @@
-import React, { useContext, useState, useEffect, useRef, useMemo } from "react";
+import React, { useContext, useState, useMemo } from "react";
 import { useSelector } from "react-redux";
-import { Button, Input, Label, Box, Grid, TextArea, HelpText, Column, AutoScrollPlugin } from "@twilio-paste/core";
+import { Button, Label, Box, Grid, HelpText, Column, AutoScrollPlugin } from "@twilio-paste/core";
 import { ChatComposer } from "@twilio-paste/core/chat-composer";
 import { SendIcon } from '@twilio-paste/icons/esm/SendIcon';
-import { $getRoot, $createParagraphNode, $createTextNode } from '@twilio-paste/lexical-library';
 import { TwilioConversationsContext } from '../WebsocketManagers/ConversationsManager';
 import MessageList from "./MessageList"
-import { ClearEditorPlugin } from "@tw2";
-import { CLEAR_HISTORY_COMMAND } from "lexical";
+import {$getRoot, ClearEditorPlugin, useLexicalComposerContext, CLEAR_EDITOR_COMMAND } from "@twilio-paste/core/lexical-library";
+
+
+
+function SendButtonPlugin({onClick, canSendMessages}) {
+  const [editor] = useLexicalComposerContext(); 
+
+  const sendIt = (e) => {
+    onClick(e);
+    editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined);
+  }
+
+
+  return (
+    <Button onClick={sendIt} type={"submit"} disabled={!canSendMessages}>
+      <SendIcon decorative />
+      Send
+    </Button>
+  )
+}
 
 function SendSmsForm({ numberInUse }) {
   const myRef = React.createRef()
@@ -44,8 +61,6 @@ function SendSmsForm({ numberInUse }) {
 
 
   return (
-    // create an event listener that looks for a submission and then clears the editor state
-    // component will need to recognize thaat the message body become null and we'll need to null out the chatcomposer
 
     <Box width="100%" backgroundColor={"default"}>
       <MessageList
@@ -67,14 +82,9 @@ function SendSmsForm({ numberInUse }) {
             onChange={myOnChange}
           >
             <ClearEditorPlugin />
+            <SendButtonPlugin canSendMessages={canSendMessages} onClick={sendIt} />
           </ChatComposer>
           <HelpText id="send_sms_help_text">Enter at most 1600 characters</HelpText>
-        </Column>
-        <Column span={2}>
-          <Button onClick={sendIt} type={"submit"} disabled={!canSendMessages}>
-            <SendIcon decorative />
-            Send
-          </Button>
         </Column>
       </Grid>
     </Box>
