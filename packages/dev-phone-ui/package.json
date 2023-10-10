@@ -25,7 +25,9 @@
     "webpack": "^5.69.1",
     "webpack-cli": "^4.9.2",
     "webpack-dev-server": "^4.7.4",
-    "webpack-license-plugin": "^4.2.2"
+    "webpack-license-plugin": "^4.2.2",
+    "@changesets/cli": "^2.26.1",
+    "turbo": "^1.2.16"
   },
   "dependencies": {
     "@twilio-paste/core": "^20.2.0",
