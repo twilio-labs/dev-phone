@@ -29,12 +29,13 @@ function Softphone({ numberInUse }) {
     return (
         <Box
             maxWidth={"75%"}
-            maxHeight={"size80"}
+            maxHeight={"size90"}
             margin={"auto"}
             marginY={"space120"}
             backgroundColor={"colorBackgroundBody"}
             boxShadow={"shadow"}
             borderRadius={"borderRadius20"}
+            overflowY="auto"
         >
             <Grid>
                 <Column span={showCallHistory ? 4 : 0}>

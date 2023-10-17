@@ -1,16 +1,16 @@
 import React, { useContext, useState, useMemo } from "react";
 import { useSelector } from "react-redux";
-import { Button, Label, Box, Grid, HelpText, Column, AutoScrollPlugin } from "@twilio-paste/core";
+import { Button, Label, Box, Grid, HelpText, Column, AutoScrollPlugin, Flex } from "@twilio-paste/core";
 import { ChatComposer } from "@twilio-paste/core/chat-composer";
 import { SendIcon } from '@twilio-paste/icons/esm/SendIcon';
 import { TwilioConversationsContext } from '../WebsocketManagers/ConversationsManager';
 import MessageList from "./MessageList"
-import {$getRoot, ClearEditorPlugin, useLexicalComposerContext, CLEAR_EDITOR_COMMAND } from "@twilio-paste/core/lexical-library";
+import { $getRoot, ClearEditorPlugin, useLexicalComposerContext, CLEAR_EDITOR_COMMAND } from "@twilio-paste/core/lexical-library";
 
 
 
-function SendButtonPlugin({onClick, canSendMessages}) {
-  const [editor] = useLexicalComposerContext(); 
+function SendButtonPlugin({ onClick, canSendMessages }) {
+  const [editor] = useLexicalComposerContext();
 
   const sendIt = (e) => {
     onClick(e);
@@ -61,15 +61,15 @@ function SendSmsForm({ numberInUse }) {
 
 
   return (
-
-    <Box width="100%" backgroundColor={"default"}>
+    <Box width="100%" backgroundColor={"default"} overflowX="hidden" overflowY="auto">
       <MessageList
         devPhoneName={channelData.devPhoneName}
       />
       <Label htmlFor="sendSmsBody" required>Message</Label>
 
       <Grid gutter={"space20"} marginBottom="space40">
-        <Column span={10}>
+        <Column span={12}>
+
           <ChatComposer
             config={{
               namespace: "send_sms",
@@ -80,9 +80,27 @@ function SendSmsForm({ numberInUse }) {
             placeholder="Chat text"
             ariaLabel="A basic chat composer"
             onChange={myOnChange}
+            style={{ display: "flex" }}
           >
-            <ClearEditorPlugin />
-            <SendButtonPlugin canSendMessages={canSendMessages} onClick={sendIt} />
+            <Flex horizontal>
+              <Flex grow>
+                <Box
+                >
+                  <ClearEditorPlugin />
+                </Box>
+              </Flex>
+              <Flex grow>
+                <Box
+                  padding="space10"
+                  width="100%"
+                  display="flex"
+                  justifyContent="end"
+                >
+                  <SendButtonPlugin canSendMessages={canSendMessages} onClick={sendIt} />
+                </Box>
+              </Flex>
+            </Flex>
+
           </ChatComposer>
           <HelpText id="send_sms_help_text">Enter at most 1600 characters</HelpText>
         </Column>
