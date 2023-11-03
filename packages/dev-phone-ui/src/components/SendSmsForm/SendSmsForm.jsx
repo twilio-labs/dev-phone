@@ -1,34 +1,14 @@
 import React, { useContext, useState, useMemo } from "react";
 import { useSelector } from "react-redux";
-import { Button, Label, Box, Grid, HelpText, Column, AutoScrollPlugin, Flex } from "@twilio-paste/core";
+import { Label, Box, Grid, HelpText, Column, AutoScrollPlugin } from "@twilio-paste/core";
 import { ChatComposer } from "@twilio-paste/core/chat-composer";
-import { SendIcon } from '@twilio-paste/icons/esm/SendIcon';
 import { TwilioConversationsContext } from '../WebsocketManagers/ConversationsManager';
 import MessageList from "./MessageList"
-import { $getRoot, ClearEditorPlugin, useLexicalComposerContext, CLEAR_EDITOR_COMMAND } from "@twilio-paste/core/lexical-library";
+import { $getRoot, ClearEditorPlugin } from "@twilio-paste/core/lexical-library";
+import SendButtonPlugin from "./SendButtonPlugin";
 
-
-
-function SendButtonPlugin({ onClick, canSendMessages }) {
-  const [editor] = useLexicalComposerContext();
-
-  const sendIt = (e) => {
-    onClick(e);
-    editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined);
-  }
-
-
-  return (
-    <Button onClick={sendIt} type={"submit"} disabled={!canSendMessages}>
-      <SendIcon decorative />
-      Send
-    </Button>
-  )
-}
-
+// Top-level container for Dev Phone SMS
 function SendSmsForm({ numberInUse }) {
-  const myRef = React.createRef()
-
   const [messageBody, setMessageBody] = useState('');
 
   const channelData = useSelector(state => state.channelData)
@@ -69,39 +49,21 @@ function SendSmsForm({ numberInUse }) {
 
       <Grid gutter={"space20"} marginBottom="space40">
         <Column span={12}>
-
-          <ChatComposer
-            config={{
-              namespace: "send_sms",
-              onError: (e) => {
-                throw e;
-              }
-            }}
-            placeholder="Chat text"
-            ariaLabel="A basic chat composer"
-            onChange={myOnChange}
-            style={{ display: "flex" }}
-          >
-            <Flex horizontal>
-              <Flex grow>
-                <Box
-                >
-                  <ClearEditorPlugin />
-                </Box>
-              </Flex>
-              <Flex grow>
-                <Box
-                  padding="space10"
-                  width="100%"
-                  display="flex"
-                  justifyContent="end"
-                >
-                  <SendButtonPlugin canSendMessages={canSendMessages} onClick={sendIt} />
-                </Box>
-              </Flex>
-            </Flex>
-
-          </ChatComposer>
+            <ChatComposer
+              config={{
+                namespace: "send_sms",
+                onError: (e) => {
+                  throw e;
+                }
+              }}
+              placeholder="Chat text"
+              ariaLabel="A basic chat composer"
+              onChange={myOnChange}
+              element="SEND_SMS_COMPOSER"
+            >
+              <ClearEditorPlugin />
+              <SendButtonPlugin canSendMessages={canSendMessages} onClick={sendIt} />
+            </ChatComposer>
           <HelpText id="send_sms_help_text">Enter at most 1600 characters</HelpText>
         </Column>
       </Grid>
@@ -109,9 +71,5 @@ function SendSmsForm({ numberInUse }) {
 
   );
 }
-
-
-
-
 
 export default SendSmsForm;
