@@ -5,7 +5,8 @@
   "main": "dist/index.html",
   "scripts": {
     "build": "rm -rf dist && webpack --config webpack.prod.config.js --mode production",
-    "start": "webpack serve"
+    "start": "webpack serve",
+    "test": "jest"
   },
   "author": "twilio-labs",
   "license": "MIT",
@@ -15,19 +16,22 @@
   "devDependencies": {
     "@babel/core": "^7.17.5",
     "@babel/plugin-transform-react-jsx": "^7.17.3",
-    "@babel/preset-env": "^7.16.11",
-    "@babel/preset-react": "^7.16.7",
+    "@babel/preset-env": "^7.24.0",
+    "@babel/preset-react": "^7.23.3",
+    "@changesets/cli": "^2.26.1",
+    "babel-jest": "^29.7.0",
     "babel-loader": "^9.0.0",
     "css-loader": "^6.6.0",
     "html-webpack-plugin": "^5.5.0",
+    "jest": "^29.7.0",
+    "react-test-renderer": "^18.2.0",
     "source-map-loader": "^3.0.1",
     "style-loader": "^3.3.1",
+    "turbo": "^1.2.16",
     "webpack": "^5.69.1",
     "webpack-cli": "^4.9.2",
     "webpack-dev-server": "^4.7.4",
-    "webpack-license-plugin": "^4.2.2",
-    "@changesets/cli": "^2.26.1",
-    "turbo": "^1.2.16"
+    "webpack-license-plugin": "^4.2.2"
   },
   "dependencies": {
     "@twilio-paste/core": "^20.2.0",
@@ -37,8 +41,8 @@
     "date-fns": "^2.28.0",
     "konami": "^1.6.3",
     "process": "^0.11.10",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
     "react-redux": "^7.2.6",
     "redux": "^4.1.2",
     "redux-thunk": "^2.4.1",
