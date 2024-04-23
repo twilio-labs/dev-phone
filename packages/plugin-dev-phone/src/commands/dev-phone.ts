@@ -27,7 +27,7 @@ const SyncGrant = AccessToken.SyncGrant;
 const CALL_LOG_MAP_NAME = 'CallLog'
 
 // removes unecessary properties to standardize the twilio phone number
-const reformatTwilioPns = (twilioResponse: IncomingPhoneNumberInstance[]) => {
+function reformatTwilioPns = (twilioResponse: IncomingPhoneNumberInstance[]) => {
     return {
         "phone-numbers": twilioResponse.map(
             ({ phoneNumber, friendlyName, smsUrl, voiceUrl, sid }) =>
