@@ -28,6 +28,7 @@
     "packages/dev-phone-ui"
   ],
   "devDependencies": {
+    "@babel/preset-typescript": "^7.24.1",
     "@changesets/cli": "^2.26.1",
     "turbo": "^1.2.16"
   },
