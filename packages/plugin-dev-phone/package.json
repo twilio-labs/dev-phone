@@ -39,7 +39,8 @@
     "nyc": "^15.0.1",
     "react-test-renderer": "^18.2.0",
     "ts-jest": "^29.1.2",
-    "typescript": "^4.6.2"
+    "typescript": "^4.6.2",
+    "typescript-coverage-report": "^1.0.0"
   },
   "engines": {
     "node": ">=10.0.0"
@@ -77,6 +78,7 @@
     "XX-posttest": "eslint --ignore-path .gitignore . && npm audit",
     "prepack": "npx oclif manifest && npx oclif readme",
     "test": "jest",
+    "ts-coverage": "typescript-coverage-report",
     "version": "npx oclif readme && git add README.md"
   },
   "directories": {

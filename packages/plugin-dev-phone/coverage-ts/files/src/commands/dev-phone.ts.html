@@ -1,0 +1,594 @@
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>dev-phone.ts</title>
+      <link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" type="text/css" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/mode/javascript/javascript.min.js" type="text/javascript" charset="utf-8"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.2/codemirror.min.css" type="text/css" rel="stylesheet">
+<script src="../../../assets/source-file.js" type="text/javascript" charset="utf-8"></script>
+<link href="../../../assets/source-file.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+    <div style="margin-top:3em" class="ui container"><h1 class="ui header"><a href="../../../index.html">TypeScript coverage report</a></h1><table style="margin-top:2em" class="ui celled table"><thead class=""><tr class=""><th class="">Filename</th><th class="">Percent</th><th class="">Threshold</th><th class="">Total</th><th class="">Covered</th><th class="">Uncovered</th></tr></thead><tbody class=""><tr class="negative"><td class="">src/commands/dev-phone.ts</td><td class="">59.10%</td><td class="">80%</td><td class="">1022</td><td class="">604</td><td class="">418</td></tr></tbody></table><textarea id="editor" readonly="" style="margin-top:3em">import path from &#x27;path&#x27;;
+import fs from &#x27;fs&#x27;;
+import open from &#x27;open&#x27;;
+import express from &#x27;express&#x27;;
+
+import { Flags } from &#x27;@oclif/core&#x27;;
+import { deployServerless, constants } from &#x27;../utils/create-serverless-util&#x27;;
+import { getAvailablePort, isValidPort } from &#x27;../utils/helpers&#x27;
+import { isSmsUrlSet, isVoiceUrlSet, updatePhoneWebhooks, removePhoneWebhooks } from &#x27;../utils/phone-number-utils&#x27;;
+const { TwilioClientCommand } = require(&#x27;@twilio/cli-core&#x27;).baseCommands;
+const { TwilioCliError } = require(&#x27;@twilio/cli-core&#x27;).services.error;
+const WebClientPath = path.resolve(require.resolve(&#x27;@twilio-labs/dev-phone-ui&#x27;), &#x27;..&#x27;)
+const { version } = require(&#x27;../../package.json&#x27;);
+
+// Types
+import { ServiceInstance as ServerlessServiceInstance } from &#x27;twilio/lib/rest/serverless/v1/service&#x27;
+import { ServiceInstance as SyncServiceInstance } from &#x27;twilio/lib/rest/sync/v1/service&#x27;
+import { ServiceInstance as ConversationServiceInstance } from &#x27;twilio/lib/rest/conversations/v1/service&#x27;
+import { KeyInstance } from &#x27;twilio/lib/rest/api/v2010/account/key&#x27;
+import { ApplicationInstance } from &#x27;twilio/lib/rest/api/v2010/account/application&#x27;
+import { IncomingPhoneNumberInstance } from &#x27;twilio/lib/rest/api/v2010/account/incomingPhoneNumber&#x27;
+
+const AccessToken = require(&#x27;twilio&#x27;).jwt.AccessToken;
+const ChatGrant = AccessToken.ChatGrant;
+const VoiceGrant = AccessToken.VoiceGrant;
+const SyncGrant = AccessToken.SyncGrant;
+const CALL_LOG_MAP_NAME = &#x27;CallLog&#x27;
+
+// removes unecessary properties to standardize the twilio phone number
+function reformatTwilioPns = (twilioResponse: IncomingPhoneNumberInstance[]) =&gt; {
+    return {
+        &quot;phone-numbers&quot;: twilioResponse.map(
+            ({ phoneNumber, friendlyName, smsUrl, voiceUrl, sid }) =&gt;
+                ({ phoneNumber, friendlyName, smsUrl, voiceUrl, sid }))
+    }
+}
+
+const generateRandomPhoneName = () =&gt; {
+    let rand = Math.random().toString().substring(2, 6)
+    return `dev-phone-${rand}`;
+}
+
+class DevPhoneServer extends TwilioClientCommand {
+    constructor(argv: any, config: any, secureStorage: any) {
+        super(argv, config, secureStorage);
+        this.cliSettings = {};
+        this.pns = [];
+        this.port = 1337
+        this.jwt = null;
+        this.apikey = {};
+        this.twimlApp = {};
+        this.devPhoneName = generateRandomPhoneName();
+        this.voiceUrl = null;
+        this.smsUrl = null;
+        this.voiceOutboundUrl = null;
+    }
+
+    async run() {
+        await super.run();
+
+        const props = this.parseProperties() || {};
+        await this.validatePropsAndFlags(props, this.flags)
+
+        console.log(`Hello 👋 I&#x27;m your dev-phone and my name is ${this.devPhoneName}\n`)
+
+        // set user agent header on twilio client
+        this.twilioClient.userAgentExtensions = [
+            `@twilio-labs/dev-phone/${version}`,
+            `@twilio-labs/dev-phone/helper-library`,  
+            &#x27;serverless-functions&#x27;
+        ]
+
+        // create API KEY and API SECRET to be generate JWT AccessToken for ChatGrant, VoiceGrant and SyncGrant
+        this.apikey = await this.reuseOrCreateApiKey();
+
+        // create conversation for SMS/web interface
+        this.conversation = await this.createConversation();
+
+        // create Sync for Call History interface
+        this.sync = await this.createSync();
+
+        // create Function to handle inbound-voice, inbound-sms and outbound-voice (voip)
+        this.serverless = await this.createFunction();
+
+        // create TwiML App
+        this.twimlApp = await this.createTwimlApp();
+
+        // create JWT Access Token with ChatGrant, VoiceGrant and SyncGrant
+        this.jwt = await this.createJwt();
+
+        // add webhook config to the phone number, if there is one passed by CLI flag
+        // TO-DO return updated phone number and set this.phoneNumber  
+        const phoneNumberProps =  {voiceUrl: this.voiceUrl, smsUrl: this.smsUrl, statusCallback: this.statusCallback}
+        this.cliSettings.phoneNumber =  await updatePhoneWebhooks(this.cliSettings.phoneNumber,this.twilioClient.incomingPhoneNumbers, phoneNumberProps );
+ 
+
+        const onShutdown = async () =&gt; {
+            await this.destroyConversations();
+            await this.destroyTwimlApps();
+            await this.destroyApiKeys();
+            await this.destroySyncs();
+            await this.destroyFunction();
+            await removePhoneWebhooks(this.cliSettings.phoneNumber, this.twilioClient.incomingPhoneNumbers);
+        }
+
+        process.on(&#x27;SIGINT&#x27;, async function () {
+            console.log(&quot;\n👋 Shutting down&quot;);
+            await onShutdown();
+
+            process.exit();
+        });
+
+        const app = express();
+
+        // serve assets from the &quot;public&quot; directory
+        // __dirname is the path to _this_ file, so ../../public to find index.html
+        app.use(express.static(WebClientPath));
+
+        app.use(express.json()); // response body writer
+
+        app.get(&quot;/ping&quot;, (req, res) =&gt; {
+            res.json({ pong: true });
+
+            console.log(&#x27;TWILIO&#x27;, this.twilioClient);
+        })
+
+        app.get(&quot;/plugin-settings&quot;, (req, res) =&gt; {
+            res.json({
+                ...this.cliSettings,
+                devPhoneName: this.devPhoneName,
+                conversation: this.conversation
+            });
+        })
+
+        app.get(&quot;/phone-numbers&quot;, async (req: express.Request, res: express.Response) =&gt; {
+            if (this.pns.length === 0) {
+                try {
+                    const pns = await this.twilioClient.incomingPhoneNumbers.list()
+                    this.pns = pns
+                    res.json(reformatTwilioPns(pns))
+                } catch (err: any) {
+                    console.error(&#x27;Phone number API threw an error&#x27;, err);
+                    res.status(err.status ? err.status : 400).send({ error: err })
+                }
+            } else {
+                res.json(reformatTwilioPns(this.pns));
+            }
+        })
+
+        app.post(&quot;/send-sms&quot;, async (req:express.Request, res:express.Response) =&gt; {
+            const {body, from, to} = req.body
+            try {
+                const message = await this.twilioClient.messages
+                    .create({
+                        body,
+                        from,
+                        to
+                    })
+                res.json({result: message})
+            } catch (err: any) {
+                console.error(&#x27;SMS API threw an error&#x27;, err);
+                res.status(err.status ? err.status : 400).send({ error: err });
+            };
+        })
+
+        app.all(&quot;/choose-phone-number&quot;, async (req:express.Request, res:express.Response) =&gt; {
+            try {
+                const rawNumbers = await this.twilioClient.incomingPhoneNumbers
+                    .list({ phoneNumber: req.body.phoneNumber, limit: 20 })
+                const selectedNumber = reformatTwilioPns(rawNumbers)[&quot;phone-numbers&quot;];
+
+                // Should only have a single number
+                if (selectedNumber.length === 1) {
+                    await removePhoneWebhooks(this.cliSettings.phoneNumber, this.twilioClient.incomingPhoneNumbers);                    
+                    this.cliSettings.phoneNumber = selectedNumber[0];
+                    this.cliSettings.phoneNumber = await updatePhoneWebhooks(this.cliSettings.phoneNumber,this.twilioClient.incomingPhoneNumbers, {voiceUrl: this.voiceUrl, smsUrl: this.smsUrl, statusCallback: this.statusCallback} );
+                    res.json({
+                        phoneNumber: this.cliSettings.phoneNumber,
+                        message: &#x27;Phone number updated!&#x27;
+                    });
+                } else {
+                    console.error(&#x27;Phone number not found!&#x27;);
+                    res.status(400).send({
+                        message: &#x27;Phone number not found!&#x27;
+                    });
+                }
+            } catch (err) {
+                console.error(err)
+                res.status(400).send(err);
+            }
+        })
+
+        app.get(&quot;/client-token&quot;, async (req:express.Request, res:express.Response) =&gt; {
+            try {
+                if (!this.jwt) {
+                    this.jwt = await this.createJwt();
+                }
+    
+                res.json({ token: this.jwt });
+            } catch (err) {
+                res.status(400).send(err)
+            }
+        })
+
+        const isHeadless = () =&gt; !!this.flags.headless;
+
+        app.listen(this.port, () =&gt; {
+            console.log(`🚀 Your local webserver is listening on port ${this.port}`);
+
+            if (fs.existsSync(path.join(WebClientPath, &#x27;index.html&#x27;))) {
+
+                const uiUrl = `http://localhost:${this.port}/`
+
+                if (isHeadless()) {
+                    console.log(`🌐 UI is available at ${uiUrl}`)
+                } else {
+                    console.log(`🌐 Opening ${uiUrl} your browser`);
+                    open(uiUrl);
+                }
+
+            } else {
+                console.log(&#x27;Hello friend! Front end files are missing, ie you are developing this pluign.&#x27;);
+                console.log(&#x27;Run: `cd plugin-dev-phone-client` then `npm start` to run dev front-end&#x27;)
+                console.log(&#x27;To build the front-end so that the local backend will serve it: ./build-for-release.sh&#x27;)
+            }
+
+            console.log(&#x27;▶️  Use ctrl-c to stop your dev-phone\n&#x27;);
+        });
+    }
+
+    async createFunction() {
+        console.log(&#x27;💻 Deploying a Functions Service to handle incoming calls and SMS...&#x27;);
+        const deployedFunctions = await deployServerless({
+            username: this.twilioClient.username,
+            password: this.twilioClient.password,
+            env: {
+                SYNC_SERVICE_SID: this.sync.sid,
+                CONVERSATION_SID: this.conversation.sid,
+                CONVERSATION_SERVICE_SID: this.conversation.serviceSid,
+                DEV_PHONE_NAME: this.devPhoneName,
+                DEV_PHONE_VERSION: version,
+                CALL_LOG_MAP_NAME
+            },
+            onUpdate: (event) =&gt; {
+                const isBuildStatusPing = event.message.indexOf(&#x27;Current status: building&#x27;) &gt; -1
+                const settingEnvVars = event.message.indexOf(&#x27;environment variables&#x27;) &gt; -1
+                if(isBuildStatusPing || event.status === &#x27;building&#x27;) {
+                    isBuildStatusPing ? process.stdout.write(&#x27;.&#x27;) : process.stdout.write(`🛠 ${event.message}`)
+                } else {
+                    console.log(`${settingEnvVars ? &#x27;\n&#x27; : &#x27;&#x27;}🧑‍💻 ${event.message}`)
+                }
+            }
+        });
+
+        console.log(`✅ I&#x27;m using the Serverless Service ${deployedFunctions.serviceSid}\n`);
+
+        this.voiceUrl = `https://${deployedFunctions.domain}/${constants.INCOMING_CALL_HANDLER}`
+        this.voiceOutboundUrl = `https://${deployedFunctions.domain}/${constants.OUTBOUND_CALL_HANDLER}`
+        this.smsUrl = `https://${deployedFunctions.domain}/${constants.INCOMING_MESSAGE_HANDLER}`
+        this.statusCallback = `https://${deployedFunctions.domain}/${constants.SYNC_CALL_HISTORY}`
+
+        return deployedFunctions;
+    }
+
+    async destroyFunction() {
+        try {
+            const functionServices = await this.twilioClient.serverless.services.list()
+            const devPhoneFunctionServices = functionServices.filter((functionServices: ServerlessServiceInstance) =&gt; {
+            return functionServices.friendlyName !== null &amp;&amp; functionServices.friendlyName.startsWith(&#x27;dev-phone&#x27;)
+        })
+
+        if(devPhoneFunctionServices.length &gt; 0) {
+            console.log(&#x27;🚮 Removing existing dev phone Serverless Functions&#x27;);
+            devPhoneFunctionServices.forEach(async (functionService: ServerlessServiceInstance) =&gt; {
+                await this.twilioClient.serverless.services(functionService.sid)
+                        .remove();
+            })
+        }
+        } catch (err) {
+            console.error(err)
+        }
+    }
+
+   
+    async validatePropsAndFlags(props: any, flags: any) {
+        // Flags defined below can be validated and used here. Example:
+        // https://github.com/twilio/plugin-debugger/blob/main/src/commands/debugger/logs/list.js#L46-L56
+
+        this.cliSettings.forceMode = flags[&#x27;force&#x27;];
+        this.port = process.env.TWILIO_DEV_PHONE_PORT || await getAvailablePort();
+        if (flags[&#x27;phone-number&#x27;]) {
+            const phoneNumber = await flags[&#x27;phone-number&#x27;]
+            this.pns = await this.twilioClient.incomingPhoneNumbers
+                .list({ phoneNumber: phoneNumber });
+
+            if (this.pns.length &lt; 1) {
+                throw new TwilioCliError(
+                    `The phone number ${phoneNumber} is not associated with your Twilio account`
+                );
+            }
+
+            const pnConfigAlreadySet = [
+                (isSmsUrlSet(this.pns[0].smsUrl) ? &quot;SMS webhook URL&quot; : null),
+                (isVoiceUrlSet(this.pns[0].voiceUrl) ? &quot;Voice webhook URL&quot; : null),
+            ].filter(x =&gt; x);
+
+            if (pnConfigAlreadySet.length &gt; 0 &amp;&amp; !this.cliSettings.forceMode) {
+                throw new TwilioCliError(
+                    `Cannot use ${phoneNumber} because the following config for that phone number would be overwritten: ` + pnConfigAlreadySet.join(&quot;, &quot;)
+                );
+            }
+         
+            this.cliSettings.phoneNumber = reformatTwilioPns(this.pns)[&quot;phone-numbers&quot;][0];
+
+        }
+
+        if(flags[&#x27;port&#x27;]) {
+            const port = await flags[&#x27;port&#x27;]
+            try {
+                if(isValidPort(port)){
+                    this.port = parseInt(port)
+                } else {
+                    throw new TwilioCliError(
+                        `❗️ &#x27;${port}&#x27; is not a valid port. 😳 I&#x27;ll try to get set up with ${this.port} instead.`,
+                        )
+                }
+            } catch (err:any) {
+                console.error(err.message)
+            }
+        }
+    }
+
+    twilioCliIsConfiguredWithApiKey() {
+        return this.currentProfile.apiKey.startsWith(&quot;SK&quot;);
+    }
+
+    async reuseOrCreateApiKey() {
+
+        // We need an API KEY and SECRET to create the Access Token
+        // Depending on how the user has provided the CLI with creds
+        // we may have one already in this.currentProfile, or we may
+        // need to create a new one
+
+        if (this.twilioCliIsConfiguredWithApiKey()) {
+            // This case is if the user has _not_ used env vars for
+            // their creds. Here we can reuse the api keys and secret
+            // that the CLI created when it was installed
+
+            console.log(&quot;✅ I&#x27;m using your profile API key.\n&quot;);
+            return {
+                sid: this.currentProfile.apiKey,
+                secret: this.currentProfile.apiSecret
+            }
+
+        } else {
+            // This case is if the user has started the CLI with
+            // $TWILIO_ACCOUNT_SID and $TWILIO_AUTH_TOKEN set in
+            // their environment, using their account creds but
+            // their API_KEY and SECRET are not properly set.
+            // the CLI uses the ACCOUNT_SID into currentProfile.apiKey
+            // and we need to generate another key
+
+            console.log(&quot;💻 I&#x27;m creating a new API Key...&quot;);
+            await this.destroyApiKeys()
+            try {
+                const key = await this.twilioClient.newKeys.create({ friendlyName: this.devPhoneName });
+                console.log(`✅ I&#x27;m using the API Key ${key.sid}\n`);
+
+                this.currentProfile.apiKey = key.sid;
+                this.currentProfile.apiSecret = key.secret;
+                return {
+                    sid: this.currentProfile.apiKey,
+                    secret: this.currentProfile.apiSecret
+                }
+            } catch (err) {
+                console.error(err)
+            }
+        }
+    }
+
+    async destroyApiKeys() {
+
+        if (this.twilioCliIsConfiguredWithApiKey()) {
+            // we never created one
+            return
+        } else {
+            try {
+                const keys = await this.twilioClient.keys.list()
+                const devPhoneKeys = keys.filter((key: KeyInstance) =&gt; {
+                    return key.friendlyName !== null &amp;&amp; key.friendlyName.startsWith(&#x27;dev-phone&#x27;)
+                })
+                
+                if(devPhoneKeys.length &gt; 0) {
+                    console.log(&#x27;🚮 Removing existing dev phone API Keys&#x27;);
+                    devPhoneKeys.forEach(async (key: KeyInstance) =&gt; {
+                        await this.twilioClient.keys(key.sid).remove();
+                    })
+                }
+            } catch (err) {
+                console.error(err)
+            }
+        }
+    }
+
+    async createTwimlApp() {
+        console.log(&#x27;💻 Creating a new TwiMl App to allow voice calls from your browser...&#x27;); 
+        await this.destroyTwimlApps()
+        try {
+            const app = await this.twilioClient.applications
+                .create({
+                    voiceUrl: this.voiceOutboundUrl,
+                    friendlyName: this.devPhoneName
+                });
+            console.log(`✅ I&#x27;m using the TwiMl App ${app.sid}\n`);
+            return app;
+        } catch (err) {
+            console.error(err)
+        }
+    }
+
+    async destroyTwimlApps() {
+        try {
+            const applications = await this.twilioClient.applications.list()
+            const devPhoneApps = applications.filter((twimlApp: ApplicationInstance) =&gt; {
+                return twimlApp.friendlyName !== null &amp;&amp; twimlApp.friendlyName.startsWith(&#x27;dev-phone&#x27;)
+            })
+
+            if(devPhoneApps.length &gt; 0) {
+                console.log(&#x27;🚮 Removing existing dev phone TwiML apps&#x27;);
+                devPhoneApps.forEach(async (twimlApp: ApplicationInstance) =&gt; {
+                    await this.twilioClient.applications(twimlApp.sid)
+                        .remove();
+                })
+            }
+        } catch (err) {
+            console.error(err)
+        }
+    }
+
+    async createJwt() {
+
+        const chatGrant = new ChatGrant({
+            serviceSid: this.conversation.serviceSid
+        });
+
+        const voiceGrant = new VoiceGrant({
+            incomingAllow: true,
+            outgoingApplicationSid: this.twimlApp.sid
+        });
+
+        const syncGrant = new SyncGrant({
+            serviceSid: this.sync.sid,
+        })
+
+        const token = new AccessToken(
+            this.twilioClient.accountSid,
+            this.apikey.sid,
+            this.apikey.secret,
+            {
+                identity: this.devPhoneName,
+                ttl: 24*60*60
+            }
+        );
+
+        token.addGrant(chatGrant);
+        token.addGrant(voiceGrant);
+        token.addGrant(syncGrant);
+        return token.toJwt();
+    }
+
+    async createSync() {
+        console.log(&#x27;💻 Creating a new sync list for call history...&#x27;);
+        await this.destroySyncs()
+        
+        try {
+            const syncService = await this.twilioClient.sync.services
+                .create({ friendlyName: this.devPhoneName });
+            console.log(`✅ I&#x27;m using the sync service ${syncService.sid}\n`);
+            // create &#x27;CallLog&#x27; syncMap
+            await this.twilioClient.sync.services(syncService.sid).syncMaps.create({
+                uniqueName: CALL_LOG_MAP_NAME,
+            });
+            return syncService
+        } catch (err) {
+            console.error(err)
+        }
+    }
+
+    async destroySyncs() {
+        try {
+            const syncServices = await this.twilioClient.sync.services.list()
+            const devPhoneSyncServices = syncServices.filter((syncService: SyncServiceInstance) =&gt; {
+                return syncService.friendlyName !== null &amp;&amp; syncService.friendlyName.startsWith(&#x27;dev-phone&#x27;)
+            })
+            
+            if(devPhoneSyncServices.length &gt; 0) {
+                console.log(&#x27;🚮 Removing existing dev phone Sync Services&#x27;);
+                devPhoneSyncServices.forEach(async (syncService: SyncServiceInstance) =&gt; {
+                    await this.twilioClient.sync.services(syncService.sid)
+                            .remove();
+                })
+            }
+        } catch (err) {
+            console.error(err)
+        }
+    }
+
+    // Creates a new conversation service, a conversation, and makes the dev phone a participant
+    async createConversation() {
+        await this.destroyConversations()
+        console.log(&#x27;💻 Creating a new conversation...&#x27;);
+        try {
+            const service = await this.twilioClient.conversations.services
+                .create({ friendlyName: &#x27;dev-phone&#x27; });
+            const conversationService = this.twilioClient.conversations.services(service.sid)
+            const newConversation = await conversationService.conversations.create({ friendlyName: this.devPhoneName })
+            await conversationService.conversations(newConversation.sid)
+                .participants.create({identity: this.devPhoneName})
+            console.log(`✅ I&#x27;m using the conversation ${newConversation.sid} from service ${service.sid}\n`);
+            return {
+                serviceSid: service.sid,
+                sid: newConversation.sid
+            }
+        } catch (err) {
+            console.error(err)
+        }
+    }
+
+    async destroyConversations() {
+        try {
+            const convoServices = await this.twilioClient.conversations.services.list()
+            const devPhoneConvoServices = convoServices.filter((convoService: SyncServiceInstance) =&gt; {
+                return convoService.friendlyName !== null &amp;&amp; convoService.friendlyName.startsWith(&#x27;dev-phone&#x27;)
+            })
+            
+            if(devPhoneConvoServices.length &gt; 0) {
+                console.log(&#x27;🚮 Removing existing dev phone Conversation Services&#x27;);
+                devPhoneConvoServices.forEach(async (convoService: ConversationServiceInstance) =&gt; {
+                    await this.twilioClient.conversations.services(convoService.sid)
+                            .remove();
+                })
+            }
+        } catch (err) {
+            console.error(err)
+        }
+    }
+}
+
+DevPhoneServer.description = `Dev Phone local express server`
+
+// Example of how to define flags and properties:
+// https://github.com/twilio/plugin-debugger/blob/main/src/commands/debugger/logs/list.js#L99-L126
+DevPhoneServer.PropertyFlags = {
+    &quot;phone-number&quot;: Flags.string({
+        description: &#x27;Optional. Associates the Dev Phone with a phone number. Takes a number from the active profile on the Twilio CLI as the parameter.&#x27;
+    }),
+    force: Flags.boolean({
+        char: &#x27;f&#x27;,
+        description: &#x27;Optional. Forces an overwrite of the phone number configuration.&#x27;,
+        dependsOn: [&#x27;phone-number&#x27;]
+    }),
+    headless: Flags.boolean({
+        description: &#x27;Optional. Prevents the UI from automatically opening in the browser.&#x27;,
+        default: false,
+    }),
+    port: Flags.string({
+        description: &#x27;Optional. Configures the port of the Dev Phone UI. Takes a valid port as a parameter.&#x27;,
+    })
+};
+
+DevPhoneServer.flags = Object.assign(
+    DevPhoneServer.PropertyFlags,
+    TwilioClientCommand.flags
+);
+
+module.exports = DevPhoneServer;
+</textarea><pre id="annotations" style="display:none">[{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:9,&quot;character&quot;:8,&quot;text&quot;:&quot;TwilioClientCommand&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:9,&quot;character&quot;:60,&quot;text&quot;:&quot;baseCommands&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:10,&quot;character&quot;:8,&quot;text&quot;:&quot;TwilioCliError&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:10,&quot;character&quot;:55,&quot;text&quot;:&quot;services&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:10,&quot;character&quot;:64,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:12,&quot;character&quot;:8,&quot;text&quot;:&quot;version&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:22,&quot;character&quot;:6,&quot;text&quot;:&quot;AccessToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:22,&quot;character&quot;:38,&quot;text&quot;:&quot;jwt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:22,&quot;character&quot;:42,&quot;text&quot;:&quot;AccessToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:23,&quot;character&quot;:6,&quot;text&quot;:&quot;ChatGrant&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:23,&quot;character&quot;:18,&quot;text&quot;:&quot;AccessToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:23,&quot;character&quot;:30,&quot;text&quot;:&quot;ChatGrant&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:24,&quot;character&quot;:6,&quot;text&quot;:&quot;VoiceGrant&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:24,&quot;character&quot;:19,&quot;text&quot;:&quot;AccessToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:24,&quot;character&quot;:31,&quot;text&quot;:&quot;VoiceGrant&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:25,&quot;character&quot;:6,&quot;text&quot;:&quot;SyncGrant&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:25,&quot;character&quot;:18,&quot;text&quot;:&quot;AccessToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:25,&quot;character&quot;:30,&quot;text&quot;:&quot;SyncGrant&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:43,&quot;character&quot;:16,&quot;text&quot;:&quot;argv&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:43,&quot;character&quot;:27,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:43,&quot;character&quot;:40,&quot;text&quot;:&quot;secureStorage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:44,&quot;character&quot;:14,&quot;text&quot;:&quot;argv&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:44,&quot;character&quot;:20,&quot;text&quot;:&quot;config&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:44,&quot;character&quot;:28,&quot;text&quot;:&quot;secureStorage&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:45,&quot;character&quot;:13,&quot;text&quot;:&quot;cliSettings&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:46,&quot;character&quot;:13,&quot;text&quot;:&quot;pns&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:47,&quot;character&quot;:13,&quot;text&quot;:&quot;port&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:48,&quot;character&quot;:13,&quot;text&quot;:&quot;jwt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:49,&quot;character&quot;:13,&quot;text&quot;:&quot;apikey&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:50,&quot;character&quot;:13,&quot;text&quot;:&quot;twimlApp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:51,&quot;character&quot;:13,&quot;text&quot;:&quot;devPhoneName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:52,&quot;character&quot;:13,&quot;text&quot;:&quot;voiceUrl&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:53,&quot;character&quot;:13,&quot;text&quot;:&quot;smsUrl&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:54,&quot;character&quot;:13,&quot;text&quot;:&quot;voiceOutboundUrl&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:58,&quot;character&quot;:20,&quot;text&quot;:&quot;run&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:60,&quot;character&quot;:14,&quot;text&quot;:&quot;props&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:60,&quot;character&quot;:27,&quot;text&quot;:&quot;parseProperties&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:61,&quot;character&quot;:41,&quot;text&quot;:&quot;props&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:61,&quot;character&quot;:53,&quot;text&quot;:&quot;flags&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:63,&quot;character&quot;:71,&quot;text&quot;:&quot;devPhoneName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:66,&quot;character&quot;:13,&quot;text&quot;:&quot;twilioClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:66,&quot;character&quot;:26,&quot;text&quot;:&quot;userAgentExtensions&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:67,&quot;character&quot;:38,&quot;text&quot;:&quot;version&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:73,&quot;character&quot;:13,&quot;text&quot;:&quot;apikey&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:76,&quot;character&quot;:13,&quot;text&quot;:&quot;conversation&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:79,&quot;character&quot;:13,&quot;text&quot;:&quot;sync&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:82,&quot;character&quot;:13,&quot;text&quot;:&quot;serverless&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:85,&quot;character&quot;:13,&quot;text&quot;:&quot;twimlApp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:88,&quot;character&quot;:13,&quot;text&quot;:&quot;jwt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:92,&quot;character&quot;:35,&quot;text&quot;:&quot;voiceUrl&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:92,&quot;character&quot;:50,&quot;text&quot;:&quot;voiceUrl&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:92,&quot;character&quot;:60,&quot;text&quot;:&quot;smsUrl&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:92,&quot;character&quot;:73,&quot;text&quot;:&quot;smsUrl&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:92,&quot;character&quot;:81,&quot;text&quot;:&quot;statusCallback&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:92,&quot;character&quot;:102,&quot;text&quot;:&quot;statusCallback&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:93,&quot;character&quot;:13,&quot;text&quot;:&quot;cliSettings&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:93,&quot;character&quot;:25,&quot;text&quot;:&quot;phoneNumber&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:93,&quot;character&quot;:71,&quot;text&quot;:&quot;cliSettings&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:93,&quot;character&quot;:83,&quot;text&quot;:&quot;phoneNumber&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:93,&quot;character&quot;:100,&quot;text&quot;:&quot;twilioClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:93,&quot;character&quot;:113,&quot;text&quot;:&quot;incomingPhoneNumbers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:102,&quot;character&quot;:43,&quot;text&quot;:&quot;cliSettings&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:102,&quot;character&quot;:55,&quot;text&quot;:&quot;phoneNumber&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:102,&quot;character&quot;:73,&quot;text&quot;:&quot;twilioClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:102,&quot;character&quot;:86,&quot;text&quot;:&quot;incomingPhoneNumbers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:123,&quot;character&quot;:39,&quot;text&quot;:&quot;twilioClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:128,&quot;character&quot;:24,&quot;text&quot;:&quot;cliSettings&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:129,&quot;character&quot;:16,&quot;text&quot;:&quot;devPhoneName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:129,&quot;character&quot;:35,&quot;text&quot;:&quot;devPhoneName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:130,&quot;character&quot;:16,&quot;text&quot;:&quot;conversation&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:130,&quot;character&quot;:35,&quot;text&quot;:&quot;conversation&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:135,&quot;character&quot;:21,&quot;text&quot;:&quot;pns&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:135,&quot;character&quot;:25,&quot;text&quot;:&quot;length&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:137,&quot;character&quot;:26,&quot;text&quot;:&quot;pns&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:137,&quot;character&quot;:43,&quot;text&quot;:&quot;twilioClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:137,&quot;character&quot;:56,&quot;text&quot;:&quot;incomingPhoneNumbers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:137,&quot;character&quot;:77,&quot;text&quot;:&quot;list&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:138,&quot;character&quot;:25,&quot;text&quot;:&quot;pns&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:138,&quot;character&quot;:31,&quot;text&quot;:&quot;pns&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:139,&quot;character&quot;:47,&quot;text&quot;:&quot;pns&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:141,&quot;character&quot;:69,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:142,&quot;character&quot;:31,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:142,&quot;character&quot;:35,&quot;text&quot;:&quot;status&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:142,&quot;character&quot;:44,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:142,&quot;character&quot;:48,&quot;text&quot;:&quot;status&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:142,&quot;character&quot;:69,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:142,&quot;character&quot;:76,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:140,&quot;character&quot;:25,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:145,&quot;character&quot;:48,&quot;text&quot;:&quot;pns&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:150,&quot;character&quot;:19,&quot;text&quot;:&quot;body&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:150,&quot;character&quot;:25,&quot;text&quot;:&quot;from&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:150,&quot;character&quot;:31,&quot;text&quot;:&quot;to&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:150,&quot;character&quot;:41,&quot;text&quot;:&quot;body&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:152,&quot;character&quot;:22,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:152,&quot;character&quot;:43,&quot;text&quot;:&quot;twilioClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:152,&quot;character&quot;:56,&quot;text&quot;:&quot;messages&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:153,&quot;character&quot;:21,&quot;text&quot;:&quot;create&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:154,&quot;character&quot;:24,&quot;text&quot;:&quot;body&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:155,&quot;character&quot;:24,&quot;text&quot;:&quot;from&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:156,&quot;character&quot;:24,&quot;text&quot;:&quot;to&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:158,&quot;character&quot;:26,&quot;text&quot;:&quot;result&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:158,&quot;character&quot;:34,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:160,&quot;character&quot;:56,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:161,&quot;character&quot;:27,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:161,&quot;character&quot;:31,&quot;text&quot;:&quot;status&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:161,&quot;character&quot;:40,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:161,&quot;character&quot;:44,&quot;text&quot;:&quot;status&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:161,&quot;character&quot;:65,&quot;text&quot;:&quot;error&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:161,&quot;character&quot;:72,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:159,&quot;character&quot;:21,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:167,&quot;character&quot;:22,&quot;text&quot;:&quot;rawNumbers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:167,&quot;character&quot;:46,&quot;text&quot;:&quot;twilioClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:167,&quot;character&quot;:59,&quot;text&quot;:&quot;incomingPhoneNumbers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:168,&quot;character&quot;:21,&quot;text&quot;:&quot;list&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:168,&quot;character&quot;:28,&quot;text&quot;:&quot;phoneNumber&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:168,&quot;character&quot;:45,&quot;text&quot;:&quot;body&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:168,&quot;character&quot;:50,&quot;text&quot;:&quot;phoneNumber&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:169,&quot;character&quot;:22,&quot;text&quot;:&quot;selectedNumber&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:169,&quot;character&quot;:57,&quot;text&quot;:&quot;rawNumbers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:172,&quot;character&quot;:20,&quot;text&quot;:&quot;selectedNumber&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:172,&quot;character&quot;:35,&quot;text&quot;:&quot;length&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:173,&quot;character&quot;:51,&quot;text&quot;:&quot;cliSettings&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:173,&quot;character&quot;:63,&quot;text&quot;:&quot;phoneNumber&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:173,&quot;character&quot;:81,&quot;text&quot;:&quot;twilioClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:173,&quot;character&quot;:94,&quot;text&quot;:&quot;incomingPhoneNumbers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:174,&quot;character&quot;:25,&quot;text&quot;:&quot;cliSettings&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:174,&quot;character&quot;:37,&quot;text&quot;:&quot;phoneNumber&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:174,&quot;character&quot;:51,&quot;text&quot;:&quot;selectedNumber&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:175,&quot;character&quot;:25,&quot;text&quot;:&quot;cliSettings&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:175,&quot;character&quot;:37,&quot;text&quot;:&quot;phoneNumber&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:175,&quot;character&quot;:82,&quot;text&quot;:&quot;cliSettings&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:175,&quot;character&quot;:94,&quot;text&quot;:&quot;phoneNumber&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:175,&quot;character&quot;:111,&quot;text&quot;:&quot;twilioClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:175,&quot;character&quot;:124,&quot;text&quot;:&quot;incomingPhoneNumbers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:175,&quot;character&quot;:162,&quot;text&quot;:&quot;voiceUrl&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:175,&quot;character&quot;:185,&quot;text&quot;:&quot;smsUrl&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:175,&quot;character&quot;:214,&quot;text&quot;:&quot;statusCallback&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:177,&quot;character&quot;:24,&quot;text&quot;:&quot;phoneNumber&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:177,&quot;character&quot;:42,&quot;text&quot;:&quot;cliSettings&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:177,&quot;character&quot;:54,&quot;text&quot;:&quot;phoneNumber&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:194,&quot;character&quot;:26,&quot;text&quot;:&quot;jwt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:195,&quot;character&quot;:25,&quot;text&quot;:&quot;jwt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:198,&quot;character&quot;:27,&quot;text&quot;:&quot;token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:198,&quot;character&quot;:39,&quot;text&quot;:&quot;jwt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:204,&quot;character&quot;:40,&quot;text&quot;:&quot;flags&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:204,&quot;character&quot;:46,&quot;text&quot;:&quot;headless&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:206,&quot;character&quot;:24,&quot;text&quot;:&quot;port&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:207,&quot;character&quot;:77,&quot;text&quot;:&quot;port&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:211,&quot;character&quot;:55,&quot;text&quot;:&quot;port&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:233,&quot;character&quot;:27,&quot;text&quot;:&quot;twilioClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:233,&quot;character&quot;:40,&quot;text&quot;:&quot;username&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:234,&quot;character&quot;:27,&quot;text&quot;:&quot;twilioClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:234,&quot;character&quot;:40,&quot;text&quot;:&quot;password&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:236,&quot;character&quot;:39,&quot;text&quot;:&quot;sync&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:236,&quot;character&quot;:44,&quot;text&quot;:&quot;sid&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:237,&quot;character&quot;:39,&quot;text&quot;:&quot;conversation&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:237,&quot;character&quot;:52,&quot;text&quot;:&quot;sid&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:238,&quot;character&quot;:47,&quot;text&quot;:&quot;conversation&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:238,&quot;character&quot;:60,&quot;text&quot;:&quot;serviceSid&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:239,&quot;character&quot;:37,&quot;text&quot;:&quot;devPhoneName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:256,&quot;character&quot;:13,&quot;text&quot;:&quot;voiceUrl&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:257,&quot;character&quot;:13,&quot;text&quot;:&quot;voiceOutboundUrl&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:258,&quot;character&quot;:13,&quot;text&quot;:&quot;smsUrl&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:259,&quot;character&quot;:13,&quot;text&quot;:&quot;statusCallback&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:266,&quot;character&quot;:18,&quot;text&quot;:&quot;functionServices&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:266,&quot;character&quot;:48,&quot;text&quot;:&quot;twilioClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:266,&quot;character&quot;:61,&quot;text&quot;:&quot;serverless&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:266,&quot;character&quot;:72,&quot;text&quot;:&quot;services&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:266,&quot;character&quot;:81,&quot;text&quot;:&quot;list&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:267,&quot;character&quot;:18,&quot;text&quot;:&quot;devPhoneFunctionServices&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:267,&quot;character&quot;:45,&quot;text&quot;:&quot;functionServices&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:267,&quot;character&quot;:62,&quot;text&quot;:&quot;filter&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:271,&quot;character&quot;:11,&quot;text&quot;:&quot;devPhoneFunctionServices&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:271,&quot;character&quot;:36,&quot;text&quot;:&quot;length&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:273,&quot;character&quot;:12,&quot;text&quot;:&quot;devPhoneFunctionServices&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:273,&quot;character&quot;:37,&quot;text&quot;:&quot;forEach&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:274,&quot;character&quot;:27,&quot;text&quot;:&quot;twilioClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:274,&quot;character&quot;:40,&quot;text&quot;:&quot;serverless&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:274,&quot;character&quot;:51,&quot;text&quot;:&quot;services&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:275,&quot;character&quot;:25,&quot;text&quot;:&quot;remove&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:284,&quot;character&quot;:32,&quot;text&quot;:&quot;props&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:284,&quot;character&quot;:44,&quot;text&quot;:&quot;flags&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:288,&quot;character&quot;:13,&quot;text&quot;:&quot;cliSettings&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:288,&quot;character&quot;:25,&quot;text&quot;:&quot;forceMode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:288,&quot;character&quot;:37,&quot;text&quot;:&quot;flags&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:289,&quot;character&quot;:13,&quot;text&quot;:&quot;port&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:290,&quot;character&quot;:12,&quot;text&quot;:&quot;flags&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:291,&quot;character&quot;:18,&quot;text&quot;:&quot;phoneNumber&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:291,&quot;character&quot;:38,&quot;text&quot;:&quot;flags&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:292,&quot;character&quot;:17,&quot;text&quot;:&quot;pns&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:292,&quot;character&quot;:34,&quot;text&quot;:&quot;twilioClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:292,&quot;character&quot;:47,&quot;text&quot;:&quot;incomingPhoneNumbers&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:293,&quot;character&quot;:17,&quot;text&quot;:&quot;list&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:293,&quot;character&quot;:24,&quot;text&quot;:&quot;phoneNumber&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:293,&quot;character&quot;:37,&quot;text&quot;:&quot;phoneNumber&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:295,&quot;character&quot;:21,&quot;text&quot;:&quot;pns&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:295,&quot;character&quot;:25,&quot;text&quot;:&quot;length&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:296,&quot;character&quot;:26,&quot;text&quot;:&quot;TwilioCliError&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:297,&quot;character&quot;:40,&quot;text&quot;:&quot;phoneNumber&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:302,&quot;character&quot;:34,&quot;text&quot;:&quot;pns&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:302,&quot;character&quot;:41,&quot;text&quot;:&quot;smsUrl&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:303,&quot;character&quot;:36,&quot;text&quot;:&quot;pns&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:303,&quot;character&quot;:43,&quot;text&quot;:&quot;voiceUrl&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:306,&quot;character&quot;:55,&quot;text&quot;:&quot;cliSettings&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:306,&quot;character&quot;:67,&quot;text&quot;:&quot;forceMode&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:307,&quot;character&quot;:26,&quot;text&quot;:&quot;TwilioCliError&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:308,&quot;character&quot;:34,&quot;text&quot;:&quot;phoneNumber&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:312,&quot;character&quot;:17,&quot;text&quot;:&quot;cliSettings&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:312,&quot;character&quot;:29,&quot;text&quot;:&quot;phoneNumber&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:312,&quot;character&quot;:66,&quot;text&quot;:&quot;pns&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:316,&quot;character&quot;:11,&quot;text&quot;:&quot;flags&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:317,&quot;character&quot;:18,&quot;text&quot;:&quot;port&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:317,&quot;character&quot;:31,&quot;text&quot;:&quot;flags&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:320,&quot;character&quot;:25,&quot;text&quot;:&quot;port&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:322,&quot;character&quot;:30,&quot;text&quot;:&quot;TwilioCliError&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:323,&quot;character&quot;:31,&quot;text&quot;:&quot;port&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:323,&quot;character&quot;:97,&quot;text&quot;:&quot;port&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:327,&quot;character&quot;:30,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:327,&quot;character&quot;:34,&quot;text&quot;:&quot;message&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:326,&quot;character&quot;:21,&quot;text&quot;:&quot;err&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:333,&quot;character&quot;:20,&quot;text&quot;:&quot;currentProfile&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:333,&quot;character&quot;:35,&quot;text&quot;:&quot;apiKey&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:333,&quot;character&quot;:42,&quot;text&quot;:&quot;startsWith&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:350,&quot;character&quot;:16,&quot;text&quot;:&quot;sid&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:350,&quot;character&quot;:26,&quot;text&quot;:&quot;currentProfile&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:350,&quot;character&quot;:41,&quot;text&quot;:&quot;apiKey&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:351,&quot;character&quot;:16,&quot;text&quot;:&quot;secret&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:351,&quot;character&quot;:29,&quot;text&quot;:&quot;currentProfile&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:351,&quot;character&quot;:44,&quot;text&quot;:&quot;apiSecret&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:365,&quot;character&quot;:22,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:365,&quot;character&quot;:39,&quot;text&quot;:&quot;twilioClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:365,&quot;character&quot;:52,&quot;text&quot;:&quot;newKeys&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:365,&quot;character&quot;:60,&quot;text&quot;:&quot;create&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:365,&quot;character&quot;:69,&quot;text&quot;:&quot;friendlyName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:365,&quot;character&quot;:88,&quot;text&quot;:&quot;devPhoneName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:366,&quot;character&quot;:55,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:366,&quot;character&quot;:59,&quot;text&quot;:&quot;sid&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:368,&quot;character&quot;:21,&quot;text&quot;:&quot;currentProfile&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:368,&quot;character&quot;:36,&quot;text&quot;:&quot;apiKey&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:368,&quot;character&quot;:45,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:368,&quot;character&quot;:49,&quot;text&quot;:&quot;sid&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:369,&quot;character&quot;:21,&quot;text&quot;:&quot;currentProfile&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:369,&quot;character&quot;:36,&quot;text&quot;:&quot;apiSecret&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:369,&quot;character&quot;:48,&quot;text&quot;:&quot;key&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:369,&quot;character&quot;:52,&quot;text&quot;:&quot;secret&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:371,&quot;character&quot;:20,&quot;text&quot;:&quot;sid&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:371,&quot;character&quot;:30,&quot;text&quot;:&quot;currentProfile&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:371,&quot;character&quot;:45,&quot;text&quot;:&quot;apiKey&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:372,&quot;character&quot;:20,&quot;text&quot;:&quot;secret&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:372,&quot;character&quot;:33,&quot;text&quot;:&quot;currentProfile&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:372,&quot;character&quot;:48,&quot;text&quot;:&quot;apiSecret&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:387,&quot;character&quot;:22,&quot;text&quot;:&quot;keys&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:387,&quot;character&quot;:40,&quot;text&quot;:&quot;twilioClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:387,&quot;character&quot;:53,&quot;text&quot;:&quot;keys&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:387,&quot;character&quot;:58,&quot;text&quot;:&quot;list&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:388,&quot;character&quot;:22,&quot;text&quot;:&quot;devPhoneKeys&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:388,&quot;character&quot;:37,&quot;text&quot;:&quot;keys&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:388,&quot;character&quot;:42,&quot;text&quot;:&quot;filter&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:392,&quot;character&quot;:19,&quot;text&quot;:&quot;devPhoneKeys&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:392,&quot;character&quot;:32,&quot;text&quot;:&quot;length&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:394,&quot;character&quot;:20,&quot;text&quot;:&quot;devPhoneKeys&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:394,&quot;character&quot;:33,&quot;text&quot;:&quot;forEach&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:395,&quot;character&quot;:35,&quot;text&quot;:&quot;twilioClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:395,&quot;character&quot;:48,&quot;text&quot;:&quot;keys&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:395,&quot;character&quot;:62,&quot;text&quot;:&quot;remove&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:408,&quot;character&quot;:18,&quot;text&quot;:&quot;app&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:408,&quot;character&quot;:35,&quot;text&quot;:&quot;twilioClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:408,&quot;character&quot;:48,&quot;text&quot;:&quot;applications&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:409,&quot;character&quot;:17,&quot;text&quot;:&quot;create&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:410,&quot;character&quot;:20,&quot;text&quot;:&quot;voiceUrl&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:410,&quot;character&quot;:35,&quot;text&quot;:&quot;voiceOutboundUrl&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:411,&quot;character&quot;:20,&quot;text&quot;:&quot;friendlyName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:411,&quot;character&quot;:39,&quot;text&quot;:&quot;devPhoneName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:413,&quot;character&quot;:53,&quot;text&quot;:&quot;app&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:413,&quot;character&quot;:57,&quot;text&quot;:&quot;sid&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:414,&quot;character&quot;:19,&quot;text&quot;:&quot;app&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:422,&quot;character&quot;:18,&quot;text&quot;:&quot;applications&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:422,&quot;character&quot;:44,&quot;text&quot;:&quot;twilioClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:422,&quot;character&quot;:57,&quot;text&quot;:&quot;applications&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:422,&quot;character&quot;:70,&quot;text&quot;:&quot;list&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:423,&quot;character&quot;:18,&quot;text&quot;:&quot;devPhoneApps&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:423,&quot;character&quot;:33,&quot;text&quot;:&quot;applications&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:423,&quot;character&quot;:46,&quot;text&quot;:&quot;filter&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:427,&quot;character&quot;:15,&quot;text&quot;:&quot;devPhoneApps&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:427,&quot;character&quot;:28,&quot;text&quot;:&quot;length&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:429,&quot;character&quot;:16,&quot;text&quot;:&quot;devPhoneApps&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:429,&quot;character&quot;:29,&quot;text&quot;:&quot;forEach&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:430,&quot;character&quot;:31,&quot;text&quot;:&quot;twilioClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:430,&quot;character&quot;:44,&quot;text&quot;:&quot;applications&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:431,&quot;character&quot;:25,&quot;text&quot;:&quot;remove&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:441,&quot;character&quot;:14,&quot;text&quot;:&quot;chatGrant&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:441,&quot;character&quot;:30,&quot;text&quot;:&quot;ChatGrant&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:442,&quot;character&quot;:12,&quot;text&quot;:&quot;serviceSid&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:442,&quot;character&quot;:29,&quot;text&quot;:&quot;conversation&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:442,&quot;character&quot;:42,&quot;text&quot;:&quot;serviceSid&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:445,&quot;character&quot;:14,&quot;text&quot;:&quot;voiceGrant&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:445,&quot;character&quot;:31,&quot;text&quot;:&quot;VoiceGrant&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:447,&quot;character&quot;:12,&quot;text&quot;:&quot;outgoingApplicationSid&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:447,&quot;character&quot;:41,&quot;text&quot;:&quot;twimlApp&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:447,&quot;character&quot;:50,&quot;text&quot;:&quot;sid&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:450,&quot;character&quot;:14,&quot;text&quot;:&quot;syncGrant&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:450,&quot;character&quot;:30,&quot;text&quot;:&quot;SyncGrant&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:451,&quot;character&quot;:12,&quot;text&quot;:&quot;serviceSid&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:451,&quot;character&quot;:29,&quot;text&quot;:&quot;sync&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:451,&quot;character&quot;:34,&quot;text&quot;:&quot;sid&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:454,&quot;character&quot;:14,&quot;text&quot;:&quot;token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:454,&quot;character&quot;:26,&quot;text&quot;:&quot;AccessToken&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:455,&quot;character&quot;:17,&quot;text&quot;:&quot;twilioClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:455,&quot;character&quot;:30,&quot;text&quot;:&quot;accountSid&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:456,&quot;character&quot;:17,&quot;text&quot;:&quot;apikey&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:456,&quot;character&quot;:24,&quot;text&quot;:&quot;sid&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:457,&quot;character&quot;:17,&quot;text&quot;:&quot;apikey&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:457,&quot;character&quot;:24,&quot;text&quot;:&quot;secret&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:459,&quot;character&quot;:16,&quot;text&quot;:&quot;identity&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:459,&quot;character&quot;:31,&quot;text&quot;:&quot;devPhoneName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:464,&quot;character&quot;:8,&quot;text&quot;:&quot;token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:464,&quot;character&quot;:14,&quot;text&quot;:&quot;addGrant&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:464,&quot;character&quot;:23,&quot;text&quot;:&quot;chatGrant&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:465,&quot;character&quot;:8,&quot;text&quot;:&quot;token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:465,&quot;character&quot;:14,&quot;text&quot;:&quot;addGrant&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:465,&quot;character&quot;:23,&quot;text&quot;:&quot;voiceGrant&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:466,&quot;character&quot;:8,&quot;text&quot;:&quot;token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:466,&quot;character&quot;:14,&quot;text&quot;:&quot;addGrant&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:466,&quot;character&quot;:23,&quot;text&quot;:&quot;syncGrant&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:467,&quot;character&quot;:15,&quot;text&quot;:&quot;token&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:467,&quot;character&quot;:21,&quot;text&quot;:&quot;toJwt&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:475,&quot;character&quot;:18,&quot;text&quot;:&quot;syncService&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:475,&quot;character&quot;:43,&quot;text&quot;:&quot;twilioClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:475,&quot;character&quot;:56,&quot;text&quot;:&quot;sync&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:475,&quot;character&quot;:61,&quot;text&quot;:&quot;services&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:476,&quot;character&quot;:17,&quot;text&quot;:&quot;create&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:476,&quot;character&quot;:26,&quot;text&quot;:&quot;friendlyName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:476,&quot;character&quot;:45,&quot;text&quot;:&quot;devPhoneName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:477,&quot;character&quot;:56,&quot;text&quot;:&quot;syncService&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:477,&quot;character&quot;:68,&quot;text&quot;:&quot;sid&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:479,&quot;character&quot;:23,&quot;text&quot;:&quot;twilioClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:479,&quot;character&quot;:36,&quot;text&quot;:&quot;sync&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:479,&quot;character&quot;:41,&quot;text&quot;:&quot;services&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:479,&quot;character&quot;:50,&quot;text&quot;:&quot;syncService&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:479,&quot;character&quot;:62,&quot;text&quot;:&quot;sid&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:479,&quot;character&quot;:67,&quot;text&quot;:&quot;syncMaps&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:479,&quot;character&quot;:76,&quot;text&quot;:&quot;create&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:482,&quot;character&quot;:19,&quot;text&quot;:&quot;syncService&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:490,&quot;character&quot;:18,&quot;text&quot;:&quot;syncServices&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:490,&quot;character&quot;:44,&quot;text&quot;:&quot;twilioClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:490,&quot;character&quot;:57,&quot;text&quot;:&quot;sync&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:490,&quot;character&quot;:62,&quot;text&quot;:&quot;services&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:490,&quot;character&quot;:71,&quot;text&quot;:&quot;list&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:491,&quot;character&quot;:18,&quot;text&quot;:&quot;devPhoneSyncServices&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:491,&quot;character&quot;:41,&quot;text&quot;:&quot;syncServices&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:491,&quot;character&quot;:54,&quot;text&quot;:&quot;filter&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:495,&quot;character&quot;:15,&quot;text&quot;:&quot;devPhoneSyncServices&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:495,&quot;character&quot;:36,&quot;text&quot;:&quot;length&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:497,&quot;character&quot;:16,&quot;text&quot;:&quot;devPhoneSyncServices&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:497,&quot;character&quot;:37,&quot;text&quot;:&quot;forEach&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:498,&quot;character&quot;:31,&quot;text&quot;:&quot;twilioClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:498,&quot;character&quot;:44,&quot;text&quot;:&quot;sync&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:498,&quot;character&quot;:49,&quot;text&quot;:&quot;services&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:499,&quot;character&quot;:29,&quot;text&quot;:&quot;remove&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:512,&quot;character&quot;:18,&quot;text&quot;:&quot;service&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:512,&quot;character&quot;:39,&quot;text&quot;:&quot;twilioClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:512,&quot;character&quot;:52,&quot;text&quot;:&quot;conversations&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:512,&quot;character&quot;:66,&quot;text&quot;:&quot;services&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:513,&quot;character&quot;:17,&quot;text&quot;:&quot;create&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:514,&quot;character&quot;:18,&quot;text&quot;:&quot;conversationService&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:514,&quot;character&quot;:45,&quot;text&quot;:&quot;twilioClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:514,&quot;character&quot;:58,&quot;text&quot;:&quot;conversations&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:514,&quot;character&quot;:72,&quot;text&quot;:&quot;services&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:514,&quot;character&quot;:81,&quot;text&quot;:&quot;service&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:514,&quot;character&quot;:89,&quot;text&quot;:&quot;sid&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:515,&quot;character&quot;:18,&quot;text&quot;:&quot;newConversation&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:515,&quot;character&quot;:42,&quot;text&quot;:&quot;conversationService&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:515,&quot;character&quot;:62,&quot;text&quot;:&quot;conversations&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:515,&quot;character&quot;:76,&quot;text&quot;:&quot;create&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:515,&quot;character&quot;:85,&quot;text&quot;:&quot;friendlyName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:515,&quot;character&quot;:104,&quot;text&quot;:&quot;devPhoneName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:516,&quot;character&quot;:18,&quot;text&quot;:&quot;conversationService&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:516,&quot;character&quot;:38,&quot;text&quot;:&quot;conversations&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:516,&quot;character&quot;:52,&quot;text&quot;:&quot;newConversation&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:516,&quot;character&quot;:68,&quot;text&quot;:&quot;sid&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:517,&quot;character&quot;:17,&quot;text&quot;:&quot;participants&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:517,&quot;character&quot;:30,&quot;text&quot;:&quot;create&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:517,&quot;character&quot;:38,&quot;text&quot;:&quot;identity&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:517,&quot;character&quot;:53,&quot;text&quot;:&quot;devPhoneName&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:518,&quot;character&quot;:56,&quot;text&quot;:&quot;newConversation&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:518,&quot;character&quot;:72,&quot;text&quot;:&quot;sid&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:518,&quot;character&quot;:92,&quot;text&quot;:&quot;service&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:518,&quot;character&quot;:100,&quot;text&quot;:&quot;sid&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:520,&quot;character&quot;:16,&quot;text&quot;:&quot;serviceSid&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:520,&quot;character&quot;:28,&quot;text&quot;:&quot;service&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:520,&quot;character&quot;:36,&quot;text&quot;:&quot;sid&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:521,&quot;character&quot;:16,&quot;text&quot;:&quot;sid&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:521,&quot;character&quot;:21,&quot;text&quot;:&quot;newConversation&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:521,&quot;character&quot;:37,&quot;text&quot;:&quot;sid&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:530,&quot;character&quot;:18,&quot;text&quot;:&quot;convoServices&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:530,&quot;character&quot;:45,&quot;text&quot;:&quot;twilioClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:530,&quot;character&quot;:58,&quot;text&quot;:&quot;conversations&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:530,&quot;character&quot;:72,&quot;text&quot;:&quot;services&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:530,&quot;character&quot;:81,&quot;text&quot;:&quot;list&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:531,&quot;character&quot;:18,&quot;text&quot;:&quot;devPhoneConvoServices&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:531,&quot;character&quot;:42,&quot;text&quot;:&quot;convoServices&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:531,&quot;character&quot;:56,&quot;text&quot;:&quot;filter&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:535,&quot;character&quot;:15,&quot;text&quot;:&quot;devPhoneConvoServices&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:535,&quot;character&quot;:37,&quot;text&quot;:&quot;length&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:537,&quot;character&quot;:16,&quot;text&quot;:&quot;devPhoneConvoServices&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:537,&quot;character&quot;:38,&quot;text&quot;:&quot;forEach&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:538,&quot;character&quot;:31,&quot;text&quot;:&quot;twilioClient&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:538,&quot;character&quot;:44,&quot;text&quot;:&quot;conversations&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:538,&quot;character&quot;:58,&quot;text&quot;:&quot;services&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:539,&quot;character&quot;:29,&quot;text&quot;:&quot;remove&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:42,&quot;character&quot;:29,&quot;text&quot;:&quot;TwilioClientCommand&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:548,&quot;character&quot;:15,&quot;text&quot;:&quot;description&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:552,&quot;character&quot;:15,&quot;text&quot;:&quot;PropertyFlags&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:570,&quot;character&quot;:15,&quot;text&quot;:&quot;flags&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:571,&quot;character&quot;:19,&quot;text&quot;:&quot;PropertyFlags&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:572,&quot;character&quot;:4,&quot;text&quot;:&quot;TwilioClientCommand&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:572,&quot;character&quot;:24,&quot;text&quot;:&quot;flags&quot;,&quot;kind&quot;:1},{&quot;file&quot;:&quot;src/commands/dev-phone.ts&quot;,&quot;line&quot;:575,&quot;character&quot;:7,&quot;text&quot;:&quot;exports&quot;,&quot;kind&quot;:1}]</pre></div>
+    <p class="footer-text">TypeScript Coverage Report generated by <a href="https://github.com/plantain-00/type-coverage">type-coverage</a> and <a href="https://github.com/alexcanessa/typescript-coverage-report">typescript-coverage-report</a> at Tue, 21 May 2024 18:37:02 GMT</p>
+    </body>
+  </html>
+  

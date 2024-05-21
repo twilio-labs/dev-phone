@@ -5,10 +5,6 @@ describe('Addition', () => {
   });
 });
 
-
-
-
-
 const { getAvailablePort } = require('../../src/utils/helpers');
 
 // Mock the getPort module to control its behavior
@@ -23,20 +19,59 @@ describe('getAvailablePort', () => {
   });
 });
 
-// import { reformatTwilioPns } from "../../src/commands/dev-phone";
 
-// describe('reformatTwilioPns', () => {
-//   it('should return a string of 4 digits', () => {
-//     const result = reformatTwilioPns();
-//     expect(result).toMatch(/^dev-phone\d{4}$/);
-//   });
+// Phone number utils tests
+import { isSmsUrlSet } from '../../src/utils/phone-number-utils'; // replace with the path to your module
 
-//   it('should return a different value each time', () => {
-//     const firstCall = reformatTwilioPns();
-//     const secondCall = reformatTwilioPns();
-//     expect(firstCall).not.toEqual(secondCall);
-//   });
-// });
+describe('isSmsUrlSet', () => {
+  it('should return false if smsUrl is blank', () => {
+    expect(isSmsUrlSet('')).toBe("");
+  });
+
+  it('should return false if smsUrl is the default URL', () => {
+    expect(isSmsUrlSet('https://demo.twilio.com/welcome/sms/reply')).toBe(false);
+  });
+
+  it('should return true if smsUrl is a different URL', () => {
+    expect(isSmsUrlSet('https://example.com')).toBe(true);
+  });
+});
+
+
+import { isVoiceUrlSet } from '../../src/utils/phone-number-utils'; // replace with the path to your module
+
+describe('isVoiceUrlSet', () => {
+  it('should return false if smsUrl is blank', () => {
+    expect(isVoiceUrlSet('')).toBe("");
+  });
+
+  it('should return false if smsUrl is the default URL', () => {
+    expect(isVoiceUrlSet('https://demo.twilio.com/welcome/voice/')).toBe(false);
+  });
+
+  it('should return true if voiceUrl is a different URL', () => {
+    expect(isVoiceUrlSet('https://example.com')).toBe(true);
+  });
+});
+
+import { isVoiceUrlSet } from '../../src/utils/phone-number-utils'; // replace with the path to your module
+
+describe('isVoiceUrlSet', () => {
+  it('should return false if smsUrl is blank', () => {
+    expect(isVoiceUrlSet('')).toBe("");
+  });
+
+  it('should return false if smsUrl is the default URL', () => {
+    expect(isVoiceUrlSet('https://demo.twilio.com/welcome/voice/')).toBe(false);
+  });
+
+  it('should return true if voiceUrl is a different URL', () => {
+    expect(isVoiceUrlSet('https://example.com')).toBe(true);
+  });
+});
+
+
+
 
 
 // const { expect, test } = require('@twilio/cli-test');
