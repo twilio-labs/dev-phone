@@ -1,12 +1,26 @@
 // test if these components can mount
-describe('Addition', () => {
-  it('knows that 2 and 2 make 4', () => {
-    expect(2 + 2).toBe(4);
+const { isValidPort } = require('../../src/utils/helpers');
+
+describe('isValidPort', () => {
+  test('valid ports', () => {
+    expect(isValidPort('80')).toBe(true);
+    expect(isValidPort('443')).toBe(true);
+    expect(isValidPort('3000')).toBe(true)
+    expect(isValidPort('8080')).toBe(true);
+    expect(isValidPort('65535')).toBe(true);
+  });
+
+  test('invalid ports', () => {
+    expect(isValidPort('65536')).toBe(false);
+    expect(isValidPort('-1')).toBe(false);
+    expect(isValidPort('70000')).toBe(false);
+    expect(isValidPort('abc')).toBe(false);
   });
 });
 
-const { getAvailablePort } = require('../../src/utils/helpers');
 
+
+const { getAvailablePort } = require('../../src/utils/helpers');
 // Mock the getPort module to control its behavior
 jest.mock('get-port', () => {
   return jest.fn(() => Promise.resolve(1337));
@@ -53,24 +67,6 @@ describe('isVoiceUrlSet', () => {
     expect(isVoiceUrlSet('https://example.com')).toBe(true);
   });
 });
-
-import { isVoiceUrlSet } from '../../src/utils/phone-number-utils'; // replace with the path to your module
-
-describe('isVoiceUrlSet', () => {
-  it('should return false if smsUrl is blank', () => {
-    expect(isVoiceUrlSet('')).toBe("");
-  });
-
-  it('should return false if smsUrl is the default URL', () => {
-    expect(isVoiceUrlSet('https://demo.twilio.com/welcome/voice/')).toBe(false);
-  });
-
-  it('should return true if voiceUrl is a different URL', () => {
-    expect(isVoiceUrlSet('https://example.com')).toBe(true);
-  });
-});
-
-
 
 
 
