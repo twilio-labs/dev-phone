@@ -266,7 +266,7 @@ class DevPhoneServer extends TwilioClientCommand {
         try {
             const functionServices = await this.twilioClient.serverless.services.list()
             const devPhoneFunctionServices = functionServices.filter((functionServices: ServerlessServiceInstance) => {
-            return functionServices.friendlyName !== null && functionServices.friendlyName.startsWith('dev-phone')
+            return functionServices.friendlyName !== null && functionServices.friendlyName.startsWith(this.devPhoneName)
         })
 
         if(devPhoneFunctionServices.length > 0) {
@@ -387,7 +387,7 @@ class DevPhoneServer extends TwilioClientCommand {
             try {
                 const keys = await this.twilioClient.keys.list()
                 const devPhoneKeys = keys.filter((key: KeyInstance) => {
-                    return key.friendlyName !== null && key.friendlyName.startsWith('dev-phone')
+                    return key.friendlyName !== null && key.friendlyName.startsWith(this.devPhoneName)
                 })
                 
                 if(devPhoneKeys.length > 0) {
@@ -422,7 +422,7 @@ class DevPhoneServer extends TwilioClientCommand {
         try {
             const applications = await this.twilioClient.applications.list()
             const devPhoneApps = applications.filter((twimlApp: ApplicationInstance) => {
-                return twimlApp.friendlyName !== null && twimlApp.friendlyName.startsWith('dev-phone')
+                return twimlApp.friendlyName !== null && twimlApp.friendlyName.startsWith(this.devPhoneName)
             })
 
             if(devPhoneApps.length > 0) {
@@ -490,7 +490,7 @@ class DevPhoneServer extends TwilioClientCommand {
         try {
             const syncServices = await this.twilioClient.sync.services.list()
             const devPhoneSyncServices = syncServices.filter((syncService: SyncServiceInstance) => {
-                return syncService.friendlyName !== null && syncService.friendlyName.startsWith('dev-phone')
+                return syncService.friendlyName !== null && syncService.friendlyName.startsWith(this.devPhoneName)
             })
             
             if(devPhoneSyncServices.length > 0) {
@@ -511,7 +511,7 @@ class DevPhoneServer extends TwilioClientCommand {
         console.log('💻 Creating a new conversation...');
         try {
             const service = await this.twilioClient.conversations.services
-                .create({ friendlyName: 'dev-phone' });
+                .create({ friendlyName: this.devPhoneName });
             const conversationService = this.twilioClient.conversations.services(service.sid)
             const newConversation = await conversationService.conversations.create({ friendlyName: this.devPhoneName })
             await conversationService.conversations(newConversation.sid)
@@ -530,7 +530,7 @@ class DevPhoneServer extends TwilioClientCommand {
         try {
             const convoServices = await this.twilioClient.conversations.services.list()
             const devPhoneConvoServices = convoServices.filter((convoService: SyncServiceInstance) => {
-                return convoService.friendlyName !== null && convoService.friendlyName.startsWith('dev-phone')
+                return convoService.friendlyName !== null && convoService.friendlyName.startsWith(this.devPhoneName)
             })
             
             if(devPhoneConvoServices.length > 0) {
