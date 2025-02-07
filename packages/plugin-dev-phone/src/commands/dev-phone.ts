@@ -270,7 +270,7 @@ class DevPhoneServer extends TwilioClientCommand {
         })
 
         if(devPhoneFunctionServices.length > 0) {
-            console.log('🚮 Removing existing dev phone Serverless Functions');
+            console.log(`🚮 Removing Serverless Functions for ${this.devPhoneName}`);
             devPhoneFunctionServices.forEach(async (functionService: ServerlessServiceInstance) => {
                 await this.twilioClient.serverless.services(functionService.sid)
                         .remove();
@@ -391,7 +391,7 @@ class DevPhoneServer extends TwilioClientCommand {
                 })
                 
                 if(devPhoneKeys.length > 0) {
-                    console.log('🚮 Removing existing dev phone API Keys');
+                    console.log(`🚮 Removing API Keys for ${this.devPhoneName}`);
                     devPhoneKeys.forEach(async (key: KeyInstance) => {
                         await this.twilioClient.keys(key.sid).remove();
                     })
@@ -426,7 +426,7 @@ class DevPhoneServer extends TwilioClientCommand {
             })
 
             if(devPhoneApps.length > 0) {
-                console.log('🚮 Removing existing dev phone TwiML apps');
+                console.log(`🚮 Removing TwiML app for ${this.devPhoneName}`);
                 devPhoneApps.forEach(async (twimlApp: ApplicationInstance) => {
                     await this.twilioClient.applications(twimlApp.sid)
                         .remove();
@@ -494,7 +494,7 @@ class DevPhoneServer extends TwilioClientCommand {
             })
             
             if(devPhoneSyncServices.length > 0) {
-                console.log('🚮 Removing existing dev phone Sync Services');
+                console.log(`🚮 Removing Sync Service for ${this.devPhoneName}`);
                 devPhoneSyncServices.forEach(async (syncService: SyncServiceInstance) => {
                     await this.twilioClient.sync.services(syncService.sid)
                             .remove();
@@ -534,7 +534,7 @@ class DevPhoneServer extends TwilioClientCommand {
             })
             
             if(devPhoneConvoServices.length > 0) {
-                console.log('🚮 Removing existing dev phone Conversation Services');
+                console.log(`🚮 Removing Conversation Service for ${this.devPhoneName}`);
                 devPhoneConvoServices.forEach(async (convoService: ConversationServiceInstance) => {
                     await this.twilioClient.conversations.services(convoService.sid)
                             .remove();
