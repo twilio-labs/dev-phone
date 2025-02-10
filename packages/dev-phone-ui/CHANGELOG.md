@@ -1,5 +1,11 @@
 # @twilio-labs/dev-phone-ui
 
+## 1.0.0-beta.3
+
+### Patch Changes
+
+- 3d614e7: Remove logging from Voice SDK component, which was causing errors on startup
+
 ## 1.0.0-beta.2
 
 ### Minor Changes
