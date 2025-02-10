@@ -1,5 +1,17 @@
 # @twilio-labs/dev-phone-ui
 
+## 1.0.0-beta.2
+
+### Minor Changes
+
+- 1a4872c: Replaced custom messaging component with paste chat log. Version bump for paste react, and react dom.
+- 75bb2ed: Added mute button to dialer for calls
+
+### Patch Changes
+
+- 6ead73b: Fixed Overflow in Call History Component
+- 5b8461f: Improve resilience of the phone number picker component
+
 ## 1.0.0-beta.1
 
 ### Minor Changes
