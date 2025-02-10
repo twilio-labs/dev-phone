@@ -32,30 +32,6 @@ const sortUnconfiguredNumbersFirstThenAlphabetically = (pn1, pn2) => {
   return pn1.phoneNumber.localeCompare(pn2.phoneNumber);
 };
 
-const numPicker = async (currentNum, selectNum, getAvailableNums) => {
-  if (!currentNum) {
-    try {
-      const response = await fetch('/phone-numbers')
-      const data = await response.json()
-      data["phone-numbers"].sort(
-        sortUnconfiguredNumbersFirstThenAlphabetically
-      )
-      getAvailableNums(data["phone-numbers"]);
-      if (data["phone-numbers"].length !== 0) {
-        selectNum(
-          getPnDetailsByNumber(
-            data["phone-numbers"][0].phoneNumber,
-            data["phone-numbers"]
-          )
-        );
-      }
-    } catch (error) {
-      console.error(error)
-    }
-  }
-}
-
-
 function PhoneNumberPickerContainer({ children }) {
   return <Box
     maxWidth={"75%"}
@@ -70,13 +46,34 @@ function PhoneNumberPickerContainer({ children }) {
   </Box>
 }
 
-
 function PhoneNumberPicker({ configureNumberInUse, phoneNumbers }) {
   const [twilioPns, setTwilioPns] = useState(null);
   const [selectedPn, setSelectedPn] = useState(null);
 
-  useEffect(() => {
-    numPicker(selectedPn, setSelectedPn, setTwilioPns);
+  useEffect( () => {
+    const asyncFn = async() => {
+    if (!selectedPn) {
+      try {
+        const response = await fetch('/phone-numbers')
+        const data = await response.json()
+        data["phone-numbers"].sort(
+          sortUnconfiguredNumbersFirstThenAlphabetically
+        )
+        setTwilioPns(data["phone-numbers"]);
+        if (data["phone-numbers"].length !== 0) {
+          setSelectedPn(
+            getPnDetailsByNumber(
+              data["phone-numbers"][0].phoneNumber,
+              data["phone-numbers"]
+            )
+          );
+        }
+      } catch (error) {
+        console.error(error)
+      }
+    }
+  }
+asyncFn()
   }, [selectedPn]);
 
   if (twilioPns === null) {

@@ -28,7 +28,13 @@
     "packages/dev-phone-ui"
   ],
   "devDependencies": {
-    "@changesets/cli": "^2.23.0",
+    "@babel/preset-typescript": "^7.24.1",
+    "@changesets/cli": "^2.26.1",
     "turbo": "^1.2.16"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "redux": "^4.2.1"
   }
 }
