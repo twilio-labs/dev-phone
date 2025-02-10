@@ -1,5 +1,11 @@
 # @twilio-labs/plugin-dev-phone
 
+## 1.0.0-beta.5
+
+### Patch Changes
+
+- a620022: Update dev phone ui dependency
+
 ## 1.0.0-beta.4
 
 ### Patch Changes
