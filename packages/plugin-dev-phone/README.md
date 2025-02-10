@@ -28,7 +28,7 @@ Dev Phone local express server
 
 ```
 USAGE
-  $ twilio dev-phone [-l debug|info|warn|error|none] [-o columns|json|tsv|none] [--silent] [-p <value>] [-f
+  $ twilio dev-phone [-l (debug|info|warn|error|none)] [-o (columns|json|tsv|none)] [--silent] [-p <value>] [-f
     --phone-number <value>] [--headless] [--port <value>]
 
 FLAGS
@@ -36,17 +36,17 @@ FLAGS
   -l=(debug|info|warn|error|none)  [default: info] Level of logging messages.
   -o=(columns|json|tsv|none)       [default: columns] Format of command output.
   -p, --profile=<value>            Shorthand identifier for your profile.
-  --headless                       Optional. Prevents the UI from automatically opening in the browser.
-  --phone-number=<value>           Optional. Associates the Dev Phone with a phone number. Takes a number from the
+      --headless                   Optional. Prevents the UI from automatically opening in the browser.
+      --phone-number=<value>       Optional. Associates the Dev Phone with a phone number. Takes a number from the
                                    active profile on the Twilio CLI as the parameter.
-  --port=<value>                   Optional. Configures the port of the Dev Phone UI. Takes a valid port as a parameter.
-  --silent                         Suppress  output and logs. This is a shorthand for "-l none -o none".
+      --port=<value>               Optional. Configures the port of the Dev Phone UI. Takes a valid port as a parameter.
+      --silent                     Suppress  output and logs. This is a shorthand for "-l none -o none".
 
 DESCRIPTION
   Dev Phone local express server
 ```
 
-_See code: [dist/commands/dev-phone.ts](https://github.com/twilio-labs/dev-phone/blob/1.0.0-beta.3/dist/commands/dev-phone.ts)_
+_See code: [src/commands/dev-phone.ts](https://github.com/twilio-labs/dev-phone/blob/1.0.0-beta.4/src/commands/dev-phone.ts)_
 <!-- commandsstop -->
  
 ## Working on this plugin
