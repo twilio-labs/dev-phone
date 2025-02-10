@@ -91,8 +91,7 @@ const TwilioVoiceManager = ({ children }) => {
             codecPreferences: ["opus", "pcmu"],
             fakeLocalDTMF: true,
             debug: false,
-            enableRingingState: true,
-            logLevel: '1'
+            enableRingingState: true
         })
 
 
