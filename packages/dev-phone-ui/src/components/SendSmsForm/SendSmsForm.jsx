@@ -1,5 +1,5 @@
-import { useContext, useState, useMemo } from "react";
-import { Button, Input, Label, Box, Grid, Column } from "@twilio-paste/core";
+import { useContext, useState, useEffect, useMemo } from "react";
+import { Button, Input, Label, Box, Grid, TextArea, HelpText, Column } from "@twilio-paste/core";
 import { SendIcon } from '@twilio-paste/icons/esm/SendIcon';
 import { useSelector } from "react-redux";
 import { TwilioConversationsContext } from '../WebsocketManagers/ConversationsManager';
@@ -12,11 +12,12 @@ function SendSmsForm({ numberInUse }) {
   const destinationNumber = useSelector(state => state.destinationNumber)
 
   const conversationsClient = useContext(TwilioConversationsContext)
-  const {sendMessage, sendSms} = conversationsClient
+  const { sendMessage, sendSms } = conversationsClient
 
   const canSendMessages = useMemo(() => {
     return destinationNumber && destinationNumber.length > 6;
   }, [destinationNumber]);
+
 
   // Handles the UI state for sending messages
   const sendIt = async (e) => {
@@ -37,9 +38,11 @@ function SendSmsForm({ numberInUse }) {
       />
       <form onSubmit={(e) => sendIt(e)} method={"GET"}>
         <Label htmlFor="sendSmsBody" required>Message</Label>
+
         <Grid gutter={"space20"} marginBottom="space40">
           <Column span={10}>
-            <Input id="sendSmsBody" type="text" value={messageBody} onChange={(e) => setMessageBody(e.target.value)} />
+            <TextArea resize="vertical" maxLength={1600} id="sendSmsBody" type="text" messageBody={messageBody} onChange={(e) => setMessageBody(e.target.value)} aria-describedby="send_sms_help_text" required />
+            <HelpText id="send_sms_help_text">Enter at most 1600 characters</HelpText>
           </Column>
           <Column span={2}>
             <Button type={"submit"} disabled={!canSendMessages}>
@@ -48,6 +51,8 @@ function SendSmsForm({ numberInUse }) {
             </Button>
           </Column>
         </Grid>
+
+
       </form>
     </Box>
 
