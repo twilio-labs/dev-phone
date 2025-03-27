@@ -2,7 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import open from 'open';
 import express from 'express';
-import readline from 'readline';
+import confirm  from '@inquirer/confirm';
 
 import { Flags } from '@oclif/core';
 import { deployServerless, constants } from '../utils/create-serverless-util';
@@ -85,22 +85,14 @@ class DevPhoneServer extends TwilioClientCommand {
         }
 
         if (isDeletingAll()) {
-          const askQuestion = function (query:string) {
-            const rl = readline.createInterface({
-              input: process.stdin,
-              output: process.stdout,
-            });
-
-            return new Promise(resolve => rl.question(query, (ans:string) => {
-              rl.close();
-              resolve(ans);
-            }))
-          }
-          const confirmation = await askQuestion(`\nType YES to confirm that you want to delete all resources...\n`);
-          if (confirmation == "Y" || confirmation == "YES") {
-            console.log(`🌐 Deleting all dev-phone resources from your account before starting...`)
-            await deleteAll().finally(() => console.log(`✅ All resources have been deleted.`));
-          }
+            const deleteAllConfirmation = await confirm({
+                message: "Do you want to delete all of the dev phone resources on your Twilio account? This may interfere with other instances of the Dev Phone.",
+                default: false
+            })
+            if(deleteAllConfirmation){
+                console.log(`🌐 Deleting all dev-phone resources from your account before starting...`)
+                await deleteAll().finally(() => console.log(`✅ All resources have been deleted.`));
+            }
         }
 
         // create conversation for SMS/web interface
@@ -296,7 +288,7 @@ class DevPhoneServer extends TwilioClientCommand {
 
     async destroyFunction() {
         try {
-            const functionServices = await this.twilioClient.serverless.services.list()
+            const functionServices = await this.twilioClient.serverless.v1.services.list()
             const devPhoneFunctionServices = functionServices.filter((functionServices: ServerlessServiceInstance) => {
             return functionServices.friendlyName !== null && functionServices.friendlyName.startsWith(this.devPhoneName)
           })
@@ -305,7 +297,7 @@ class DevPhoneServer extends TwilioClientCommand {
               console.log(`🚮 Removing Serverless Functions for ${this.devPhoneName}`);
 
               for (const functionService of devPhoneFunctionServices) {
-                await this.twilioClient.serverless.services(functionService.sid)
+                await this.twilioClient.serverless.v1.services(functionService.sid)
                   .remove();
               }
           }
@@ -316,7 +308,7 @@ class DevPhoneServer extends TwilioClientCommand {
 
     async destroyAllFunctions() {
         try {
-            const functionServices = await this.twilioClient.serverless.services.list()
+            const functionServices = await this.twilioClient.serverless.v1.services.list()
             const devPhoneFunctionServices = functionServices.filter((functionServices: ServerlessServiceInstance) => {
             return functionServices.friendlyName !== null && functionServices.friendlyName.startsWith('dev-phone')
         })
@@ -568,11 +560,11 @@ class DevPhoneServer extends TwilioClientCommand {
         await this.destroySyncs()
 
         try {
-            const syncService = await this.twilioClient.sync.services
+            const syncService = await this.twilioClient.sync.v1.services
                 .create({ friendlyName: this.devPhoneName });
             console.log(`✅ I'm using the sync service ${syncService.sid}\n`);
             // create 'CallLog' syncMap
-            await this.twilioClient.sync.services(syncService.sid).syncMaps.create({
+            await this.twilioClient.sync.v1.services(syncService.sid).syncMaps.create({
                 uniqueName: CALL_LOG_MAP_NAME,
             });
             return syncService
@@ -583,7 +575,7 @@ class DevPhoneServer extends TwilioClientCommand {
 
     async destroySyncs() {
         try {
-            const syncServices = await this.twilioClient.sync.services.list()
+            const syncServices = await this.twilioClient.sync.v1.services.list()
             const devPhoneSyncServices = syncServices.filter((syncService: SyncServiceInstance) => {
                 return syncService.friendlyName !== null && syncService.friendlyName.startsWith(this.devPhoneName)
             })
@@ -591,7 +583,7 @@ class DevPhoneServer extends TwilioClientCommand {
             if(devPhoneSyncServices.length > 0) {
                 console.log(`🚮 Removing Sync Service for ${this.devPhoneName}`);
                 for (const syncService of devPhoneSyncServices) {
-                    await this.twilioClient.sync.services(syncService.sid)
+                    await this.twilioClient.sync.v1.services(syncService.sid)
                             .remove();
                 }
             }
@@ -602,7 +594,7 @@ class DevPhoneServer extends TwilioClientCommand {
 
     async destroyAllSyncs() {
         try {
-            const syncServices = await this.twilioClient.sync.services.list()
+            const syncServices = await this.twilioClient.sync.v1.services.list()
             const devPhoneSyncServices = syncServices.filter((syncService: SyncServiceInstance) => {
                 return syncService.friendlyName !== null && syncService.friendlyName.startsWith('dev-phone')
             })
@@ -610,7 +602,7 @@ class DevPhoneServer extends TwilioClientCommand {
             if(devPhoneSyncServices.length > 0) {
                 console.log(`🚮 Removing All Sync Service for existing dev phone`);
                 for (const syncService of devPhoneSyncServices) {
-                    await this.twilioClient.sync.services(syncService.sid)
+                    await this.twilioClient.sync.v1.services(syncService.sid)
                             .remove();
                 }
             }
@@ -624,9 +616,9 @@ class DevPhoneServer extends TwilioClientCommand {
         await this.destroyConversations()
         console.log('💻 Creating a new conversation...');
         try {
-            const service = await this.twilioClient.conversations.services
+            const service = await this.twilioClient.conversations.v1.services
                 .create({ friendlyName: this.devPhoneName });
-            const conversationService = this.twilioClient.conversations.services(service.sid)
+            const conversationService = this.twilioClient.conversations.v1.services(service.sid)
             const newConversation = await conversationService.conversations.create({ friendlyName: this.devPhoneName })
             await conversationService.conversations(newConversation.sid)
                 .participants.create({identity: this.devPhoneName})
@@ -642,7 +634,7 @@ class DevPhoneServer extends TwilioClientCommand {
 
     async destroyConversations() {
         try {
-            const convoServices = await this.twilioClient.conversations.services.list()
+            const convoServices = await this.twilioClient.conversations.v1.services.list()
             const devPhoneConvoServices = convoServices.filter((convoService: SyncServiceInstance) => {
                 return convoService.friendlyName !== null && convoService.friendlyName.startsWith(this.devPhoneName)
             })
@@ -650,7 +642,7 @@ class DevPhoneServer extends TwilioClientCommand {
             if(devPhoneConvoServices.length > 0) {
                 console.log(`🚮 Removing Conversation Service for ${this.devPhoneName}`);
                 for (const convoService of devPhoneConvoServices) {
-                    await this.twilioClient.conversations.services(convoService.sid)
+                    await this.twilioClient.conversations.v1.services(convoService.sid)
                             .remove();
                 }
             }
@@ -661,7 +653,7 @@ class DevPhoneServer extends TwilioClientCommand {
 
     async destroyAllConversations() {
         try {
-            const convoServices = await this.twilioClient.conversations.services.list()
+            const convoServices = await this.twilioClient.conversations.v1.services.list()
             const devPhoneConvoServices = convoServices.filter((convoService: SyncServiceInstance) => {
                 return convoService.friendlyName !== null && convoService.friendlyName.startsWith('dev-phone')
             })
@@ -669,7 +661,7 @@ class DevPhoneServer extends TwilioClientCommand {
             if(devPhoneConvoServices.length > 0) {
                 console.log(`🚮 Removing All Conversation Service for existing dev phone`);
                 for (const convoService of devPhoneConvoServices) {
-                    await this.twilioClient.conversations.services(convoService.sid)
+                    await this.twilioClient.conversations.v1.services(convoService.sid)
                             .remove();
                 }
             }
