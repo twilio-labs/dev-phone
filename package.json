@@ -28,7 +28,11 @@
     "packages/dev-phone-ui"
   ],
   "devDependencies": {
-    "@changesets/cli": "^2.23.0",
+    "@changesets/cli": "^2.26.1",
     "turbo": "^1.2.16"
+  },
+  "dependencies": {
+    "redux": "^4.2.1",
+    "twilio-cli": "^5.5.0"
   }
 }
