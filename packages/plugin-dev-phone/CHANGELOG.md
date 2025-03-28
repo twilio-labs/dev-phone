@@ -1,5 +1,15 @@
 # @twilio-labs/plugin-dev-phone
 
+## 1.0.0-beta.6
+
+### Minor Changes
+
+- d512daf: Include new `clear` flag, enabling the deletion of all dev-phone resources from your Twilio account
+
+### Patch Changes
+
+- b528d50: Update services to use v1 endpoints with the helper library. This will quiet noisy setup and teardown of the dev phone.
+
 ## 1.0.0-beta.5
 
 ### Patch Changes
