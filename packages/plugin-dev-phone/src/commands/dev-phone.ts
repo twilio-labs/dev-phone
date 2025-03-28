@@ -2,7 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import open from 'open';
 import express from 'express';
-import confirm  from '@inquirer/confirm';
+import confirm from '@inquirer/confirm';
 
 import { Flags } from '@oclif/core';
 import { deployServerless, constants } from '../utils/create-serverless-util';
