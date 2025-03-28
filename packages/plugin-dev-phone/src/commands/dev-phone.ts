@@ -2,6 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import open from 'open';
 import express from 'express';
+import confirm from '@inquirer/confirm';
 
 import { Flags } from '@oclif/core';
 import { deployServerless, constants } from '../utils/create-serverless-util';
@@ -15,7 +16,6 @@ const { version } = require('../../package.json');
 // Types
 import { ServiceInstance as ServerlessServiceInstance } from 'twilio/lib/rest/serverless/v1/service'
 import { ServiceInstance as SyncServiceInstance } from 'twilio/lib/rest/sync/v1/service'
-import { ServiceInstance as ConversationServiceInstance } from 'twilio/lib/rest/conversations/v1/service'
 import { KeyInstance } from 'twilio/lib/rest/api/v2010/account/key'
 import { ApplicationInstance } from 'twilio/lib/rest/api/v2010/account/application'
 import { IncomingPhoneNumberInstance } from 'twilio/lib/rest/api/v2010/account/incomingPhoneNumber'
@@ -66,12 +66,34 @@ class DevPhoneServer extends TwilioClientCommand {
         // set user agent header on twilio client
         this.twilioClient.userAgentExtensions = [
             `@twilio-labs/dev-phone/${version}`,
-            `@twilio-labs/dev-phone/helper-library`,  
+            `@twilio-labs/dev-phone/helper-library`,
             'serverless-functions'
         ]
 
         // create API KEY and API SECRET to be generate JWT AccessToken for ChatGrant, VoiceGrant and SyncGrant
         this.apikey = await this.reuseOrCreateApiKey();
+
+        const isDeletingAll = () => !!this.flags.clear;
+
+        const deleteAll = async () => {
+          await this.destroyAllConversations();
+          await this.destroyAllTwimlApps();
+          await this.destroyAllApiKeys();
+          await this.destroyAllSyncs();
+          await this.destroyAllFunctions();
+          await this.removeAllPhoneWebhooks();
+        }
+
+        if (isDeletingAll()) {
+            const deleteAllConfirmation = await confirm({
+                message: "Do you want to delete all of the dev phone resources on your Twilio account? This may interfere with other instances of the Dev Phone.",
+                default: false
+            })
+            if(deleteAllConfirmation){
+                console.log(`🌐 Deleting all dev-phone resources from your account before starting...`)
+                await deleteAll().finally(() => console.log(`✅ All resources have been deleted.`));
+            }
+        }
 
         // create conversation for SMS/web interface
         this.conversation = await this.createConversation();
@@ -89,10 +111,9 @@ class DevPhoneServer extends TwilioClientCommand {
         this.jwt = await this.createJwt();
 
         // add webhook config to the phone number, if there is one passed by CLI flag
-        // TO-DO return updated phone number and set this.phoneNumber  
+        // TO-DO return updated phone number and set this.phoneNumber
         const phoneNumberProps =  {voiceUrl: this.voiceUrl, smsUrl: this.smsUrl, statusCallback: this.statusCallback}
         this.cliSettings.phoneNumber =  await updatePhoneWebhooks(this.cliSettings.phoneNumber,this.twilioClient.incomingPhoneNumbers, phoneNumberProps );
- 
 
         const onShutdown = async () => {
             await this.destroyConversations();
@@ -103,11 +124,14 @@ class DevPhoneServer extends TwilioClientCommand {
             await removePhoneWebhooks(this.cliSettings.phoneNumber, this.twilioClient.incomingPhoneNumbers);
         }
 
+        process.on("SIGTERM", async function () {
+            console.log("\n👋 Shutting down");
+            await onShutdown().finally(() => process.exit(0));
+        });
+
         process.on('SIGINT', async function () {
             console.log("\n👋 Shutting down");
-            await onShutdown();
-
-            process.exit();
+            await onShutdown().finally(() => process.exit(0));
         });
 
         const app = express();
@@ -171,7 +195,7 @@ class DevPhoneServer extends TwilioClientCommand {
 
                 // Should only have a single number
                 if (selectedNumber.length === 1) {
-                    await removePhoneWebhooks(this.cliSettings.phoneNumber, this.twilioClient.incomingPhoneNumbers);                    
+                    await removePhoneWebhooks(this.cliSettings.phoneNumber, this.twilioClient.incomingPhoneNumbers);
                     this.cliSettings.phoneNumber = selectedNumber[0];
                     this.cliSettings.phoneNumber = await updatePhoneWebhooks(this.cliSettings.phoneNumber,this.twilioClient.incomingPhoneNumbers, {voiceUrl: this.voiceUrl, smsUrl: this.smsUrl, statusCallback: this.statusCallback} );
                     res.json({
@@ -195,7 +219,7 @@ class DevPhoneServer extends TwilioClientCommand {
                 if (!this.jwt) {
                     this.jwt = await this.createJwt();
                 }
-    
+
                 res.json({ token: this.jwt });
             } catch (err) {
                 res.status(400).send(err)
@@ -267,21 +291,41 @@ class DevPhoneServer extends TwilioClientCommand {
             const functionServices = await this.twilioClient.serverless.services.list()
             const devPhoneFunctionServices = functionServices.filter((functionServices: ServerlessServiceInstance) => {
             return functionServices.friendlyName !== null && functionServices.friendlyName.startsWith(this.devPhoneName)
+          })
+
+          if(devPhoneFunctionServices.length > 0) {
+              console.log(`🚮 Removing Serverless Functions for ${this.devPhoneName}`);
+
+              for (const functionService of devPhoneFunctionServices) {
+                await this.twilioClient.serverless.services(functionService.sid)
+                  .remove();
+              }
+          }
+        } catch (err) {
+            console.error(err)
+        }
+    }
+
+    async destroyAllFunctions() {
+        try {
+            const functionServices = await this.twilioClient.serverless.services.list()
+            const devPhoneFunctionServices = functionServices.filter((functionServices: ServerlessServiceInstance) => {
+            return functionServices.friendlyName !== null && functionServices.friendlyName.startsWith('dev-phone')
         })
 
         if(devPhoneFunctionServices.length > 0) {
-            console.log(`🚮 Removing Serverless Functions for ${this.devPhoneName}`);
-            devPhoneFunctionServices.forEach(async (functionService: ServerlessServiceInstance) => {
-                await this.twilioClient.serverless.services(functionService.sid)
+            console.log(`🚮 Removing All Serverless Functions for existing dev phone`);
+            for (const functionService of devPhoneFunctionServices) {
+                await this.twilioClient.serverless.v1.services(functionService.sid)
                         .remove();
-            })
+            }
         }
         } catch (err) {
             console.error(err)
         }
     }
 
-   
+
     async validatePropsAndFlags(props: any, flags: any) {
         // Flags defined below can be validated and used here. Example:
         // https://github.com/twilio/plugin-debugger/blob/main/src/commands/debugger/logs/list.js#L46-L56
@@ -309,7 +353,7 @@ class DevPhoneServer extends TwilioClientCommand {
                     `Cannot use ${phoneNumber} because the following config for that phone number would be overwritten: ` + pnConfigAlreadySet.join(", ")
                 );
             }
-         
+
             this.cliSettings.phoneNumber = reformatTwilioPns(this.pns)["phone-numbers"][0];
 
         }
@@ -389,12 +433,36 @@ class DevPhoneServer extends TwilioClientCommand {
                 const devPhoneKeys = keys.filter((key: KeyInstance) => {
                     return key.friendlyName !== null && key.friendlyName.startsWith(this.devPhoneName)
                 })
-                
+
                 if(devPhoneKeys.length > 0) {
                     console.log(`🚮 Removing API Keys for ${this.devPhoneName}`);
-                    devPhoneKeys.forEach(async (key: KeyInstance) => {
+                    for (const key of devPhoneKeys) {
                         await this.twilioClient.keys(key.sid).remove();
-                    })
+                    }
+                }
+            } catch (err) {
+                console.error(err)
+            }
+        }
+    }
+
+    async destroyAllApiKeys() {
+
+        if (this.twilioCliIsConfiguredWithApiKey()) {
+            // we never created one
+            return
+        } else {
+            try {
+                const keys = await this.twilioClient.keys.list()
+                const devPhoneKeys = keys.filter((key: KeyInstance) => {
+                    return key.friendlyName !== null && key.friendlyName.startsWith('dev-phone')
+                })
+
+                if(devPhoneKeys.length > 0) {
+                    console.log(`🚮 Removing All API Keys for existing dev phone`);
+                    for (const key of devPhoneKeys) {
+                        await this.twilioClient.keys(key.sid).remove();
+                    }
                 }
             } catch (err) {
                 console.error(err)
@@ -403,7 +471,7 @@ class DevPhoneServer extends TwilioClientCommand {
     }
 
     async createTwimlApp() {
-        console.log('💻 Creating a new TwiMl App to allow voice calls from your browser...'); 
+        console.log('💻 Creating a new TwiMl App to allow voice calls from your browser...');
         await this.destroyTwimlApps()
         try {
             const app = await this.twilioClient.applications
@@ -427,10 +495,29 @@ class DevPhoneServer extends TwilioClientCommand {
 
             if(devPhoneApps.length > 0) {
                 console.log(`🚮 Removing TwiML app for ${this.devPhoneName}`);
-                devPhoneApps.forEach(async (twimlApp: ApplicationInstance) => {
+                for (const twimlApp of devPhoneApps) {
                     await this.twilioClient.applications(twimlApp.sid)
                         .remove();
-                })
+                }
+            }
+        } catch (err) {
+            console.error(err)
+        }
+    }
+
+    async destroyAllTwimlApps() {
+        try {
+            const applications = await this.twilioClient.applications.list()
+            const devPhoneApps = applications.filter((twimlApp: ApplicationInstance) => {
+                return twimlApp.friendlyName !== null && twimlApp.friendlyName.startsWith('dev-phone')
+            })
+
+            if(devPhoneApps.length > 0) {
+                console.log(`🚮 Removing All TwiML app for existing dev phone`);
+                for (const twimlApp of devPhoneApps) {
+                    await this.twilioClient.applications(twimlApp.sid)
+                        .remove();
+                }
             }
         } catch (err) {
             console.error(err)
@@ -471,7 +558,7 @@ class DevPhoneServer extends TwilioClientCommand {
     async createSync() {
         console.log('💻 Creating a new sync list for call history...');
         await this.destroySyncs()
-        
+
         try {
             const syncService = await this.twilioClient.sync.services
                 .create({ friendlyName: this.devPhoneName });
@@ -492,13 +579,32 @@ class DevPhoneServer extends TwilioClientCommand {
             const devPhoneSyncServices = syncServices.filter((syncService: SyncServiceInstance) => {
                 return syncService.friendlyName !== null && syncService.friendlyName.startsWith(this.devPhoneName)
             })
-            
+
             if(devPhoneSyncServices.length > 0) {
                 console.log(`🚮 Removing Sync Service for ${this.devPhoneName}`);
-                devPhoneSyncServices.forEach(async (syncService: SyncServiceInstance) => {
+                for (const syncService of devPhoneSyncServices) {
                     await this.twilioClient.sync.services(syncService.sid)
                             .remove();
-                })
+                }
+            }
+        } catch (err) {
+            console.error(err)
+        }
+    }
+
+    async destroyAllSyncs() {
+        try {
+            const syncServices = await this.twilioClient.sync.services.list()
+            const devPhoneSyncServices = syncServices.filter((syncService: SyncServiceInstance) => {
+                return syncService.friendlyName !== null && syncService.friendlyName.startsWith('dev-phone')
+            })
+
+            if(devPhoneSyncServices.length > 0) {
+                console.log(`🚮 Removing All Sync Service for existing dev phone`);
+                for (const syncService of devPhoneSyncServices) {
+                    await this.twilioClient.sync.services(syncService.sid)
+                            .remove();
+                }
             }
         } catch (err) {
             console.error(err)
@@ -532,13 +638,57 @@ class DevPhoneServer extends TwilioClientCommand {
             const devPhoneConvoServices = convoServices.filter((convoService: SyncServiceInstance) => {
                 return convoService.friendlyName !== null && convoService.friendlyName.startsWith(this.devPhoneName)
             })
-            
+
             if(devPhoneConvoServices.length > 0) {
                 console.log(`🚮 Removing Conversation Service for ${this.devPhoneName}`);
-                devPhoneConvoServices.forEach(async (convoService: ConversationServiceInstance) => {
+                for (const convoService of devPhoneConvoServices) {
                     await this.twilioClient.conversations.services(convoService.sid)
                             .remove();
-                })
+                }
+            }
+        } catch (err) {
+            console.error(err)
+        }
+    }
+
+    async destroyAllConversations() {
+        try {
+            const convoServices = await this.twilioClient.conversations.services.list()
+            const devPhoneConvoServices = convoServices.filter((convoService: SyncServiceInstance) => {
+                return convoService.friendlyName !== null && convoService.friendlyName.startsWith('dev-phone')
+            })
+
+            if(devPhoneConvoServices.length > 0) {
+                console.log(`🚮 Removing All Conversation Service for existing dev phone`);
+                for (const convoService of devPhoneConvoServices) {
+                    await this.twilioClient.conversations.services(convoService.sid)
+                            .remove();
+                }
+            }
+        } catch (err) {
+            console.error(err)
+        }
+    }
+
+    async removeAllPhoneWebhooks() {
+        try {
+            const pns = await this.twilioClient.incomingPhoneNumbers.list()
+
+            const numbersDevPhone = pns.filter((pn: IncomingPhoneNumberInstance) => {
+              return pn.smsUrl.startsWith('https://dev-phone') && pn.voiceUrl.startsWith('https://dev-phone')
+            });
+
+            if (numbersDevPhone.length > 0) {
+              console.log(`🚮 Removing All number webhooks for dev phone`);
+              for (const pn of numbersDevPhone) {
+                await removePhoneWebhooks({
+                  voiceUrl: '',
+                  smsUrl: '',
+                  statusCallback: '',
+                  phoneNumber: pn.phoneNumber,
+                  sid: pn.sid,
+                }, this.twilioClient.incomingPhoneNumbers);
+              }
             }
         } catch (err) {
             console.error(err)
@@ -561,6 +711,10 @@ DevPhoneServer.PropertyFlags = {
     }),
     headless: Flags.boolean({
         description: 'Optional. Prevents the UI from automatically opening in the browser.',
+        default: false,
+    }),
+    clear: Flags.boolean({
+        description: 'Optional. Remove all dev-phone resources from your account before starting the dev-phone.',
         default: false,
     }),
     port: Flags.string({
