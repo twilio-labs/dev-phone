@@ -2,7 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import open from 'open';
 import express from 'express';
-import readline from 'readline';
+import confirm from '@inquirer/confirm';
 
 import { Flags } from '@oclif/core';
 import { deployServerless, constants } from '../utils/create-serverless-util';
@@ -85,22 +85,14 @@ class DevPhoneServer extends TwilioClientCommand {
         }
 
         if (isDeletingAll()) {
-          const askQuestion = function (query:string) {
-            const rl = readline.createInterface({
-              input: process.stdin,
-              output: process.stdout,
-            });
-
-            return new Promise(resolve => rl.question(query, (ans:string) => {
-              rl.close();
-              resolve(ans);
-            }))
-          }
-          const confirmation = await askQuestion(`\nType YES to confirm that you want to delete all resources...\n`);
-          if (confirmation == "Y" || confirmation == "YES") {
-            console.log(`🌐 Deleting all dev-phone resources from your account before starting...`)
-            await deleteAll().finally(() => console.log(`✅ All resources have been deleted.`));
-          }
+            const deleteAllConfirmation = await confirm({
+                message: "Do you want to delete all of the dev phone resources on your Twilio account? This may interfere with other instances of the Dev Phone.",
+                default: false
+            })
+            if(deleteAllConfirmation){
+                console.log(`🌐 Deleting all dev-phone resources from your account before starting...`)
+                await deleteAll().finally(() => console.log(`✅ All resources have been deleted.`));
+            }
         }
 
         // create conversation for SMS/web interface
