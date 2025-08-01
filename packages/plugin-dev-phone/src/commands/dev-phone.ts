@@ -136,6 +136,9 @@ class DevPhoneServer extends TwilioClientCommand {
 
         const app = express();
 
+        // Disable the X-Powered-By header
+        app.disable('x-powered-by');
+
         // serve assets from the "public" directory
         // __dirname is the path to _this_ file, so ../../public to find index.html
         app.use(express.static(WebClientPath));
@@ -164,7 +167,7 @@ class DevPhoneServer extends TwilioClientCommand {
                     res.json(reformatTwilioPns(pns))
                 } catch (err: any) {
                     console.error('Phone number API threw an error', err);
-                    res.status(err.status ? err.status : 400).send({ error: err })
+                    res.status(err.status ? err.status : 400).send({ error: 'An error occurred while fetching phone numbers.' })
                 }
             } else {
                 res.json(reformatTwilioPns(this.pns));
@@ -183,7 +186,7 @@ class DevPhoneServer extends TwilioClientCommand {
                 res.json({result: message})
             } catch (err: any) {
                 console.error('SMS API threw an error', err);
-                res.status(err.status ? err.status : 400).send({ error: err });
+                res.status(err.status ? err.status : 400).send({ error: 'An error occurred while sending SMS.' });
             };
         })
 
@@ -210,7 +213,7 @@ class DevPhoneServer extends TwilioClientCommand {
                 }
             } catch (err) {
                 console.error(err)
-                res.status(400).send(err);
+                res.status(400).send({ error: 'An error occurred while choosing phone number.' });
             }
         })
 
@@ -222,7 +225,7 @@ class DevPhoneServer extends TwilioClientCommand {
 
                 res.json({ token: this.jwt });
             } catch (err) {
-                res.status(400).send(err)
+                res.status(400).send({ error: 'An error occurred while generating client token.' })
             }
         })
 
