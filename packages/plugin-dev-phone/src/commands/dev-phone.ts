@@ -408,7 +408,12 @@ class DevPhoneServer extends TwilioClientCommand {
             await this.destroyApiKeys()
             try {
                 const key = await this.twilioClient.newKeys.create({ friendlyName: this.devPhoneName });
-                console.log(`✅ I'm using the API Key ${key.sid}\n`);
+                const mask = (value: string): string => {
+                  if (!value) return "";
+                  const last4 = value.slice(-4);
+                  return `${"*".repeat(value.length - 4)}${last4}`;
+                };
+                console.log(`✅ I'm using the API Key ${mask(key.sid)}\n`);
 
                 this.currentProfile.apiKey = key.sid;
                 this.currentProfile.apiSecret = key.secret;
