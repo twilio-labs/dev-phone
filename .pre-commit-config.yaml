@@ -1,0 +1,17 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: local
+    hooks:
+      - id: auto-changeset
+        name: Auto-create changeset for staged package changes
+        entry: node scripts/ensure-changeset-on-commit.js
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]

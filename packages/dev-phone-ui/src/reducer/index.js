@@ -10,6 +10,10 @@ import {
     UPDATE_CALL_RECORD,
     UPDATE_CALL_INFORMATION,
     UPDATE_MUTE_STATUS,
+    UPDATE_VOICE_DEVICE_STATUS,
+    UPDATE_VOICE_DEVICE_ERROR,
+    ADD_DEBUG_EVENT,
+    CLEAR_DEBUG_EVENTS,
     SET_DESTINATION_NUMBER,
     ADD_DIGIT_TO_DESTINATION_NUMBER
 } from '../actions'
@@ -24,6 +28,9 @@ const initialState = {
         phoneNumber: '',
     },
     twilioAccessToken: '',
+    voiceDeviceStatus: 'disconnected',
+    voiceDeviceError: null,
+    debugEvents: [],
     voiceDevice: {},
     error: {}
 }
@@ -39,7 +46,7 @@ export default function reducer(state = initialState, action) {
         case UPDATE_CALL_RECORD:
             return {
                 ...state,
-                callLog: state.callLog.map(call => { 
+                callLog: state.callLog.map(call => {
                     return call.Sid === action.payload.Sid ? action.payload : call
                 })
             }
@@ -63,6 +70,26 @@ export default function reducer(state = initialState, action) {
             return {
                 ...state,
                 isMuted: action.isMuted
+            }
+        case UPDATE_VOICE_DEVICE_STATUS:
+            return {
+                ...state,
+                voiceDeviceStatus: action.status
+            }
+        case UPDATE_VOICE_DEVICE_ERROR:
+            return {
+                ...state,
+                voiceDeviceError: action.error
+            }
+        case ADD_DEBUG_EVENT:
+            return {
+                ...state,
+                debugEvents: [...state.debugEvents, action.event].slice(-400)
+            }
+        case CLEAR_DEBUG_EVENTS:
+            return {
+                ...state,
+                debugEvents: []
             }
         case ADD_DIGIT_TO_DESTINATION_NUMBER:
             return { ...state, destinationNumber: state.destinationNumber + action.digit }

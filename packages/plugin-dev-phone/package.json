@@ -1,15 +1,15 @@
 {
-  "name": "@twilio-labs/plugin-dev-phone",
+  "name": "@mqarty/plugin-dev-phone",
   "description": "Twilio Dev Phone",
-  "version": "1.0.0-beta.6",
-  "author": "Twilio @twilio",
+  "version": "1.0.0-beta.32",
+  "author": "mqarty",
   "bugs": {
-    "url": "https://github.com/twilio-labs/dev-phone/issues"
+    "url": "https://github.com/mqarty/dev-phone/issues"
   },
   "dependencies": {
     "@inquirer/confirm": "^5.1.8",
     "@oclif/core": "^1.13.6",
-    "@twilio-labs/dev-phone-ui": "^1.0.0-beta.3",
+    "@mqarty/dev-phone-ui": "^1.0.0-beta.29",
     "@twilio-labs/serverless-api": "^5.4.0",
     "@twilio/cli-core": "^7.0.0",
     "express": "^4.17.1",
@@ -39,7 +39,10 @@
     "/oclif.manifest.json",
     "/dist"
   ],
-  "homepage": "https://github.com/twilio-labs/dev-phone/packages/dev-phone",
+  "publishConfig": {
+    "access": "public"
+  },
+  "homepage": "https://github.com/mqarty/dev-phone/packages/dev-phone",
   "keywords": [
     "oclif-plugin"
   ],
@@ -60,7 +63,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/twilio-labs/dev-phone.git"
+    "url": "git+https://github.com/mqarty/dev-phone.git"
   },
   "scripts": {
     "build": "tsc",

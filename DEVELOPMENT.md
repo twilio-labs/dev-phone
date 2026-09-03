@@ -5,6 +5,7 @@
 You will need:
  - Node development environment (node, npm, npx)
  - Twilio CLI
+ - pre-commit
 
 ## Set up and run locally
 
@@ -12,6 +13,7 @@ You will need:
      * Clone this repo & `cd` into the directory
    2. Install all of the dependencies using `npm i --workspaces`
    3. Build all of the packages using `npm run build --workspaces`
+  4. Install local git hooks with `pre-commit install`
 
 ## CLI Plugin
    1. Link the plugin with your Twilio CLI installation
@@ -52,7 +54,9 @@ This does hot-reload, so changes will be reflected in your browser as soon as yo
 Run tests with `npm test`. There are no tests at the moment but the place to add them is `
 
 ### Documenting Changes
-After you've made changes, run:
+When `pre-commit` is installed, a changeset is created and staged automatically whenever staged changes include files under `packages/` and no new `.changeset/*.md` file is already staged.
+
+You can still create a changeset manually by running:
 
 `npx changeset`
 

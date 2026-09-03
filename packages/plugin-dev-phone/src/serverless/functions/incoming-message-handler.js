@@ -1,12 +1,12 @@
 // Incoming Message Handler
 
-exports.handler = async function(context, event, callback) {
+exports.handler = async function (context, event, callback) {
     // receive an SMS and put into a conversation
 
     const client = context.getTwilioClient({
         userAgentExtension: [
-            `@twilio-labs/dev-phone/${context.DEV_PHONE_VERSION}`,
-            `@twilio-labs/dev-phone/serverless`,
+            `@mqarty/plugin-dev-phone/${context.DEV_PHONE_VERSION}`,
+            `@mqarty/plugin-dev-phone/serverless`,
             'serverless-functions'
         ]
     });

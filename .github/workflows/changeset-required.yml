@@ -1,0 +1,45 @@
+name: Require Changeset
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  changeset-required:
+    name: Require changeset for package updates
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate changeset presence
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          BASE_REF="${{ github.base_ref }}"
+          git fetch origin "${BASE_REF}" --depth=1
+
+          CHANGED_FILES="$(git diff --name-only "origin/${BASE_REF}"...HEAD)"
+          echo "Changed files:"
+          echo "${CHANGED_FILES}"
+
+          if ! echo "${CHANGED_FILES}" | grep -q '^packages/'; then
+            echo "No package changes detected. Skipping changeset requirement."
+            exit 0
+          fi
+
+          ADDED_CHANGESET_FILES="$(git diff --name-status "origin/${BASE_REF}"...HEAD | grep -E '^A[[:space:]]+\.changeset/[^/]+\.md$' || true)"
+
+          if [[ -z "${ADDED_CHANGESET_FILES}" ]]; then
+            echo "Package changes were detected, but no new .changeset/*.md file was added."
+            echo "Please run: npx changeset"
+            exit 1
+          fi
+
+          echo "Changeset requirement satisfied:"
+          echo "${ADDED_CHANGESET_FILES}"

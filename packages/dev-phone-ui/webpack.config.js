@@ -24,7 +24,7 @@ module.exports = {
         },
         compress: true,
         hot: true,
-        port: 3000,
+        port: process.env.PORT || 3000,
     },
     devtool: 'eval-source-map',
     plugins: [

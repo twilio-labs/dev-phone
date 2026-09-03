@@ -28,7 +28,7 @@ function WelcomeDialog() {
         </Paragraph>
         <Paragraph>
           This tool is a Twilio Labs project, meaning it is <em>not</em> covered by Twilio Support. If you find any issues, want to look under the hood, or even contribute to the tool,
-          the project is 100% open-source and <Anchor href="https://github.com/twilio-labs/dev-phone" showExternal>available on GitHub</Anchor>.
+          the project is 100% open-source and <Anchor href="https://github.com/mqarty/dev-phone" showExternal>available on GitHub</Anchor>.
         </Paragraph>
         <Paragraph>
           <strong>We can't wait to see what you build!</strong>
