@@ -6,7 +6,7 @@ import confirm from '@inquirer/confirm';
 
 import { Flags } from '@oclif/core';
 import { deployServerless, constants } from '../utils/create-serverless-util';
-import { getAvailablePort, isValidPort } from '../utils/helpers'
+import { getAvailablePort, isValidPort, isLoopbackHost } from '../utils/helpers'
 import { isSmsUrlSet, isVoiceUrlSet, updatePhoneWebhooks, removePhoneWebhooks } from '../utils/phone-number-utils';
 const { TwilioClientCommand } = require('@twilio/cli-core').baseCommands;
 const { TwilioCliError } = require('@twilio/cli-core').services.error;
@@ -136,6 +136,17 @@ class DevPhoneServer extends TwilioClientCommand {
 
         const app = express();
 
+        // Reject any request whose Host header isn't a loopback address.
+        // Together with listening on 127.0.0.1, this closes the DNS-rebinding
+        // path: an attacker page that rebinds its own hostname to 127.0.0.1
+        // still sends its original Host, which won't match here.
+        app.use((req, res, next) => {
+            if (isLoopbackHost(req.headers.host)) {
+                return next();
+            }
+            res.status(403).send({ error: 'Forbidden: dev-phone only accepts loopback requests' });
+        });
+
         // serve assets from the "public" directory
         // __dirname is the path to _this_ file, so ../../public to find index.html
         app.use(express.static(WebClientPath));
@@ -228,7 +239,7 @@ class DevPhoneServer extends TwilioClientCommand {
 
         const isHeadless = () => !!this.flags.headless;
 
-        app.listen(this.port, () => {
+        app.listen(this.port, '127.0.0.1', () => {
             console.log(`🚀 Your local webserver is listening on port ${this.port}`);
 
             if (fs.existsSync(path.join(WebClientPath, 'index.html'))) {

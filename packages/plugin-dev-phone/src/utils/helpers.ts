@@ -9,3 +9,14 @@ export async function getAvailablePort() {
     const availablePort = await getPort({port: [1337, 3000, 3001, 8000, 8080]})
     return availablePort
 }
+
+const LOOPBACK_HOSTNAMES = new Set(['localhost', '127.0.0.1', '[::1]']);
+
+export function isLoopbackHost (host: string | undefined) {
+    if (!host) return false;
+    try {
+        return LOOPBACK_HOSTNAMES.has(new URL(`http://${host}`).hostname);
+    } catch {
+        return false;
+    }
+}
